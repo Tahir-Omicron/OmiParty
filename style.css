@@ -1,18 +1,18 @@
 :root {
-    --bg-primary: #0a0e1a;
-    --bg-secondary: #111827;
-    --bg-surface: rgba(17, 24, 39, 0.8);
-    --bg-surface-hover: rgba(17, 24, 39, 0.95);
-    --glass-border: rgba(255, 255, 255, 0.08);
-    --glass-border-hover: rgba(255, 255, 255, 0.15);
-    --text-primary: #f0f0f0;
-    --text-secondary: #9ca3af;
-    --text-muted: #6b7280;
-    --accent-cyan: #00e5ff;
-    --accent-red: #ff2d55;
-    --accent-green: #00c853;
-    --accent-gold: #ffab00;
-    --accent-purple: #a855f7;
+    --bg-primary: #0f172a; /* Softer slate/navy instead of harsh black */
+    --bg-secondary: #1e293b;
+    --bg-surface: rgba(30, 41, 59, 0.85);
+    --bg-surface-hover: rgba(30, 41, 59, 0.95);
+    --glass-border: rgba(255, 255, 255, 0.05);
+    --glass-border-hover: rgba(255, 255, 255, 0.12);
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent-cyan: #22d3ee; /* Softer pastel cyan */
+    --accent-red: #fb7185; /* Softer pastel red */
+    --accent-green: #34d399; /* Softer emerald green */
+    --accent-gold: #fbbf24;
+    --accent-purple: #c084fc;
     
     --radius-sm: 8px;
     --radius-md: 12px;

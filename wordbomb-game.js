@@ -71,11 +71,10 @@ window.startWordBombGame = async function() {
     turn_count: 0
   };
 
-  await db.from('rooms').update({ 
-    status: 'playing', 
-    game_mode: 'wordbomb', 
-    game_state: gs 
-  }).eq('code', state.roomCode);
+  await fastUpdateGameState(gs, {
+    status: 'playing',
+    game_mode: 'wordbomb'
+  });
   
   let count = 3;
   const interval = setInterval(async () => {
@@ -83,10 +82,10 @@ window.startWordBombGame = async function() {
     if (count <= 0) {
       clearInterval(interval);
       const playGs = { ...gs, phase: 'playing', turn_end_time: Date.now() + 8000 };
-      await db.from('rooms').update({ game_state: playGs }).eq('code', state.roomCode);
+      await fastUpdateGameState(playGs);
       startHostTimer();
     } else {
-      await db.from('rooms').update({ game_state: { ...gs, countdown: count } }).eq('code', state.roomCode);
+      await fastUpdateGameState({ ...gs, countdown: count });
     }
   }, 1000);
 };
@@ -127,14 +126,14 @@ async function handleTimeout(gs) {
   if (alive.length <= 1) {
     gs.phase = 'game_over';
     gs.winner = alive[0] || null;
-    await db.from('rooms').update({ game_state: gs }).eq('code', state.roomCode);
+    await fastUpdateGameState(gs);
     clearInterval(hostTimerInterval);
     hostTimerInterval = null;
     return;
   }
   
   advanceTurn(gs);
-  await db.from('rooms').update({ game_state: gs }).eq('code', state.roomCode);
+  await fastUpdateGameState(gs);
 }
 
 function startHostTimer() {
@@ -161,7 +160,7 @@ async function processSubmittedWord(gs) {
   gs.processed_word_time = sub.time;
   
   if (gs.turn_order[gs.current_turn] !== sub.playerId) {
-    await db.from('rooms').update({ game_state: gs }).eq('code', state.roomCode);
+    await fastUpdateGameState(gs);
     return;
   }
   
@@ -174,7 +173,7 @@ async function processSubmittedWord(gs) {
     advanceTurn(gs);
   }
   
-  await db.from('rooms').update({ game_state: gs }).eq('code', state.roomCode);
+  await fastUpdateGameState(gs);
 }
 
 // ========================================================================
@@ -388,7 +387,7 @@ async function submitWord() {
   
   // Submit word for host to process
   const updatedGs = { ...gs, submitted_word: { word, playerId: state.playerId, time: Date.now() } };
-  await db.from('rooms').update({ game_state: updatedGs }).eq('code', state.roomCode);
+  await fastUpdateGameState(updatedGs);
 }
 
 // ========================================================================
@@ -427,7 +426,7 @@ window.processWordBombBotActions = function(gs) {
       
       if (validWord) {
         const updatedGs = { ...currentGs, submitted_word: { word: validWord, playerId: pid, time: Date.now() } };
-        await db.from('rooms').update({ game_state: updatedGs }).eq('code', state.roomCode);
+        await fastUpdateGameState(updatedGs);
       }
       // If no valid word found, bot just lets the timer expire
       

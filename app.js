@@ -770,16 +770,15 @@ async function startSabotageGame() {
     assassin_target: null
   };
   
-  await db.from('rooms').update({
+  await fastUpdateGameState(gs, {
     status: 'playing',
-    game_mode: 'sabotage',
-    game_state: gs
-  }).eq('code', state.roomCode);
+    game_mode: 'sabotage'
+  });
   
   setTimeout(() => {
     if (state.isHost && state.room.status === 'playing') {
       const gsPhase2 = { ...gs, phase: 'detective_phase' };
-      db.from('rooms').update({ game_state: gsPhase2 }).eq('code', state.roomCode);
+      fastUpdateGameState(gsPhase2);
     }
   }, ROLE_REVEAL_MS);
 }
@@ -1094,11 +1093,10 @@ async function startAuctionGame() {
     results_summary: null
   };
   
-  await db.from('rooms').update({
+  await fastUpdateGameState(gs, {
     status: 'playing',
-    game_mode: 'auction',
-    game_state: gs
-  }).eq('code', state.roomCode);
+    game_mode: 'auction'
+  });
   
   setTimeout(() => {
     if (state.isHost && state.room.status === 'playing') {
@@ -1220,7 +1218,7 @@ async function startBiddingPhase() {
   const gs = state.room.game_state;
   
   const newGs = { ...gs, phase: 'bidding', bid_deadline: deadline };
-  await db.from('rooms').update({ game_state: newGs }).eq('code', state.roomCode);
+  await fastUpdateGameState(newGs);
 }
 
 function startBidTimer(deadlineISO) {
@@ -1438,7 +1436,7 @@ async function processBids() {
   }
   
   const newGs = { ...gs, phase: 'results', results_summary: resultsData };
-  await db.from('rooms').update({ game_state: newGs }).eq('code', state.roomCode);
+  await fastUpdateGameState(newGs);
   
   state.timerTimeout = setTimeout(async () => {
     const { data: freshPlayers } = await db.from('players').select('*').eq('room_code', state.roomCode);
@@ -1453,13 +1451,13 @@ async function processBids() {
         const sorted = [...freshPlayers].sort((a,b) => b.hp - a.hp);
         winnerId = sorted[0]?.id;
       }
-      db.from('rooms').update({ game_state: { ...newGs, phase: 'game_over', winner: winnerId } }).eq('code', state.roomCode);
+      fastUpdateGameState({ ...newGs, phase: 'game_over', winner: winnerId });
       if (winnerId) window.distributeXP([winnerId]);
     } else {
       newGs.round++;
       newGs.current_event = drawEventCard();
       newGs.phase = 'event_reveal';
-      db.from('rooms').update({ game_state: newGs }).eq('code', state.roomCode).then(() => {
+      fastUpdateGameState(newGs).then(() => {
         setTimeout(() => {
           if (state.isHost) startBiddingPhase();
         }, 4000);

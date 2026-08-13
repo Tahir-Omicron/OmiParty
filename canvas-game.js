@@ -12,7 +12,7 @@
     async function updateGameState(params) {
         const current = gs();
         const newState = { ...current, ...params };
-        await db.from('rooms').update({ game_state: newState }).eq('code', state.roomCode);
+        await fastUpdateGameState(newState);
     }
 
     // ========================================================================
@@ -26,10 +26,10 @@
         players.forEach(p => scores[p.id] = 0);
 
         // Set status first so Realtime picks up game_state changes
-        await db.from('rooms').update({ 
-            status: 'playing', 
-            game_mode: 'canvas' 
-        }).eq('code', state.roomCode);
+        await fastUpdateGameState(gs, {
+            status: 'playing',
+            game_mode: 'canvas'
+        });
 
         await startRound(1, scores);
     };
@@ -63,7 +63,7 @@
             end_time: Date.now() + 5000
         };
 
-        await db.from('rooms').update({ game_state: newGs }).eq('code', state.roomCode);
+        await fastUpdateGameState(newGs);
 
         setTimeout(() => {
             if (state.isHost && state.room && state.room.game_state && state.room.game_state.phase === 'word_reveal') {
