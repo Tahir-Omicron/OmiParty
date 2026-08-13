@@ -199,14 +199,62 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-primary {
-    background-color: var(--accent-cyan);
-    color: var(--bg-primary);
+    background: linear-gradient(135deg, var(--accent-cyan), #00b0ff);
+    color: #000;
+    box-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, transparent 60%);
+    opacity: 0;
+    transform: scale(0.5);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    pointer-events: none;
+}
+
+.btn-primary:hover {
+    box-shadow: 0 0 25px rgba(0, 229, 255, 0.7);
+    transform: translateY(-2px) scale(1.02);
+}
+
+.btn-primary:hover::before {
+    opacity: 0.3;
+    transform: scale(1);
+}
+
+.btn-primary:active {
+    transform: translateY(1px) scale(0.98);
+}
+
+/* Pulsing Glow for Start Button */
+#start-game-btn {
+    animation: pulseGlow 2s infinite alternate;
+}
+
+@keyframes pulseGlow {
+    0% { box-shadow: 0 0 10px rgba(0, 229, 255, 0.4); }
+    100% { box-shadow: 0 0 30px rgba(0, 229, 255, 0.9); }
 }
 
 .btn-secondary {
-    background-color: transparent;
-    border: 1px solid var(--accent-cyan);
-    color: var(--accent-cyan);
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    border: 1px solid var(--glass-border);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: var(--glass-border-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 .btn-danger {
@@ -518,6 +566,11 @@ input[type="email"]::placeholder {
     justify-content: center;
     border: 1px solid var(--glass-border);
     box-shadow: var(--shadow-md);
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.role-card-inner:hover .role-card-back {
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
 }
 .role-card-front {
     background: var(--bg-surface);
