@@ -361,8 +361,10 @@ async function fetchRoomAndPlayers() {
 }
 
 function renderLobby() {
-  const container = $('#lobby-players');
-  container.innerHTML = '';
+  if (!$('#lobby-players')) return; // Ensure we are on index.html
+  
+  const list = $('#lobby-players');
+  list.innerHTML = '';
   
   state.players.forEach(player => {
     const card = document.createElement('div');
@@ -526,7 +528,7 @@ function subscribeToRoom(roomCode) {
 }
 
 // Ultra-fast optimistic UI & broadcast update to bypass Postgres latency
-async function fastUpdateGameState(gs, extraUpdates = {}) {
+window.fastUpdateGameState = async function(gs, extraUpdates = {}) {
   if (!state.room) return;
   state.room.game_state = gs;
   onGameStateUpdate(gs); // Optimistic local update
@@ -537,7 +539,10 @@ async function fastUpdateGameState(gs, extraUpdates = {}) {
   }
   
   await db.from('rooms').update({ game_state: gs, ...extraUpdates }).eq('code', state.roomCode);
-}
+};
+
+// Aliased for internal use
+const fastUpdateGameState = window.fastUpdateGameState;
 
 function subscribeToPlayers(roomCode) {
   const channel = db.channel(`players-${roomCode}`)
@@ -706,7 +711,7 @@ function onGameStateUpdate(gs) {
           state.assassinTimeout = setTimeout(() => {
             const target = state.players.find(p => p.id === gs.assassin_target);
             const winner = (target && target.role === 'detective') ? 'saboteurs' : 'guards';
-            db.from('rooms').update({ game_state: { ...gs, phase: 'game_over', winner } }).eq('code', state.roomCode);
+            fastUpdateGameState({ ...gs, phase: 'game_over', winner });
             const winnerIds = state.players.filter(p => (winner === 'guards' && p.role !== 'saboteur' && p.role !== 'assassin') || (winner === 'saboteurs' && (p.role === 'saboteur' || p.role === 'assassin'))).map(p => p.id);
             window.distributeXP(winnerIds);
             state.assassinTimeout = null;
