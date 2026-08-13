@@ -219,7 +219,7 @@ async function handleCreateRoom() {
     
     if (roomError) throw roomError;
 
-    const { error: playerError } = await db.from('players').insert({
+    const { error: playerError } = await db.from('players').upsert({
       id: state.playerId,
       room_code: code,
       nickname: state.nickname,
@@ -262,7 +262,7 @@ async function handleJoinRoom() {
     }
     
     // Attempt to insert player
-    const { error: playerError } = await db.from('players').insert({
+    const { error: playerError } = await db.from('players').upsert({
       id: state.playerId,
       room_code: code,
       nickname: state.nickname,
