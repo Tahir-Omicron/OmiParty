@@ -403,7 +403,7 @@ async function handleStartGame() {
 async function handleAddBot() {
   if (!state.roomCode || !state.isHost) return;
   
-  const botId = `bot-${crypto.randomUUID()}`;
+  const botId = crypto.randomUUID();
   const botNames = ['Bot_Alpha', 'Bot_Bravo', 'Bot_Charlie', 'Bot_Delta', 'Bot_Echo'];
   // Pick a random name not currently in the room (or just random if all taken)
   const availableNames = botNames.filter(n => !state.players.some(p => p.nickname === n));
