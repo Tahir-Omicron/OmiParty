@@ -72,6 +72,7 @@ function initTheme() {
 }
 
 function toggleTheme() {
+  playSound('click');
   const current = document.documentElement.getAttribute('data-theme') || 'dark';
   const newTheme = current === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', newTheme);
@@ -83,3 +84,81 @@ function toggleTheme() {
   }
 }
 initTheme();
+
+// ----------------------------------------------------------------------------
+// WEB AUDIO API SYNTHESIZER
+// ----------------------------------------------------------------------------
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playSound(type) {
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  
+  const oscillator = audioCtx.createOscillator();
+  const gainNode = audioCtx.createGain();
+  
+  oscillator.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+  
+  if (type === 'hover') {
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(400, audioCtx.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.05);
+    gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + 0.05);
+  } else if (type === 'click') {
+    oscillator.type = 'triangle';
+    oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.1);
+    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + 0.1);
+  } else if (type === 'start') {
+    oscillator.type = 'square';
+    oscillator.frequency.setValueAtTime(300, audioCtx.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.3);
+    gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + 0.3);
+  } else if (type === 'error') {
+    oscillator.type = 'sawtooth';
+    oscillator.frequency.setValueAtTime(200, audioCtx.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+    gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + 0.3);
+  } else if (type === 'success') {
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(400, audioCtx.currentTime);
+    oscillator.frequency.setValueAtTime(600, audioCtx.currentTime + 0.1);
+    oscillator.frequency.setValueAtTime(800, audioCtx.currentTime + 0.2);
+    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.4);
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + 0.4);
+  }
+}
+
+// Bind sounds to buttons globally
+document.addEventListener('DOMContentLoaded', () => {
+  document.body.addEventListener('mouseover', (e) => {
+    if (e.target.tagName === 'BUTTON' || e.target.closest('button') || e.target.classList.contains('btn')) {
+      playSound('hover');
+    }
+  });
+  document.body.addEventListener('mousedown', (e) => {
+    if (e.target.tagName === 'BUTTON' || e.target.closest('button') || e.target.classList.contains('btn')) {
+      if (e.target.id === 'start-game-btn') {
+        playSound('start');
+      } else {
+        playSound('click');
+      }
+    }
+  });
+});
