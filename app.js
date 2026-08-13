@@ -130,8 +130,16 @@ function showToast(message, type = 'info') {
 
 function getPlayerId() {
   let id = localStorage.getItem('otaq_player_id');
-  if (!id) {
-    id = crypto.randomUUID();
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  
+  if (!id || !uuidRegex.test(id)) {
+    try {
+      id = crypto.randomUUID();
+    } catch (e) {
+      id = '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, c =>
+        (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+      );
+    }
     localStorage.setItem('otaq_player_id', id);
   }
   return id;
