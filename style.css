@@ -1069,3 +1069,47 @@ input[type="text"]::placeholder {
     max-width: 100%;
     height: auto;
 }
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    .lobby-panel {
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+        gap: 15px;
+    }
+    .lobby-sidebar {
+        width: 100%;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--glass-border);
+    }
+    .lobby-main {
+        width: 100%;
+        padding: 10px;
+    }
+    .glass-panel {
+        padding: 1.5rem;
+        width: 100%;
+    }
+    .chat-messages {
+        height: 250px;
+    }
+    h1 { font-size: 2.5rem; }
+    h2 { font-size: 1.8rem; }
+    
+    /* Grid Adjustments for Games */
+    #canvas-container {
+        width: 100%;
+        height: 300px;
+    }
+    .canvas-tools {
+        flex-wrap: wrap;
+    }
+    .player-grid, .sabotage-main-area, .auction-hp-bars {
+        width: 100%;
+    }
+}

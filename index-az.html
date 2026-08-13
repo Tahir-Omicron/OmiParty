@@ -34,20 +34,47 @@
     </div>
     <div id="toast-container" class="toast-container"></div>
 
-    <!-- Screen 1: Nickname -->
-    <div class="screen active" data-screen="nickname">
-        <div class="glass-panel text-center">
+    <!-- Screen 1: Auth (Login/Register) -->
+    <div class="screen active" data-screen="auth">
+        <div class="glass-panel text-center" style="max-width: 360px;">
             <h1>OTAQ<span class="logo-accent">.gg</span></h1>
             <p>Party games for chaotic friends</p>
-            <input type="text" id="nickname-input" placeholder="Ləqəbinizi daxil edin" maxlength="16" autocomplete="off">
-            <button id="nickname-btn" class="btn btn-primary">Arenaya Daxil Ol</button>
+            
+            <div id="auth-forms">
+                <!-- Login Form -->
+                <div id="login-form">
+                    <input type="email" id="login-email" placeholder="E-poçt" autocomplete="off">
+                    <input type="password" id="login-password" placeholder="Şifrə" autocomplete="off">
+                    <button id="login-btn" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Daxil Ol</button>
+                    <p style="margin-top: 15px; font-size: 14px; cursor: pointer; color: var(--accent-cyan);" onclick="toggleAuthMode('register')">Hesabınız yoxdur? Qeydiyyat</p>
+                </div>
+                
+                <!-- Register Form (Hidden by default) -->
+                <div id="register-form" style="display: none;">
+                    <input type="email" id="reg-email" placeholder="E-poçt" autocomplete="off">
+                    <input type="text" id="reg-nickname" placeholder="Ləqəb" maxlength="16" autocomplete="off">
+                    <input type="password" id="reg-password" placeholder="Şifrə" autocomplete="off">
+                    <button id="register-btn" class="btn btn-secondary" style="width: 100%; margin-top: 10px;">Hesab Yarat</button>
+                    <p style="margin-top: 15px; font-size: 14px; cursor: pointer; color: var(--accent-cyan);" onclick="toggleAuthMode('login')">Artıq hesabınız var? Daxil ol</p>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- Screen 2: Menu -->
     <div class="screen" data-screen="menu">
         <div class="glass-panel text-center menu-panel">
-            <h2>Welcome, <span id="menu-nickname"></span></h2>
+            <div class="profile-banner" style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 20px; background: var(--bg-secondary); padding: 10px; border-radius: var(--radius-md);">
+                <img id="profile-avatar" src="" alt="Avatar" style="width: 50px; height: 50px; border-radius: 50%; cursor: pointer; border: 2px solid var(--accent-cyan);" onclick="showAvatarModal()">
+                <div style="text-align: left;">
+                    <h3 id="menu-nickname" style="margin: 0; font-size: 1.2rem;"></h3>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">Səviyyə <span id="profile-level">1</span></div>
+                    <div style="width: 120px; height: 6px; background: var(--bg-primary); border-radius: 3px; margin-top: 4px; overflow: hidden;">
+                        <div id="profile-xp-bar" style="height: 100%; width: 0%; background: var(--accent-cyan); transition: width 0.3s ease;"></div>
+                    </div>
+                </div>
+            </div>
+            
             <button id="create-room-btn" class="btn btn-primary btn-lg">Otaq Yarat</button>
             
             <div class="divider">or</div>
@@ -154,6 +181,37 @@
             <button id="gameover-lobby-btn" class="btn btn-primary btn-lg mt-4">Back to Lobby</button>
         </div>
     </div>
+    <div id="avatar-modal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10000; align-items:center; justify-content:center;">
+        <div class="glass-panel text-center" style="max-width: 400px; width: 90%;">
+            <h3>Avatar Seçin</h3>
+            <div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin: 20px 0;">
+                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=A" class="avatar-option" onclick="selectAvatar(this.src)" style="width:60px; height:60px; border-radius:50%; cursor:pointer;">
+                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=B" class="avatar-option" onclick="selectAvatar(this.src)" style="width:60px; height:60px; border-radius:50%; cursor:pointer;">
+                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=C" class="avatar-option" onclick="selectAvatar(this.src)" style="width:60px; height:60px; border-radius:50%; cursor:pointer;">
+                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=D" class="avatar-option" onclick="selectAvatar(this.src)" style="width:60px; height:60px; border-radius:50%; cursor:pointer;">
+                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=E" class="avatar-option" onclick="selectAvatar(this.src)" style="width:60px; height:60px; border-radius:50%; cursor:pointer;">
+                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=F" class="avatar-option" onclick="selectAvatar(this.src)" style="width:60px; height:60px; border-radius:50%; cursor:pointer;">
+            </div>
+            <button class="btn btn-secondary" onclick="document.getElementById('avatar-modal').style.display='none'">Bağla</button>
+        </div>
+    </div>
+
+    <!-- App Logic (must load last) -->
+    <script>
+        function toggleAuthMode(mode) {
+            document.getElementById('login-form').style.display = mode === 'login' ? 'block' : 'none';
+            document.getElementById('register-form').style.display = mode === 'register' ? 'block' : 'none';
+        }
+        function showAvatarModal() {
+            document.getElementById('avatar-modal').style.display = 'flex';
+        }
+        async function selectAvatar(src) {
+            document.getElementById('profile-avatar').src = src;
+            document.getElementById('avatar-modal').style.display = 'none';
+            // Trigger DB update logic in app.js
+            if(window.updateUserAvatar) window.updateUserAvatar(src);
+        }
+    </script>
 </body>
 </html>
 

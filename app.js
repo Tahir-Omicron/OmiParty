@@ -113,9 +113,6 @@ async function resumeGame(code) {
 }
 
 async function init() {
-  state.playerId = getPlayerId();
-  const savedNickname = localStorage.getItem('otaq_nickname');
-  
   bindEventListeners();
   
   const urlParams = new URLSearchParams(window.location.search);
@@ -125,13 +122,11 @@ async function init() {
     return;
   }
   
-  if (savedNickname) {
-    state.nickname = savedNickname;
-    const nickEl = $('#menu-nickname');
-    if (nickEl) nickEl.textContent = state.nickname;
-    showScreen('menu');
+  const { data: { session } } = await db.auth.getSession();
+  if (session && session.user) {
+    await finishAuth(session.user);
   } else {
-    showScreen('nickname');
+    showScreen('auth');
   }
 }
 
@@ -140,24 +135,58 @@ document.addEventListener('DOMContentLoaded', init);
 // ============================================================================
 // 6. SCREEN: NICKNAME
 // ============================================================================
-function handleNicknameSubmit() {
-  const input = $('#nickname-input');
-  const val = input.value.trim();
+async function handleLogin() {
+  const email = $('#login-email').value.trim();
+  const password = $('#login-password').value;
+  if (!email || !password) return showToast('Please enter email and password.', 'error');
   
-  if (!val) {
-    showToast('Please enter a nickname.', 'error');
-    return;
+  const { data, error } = await db.auth.signInWithPassword({ email, password });
+  if (error) return showToast(error.message, 'error');
+  
+  await finishAuth(data.user);
+}
+
+async function handleRegister() {
+  const email = $('#reg-email').value.trim();
+  const password = $('#reg-password').value;
+  const nickname = $('#reg-nickname').value.trim();
+  if (!email || !password || !nickname) return showToast('Please fill all fields.', 'error');
+  
+  const { data, error } = await db.auth.signUp({
+    email, password, options: { data: { nickname } }
+  });
+  if (error) return showToast(error.message, 'error');
+  
+  await finishAuth(data.user);
+}
+
+async function finishAuth(user) {
+  state.playerId = user.id;
+  
+  // Wait a sec for the trigger to insert the profile if they just registered
+  await new Promise(r => setTimeout(r, 1000));
+  
+  const { data: profile } = await db.from('profiles').select('*').eq('id', user.id).single();
+  if (profile) {
+    state.nickname = profile.nickname;
+    state.profile = profile;
+    $('#menu-nickname').textContent = state.nickname;
+    $('#profile-level').textContent = profile.level;
+    $('#profile-avatar').src = profile.avatar_url;
+    const progress = (profile.xp % 100) + '%';
+    $('#profile-xp-bar').style.width = progress;
   }
-  if (val.length < 2 || val.length > 16) {
-    showToast('Nickname must be between 2 and 16 characters.', 'error');
-    return;
-  }
-  
-  state.nickname = val;
-  localStorage.setItem('otaq_nickname', val);
-  
-  $('#menu-nickname').textContent = state.nickname;
   showScreen('menu');
+}
+
+window.updateUserAvatar = async function(src) {
+    if(!state.profile) return;
+    await db.from('profiles').update({ avatar_url: src }).eq('id', state.playerId);
+    state.profile.avatar_url = src;
+    $('#profile-avatar').src = src;
+    if(state.roomCode) {
+        db.from('players').update({ avatar_url: src }).eq('id', state.playerId);
+    }
 }
 
 // ============================================================================
@@ -178,7 +207,9 @@ async function handleCreateRoom() {
       id: state.playerId,
       room_code: code,
       nickname: state.nickname,
-      is_host: true
+      is_host: true,
+      avatar_url: state.profile?.avatar_url,
+      level: state.profile?.level || 1
     });
     
     if (playerError) throw playerError;
@@ -221,7 +252,9 @@ async function handleJoinRoom() {
       id: state.playerId,
       room_code: code,
       nickname: state.nickname,
-      is_host: false
+      is_host: false,
+      avatar_url: state.profile?.avatar_url,
+      level: state.profile?.level || 1
     });
     
     // If it fails with a duplicate key, they are already in the room. Just proceed.
@@ -373,6 +406,8 @@ async function handleAddBot() {
   const botName = availableNames.length > 0 
     ? availableNames[Math.floor(Math.random() * availableNames.length)]
     : `Bot_${Math.floor(Math.random() * 1000)}`;
+  const botLevel = Math.floor(Math.random() * 100) + 1;
+  const botAvatar = `https://api.dicebear.com/7.x/bottts/svg?seed=${botName}`;
     
   try {
     await db.from('players').insert({
@@ -380,7 +415,9 @@ async function handleAddBot() {
       room_code: state.roomCode,
       nickname: botName,
       is_host: false,
-      is_bot: true
+      is_bot: true,
+      avatar_url: botAvatar,
+      level: botLevel
     });
   } catch (err) {
     console.error('Error adding bot:', err);
@@ -590,6 +627,8 @@ function onGameStateUpdate(gs) {
             const target = state.players.find(p => p.id === gs.assassin_target);
             const winner = (target && target.role === 'detective') ? 'saboteurs' : 'guards';
             db.from('rooms').update({ game_state: { ...gs, phase: 'game_over', winner } }).eq('code', state.roomCode);
+            const winnerIds = state.players.filter(p => (winner === 'guards' && p.role !== 'saboteur' && p.role !== 'assassin') || (winner === 'saboteurs' && (p.role === 'saboteur' || p.role === 'assassin'))).map(p => p.id);
+            window.distributeXP(winnerIds);
             state.assassinTimeout = null;
           }, 3000);
         }
@@ -940,6 +979,8 @@ async function calculateMissionResult() {
       db.from('rooms').update({ game_state: { ...newGs, phase: 'assassin_phase' } }).eq('code', state.roomCode);
     } else if (sScore >= 3) {
       db.from('rooms').update({ game_state: { ...newGs, phase: 'game_over', winner: 'saboteurs' } }).eq('code', state.roomCode);
+      const saboteurIds = state.players.filter(p => p.role === 'saboteur' || p.role === 'assassin').map(p => p.id);
+      window.distributeXP(saboteurIds);
     } else {
       newGs.round++;
       db.from('rooms').update({ game_state: newGs }).eq('code', state.roomCode).then(() => {
@@ -1328,6 +1369,7 @@ async function processBids() {
         winnerId = sorted[0]?.id;
       }
       db.from('rooms').update({ game_state: { ...newGs, phase: 'game_over', winner: winnerId } }).eq('code', state.roomCode);
+      if (winnerId) window.distributeXP([winnerId]);
     } else {
       newGs.round++;
       newGs.current_event = drawEventCard();
@@ -1450,11 +1492,9 @@ async function handlePlayAgain() {
 // 14. EVENT LISTENERS
 // ============================================================================
 function bindEventListeners() {
-  // Nickname
-  $('#nickname-btn')?.addEventListener('click', handleNicknameSubmit);
-  $('#nickname-input')?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') handleNicknameSubmit();
-  });
+  // Auth
+  $('#login-btn')?.addEventListener('click', handleLogin);
+  $('#register-btn')?.addEventListener('click', handleRegister);
   
   // Menu
   $('#create-room-btn')?.addEventListener('click', handleCreateRoom);
@@ -1481,4 +1521,18 @@ function bindEventListeners() {
   
   // Game Over
   $('#gameover-lobby-btn')?.addEventListener('click', handlePlayAgain);
+}
+
+window.distributeXP = async function(winnersList) {
+  if (!state.isHost) return;
+  if (!winnersList || winnersList.length === 0) return;
+  
+  for (const id of winnersList) {
+    const { data: profile } = await db.from('profiles').select('xp, level').eq('id', id).single();
+    if (profile) {
+      const newXp = profile.xp + 50;
+      const newLevel = Math.min(100, Math.floor(Math.sqrt(newXp / 100)) + 1);
+      await db.from('profiles').update({ xp: newXp, level: newLevel }).eq('id', id);
+    }
+  }
 }
