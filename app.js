@@ -16,6 +16,7 @@ const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // 2. CONSTANTS
 // ============================================================================
 const MISSION_CONFIG = {
+  3: { sizes: [2, 2, 2, 3, 3], saboteurs: 1 },
   4: { sizes: [2, 2, 2, 3, 3], saboteurs: 1 },
   5: { sizes: [2, 3, 2, 3, 3], saboteurs: 2 },
   6: { sizes: [2, 3, 4, 3, 4], saboteurs: 2 },
@@ -62,7 +63,7 @@ const EVENT_CARDS = [
 const BID_TIMER_SECONDS = 15;
 const RESULT_DISPLAY_MS = 5000;
 const ROLE_REVEAL_MS = 8000;
-const MIN_PLAYERS_SABOTAGE = 4;
+const MIN_PLAYERS_SABOTAGE = 3;
 const MIN_PLAYERS_AUCTION = 3;
 const MIN_PLAYERS_CANVAS = 3;
 const MIN_PLAYERS_WORDBOMB = 3;
