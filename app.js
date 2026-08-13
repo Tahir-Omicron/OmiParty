@@ -109,23 +109,33 @@ async function resumeGame(code) {
   if (players) state.players = players;
   
   setupRealtimeSubscriptions(code);
-  enterGame();
+  onGameStateUpdate(state.room.game_state);
 }
 
 async function init() {
   bindEventListeners();
   
+  // Always fetch session first so state.playerId is populated
+  const { data: { session } } = await db.auth.getSession();
+  if (session && session.user) {
+    // This sets state.playerId, state.profile, etc.
+    await finishAuth(session.user);
+  }
+  
   const urlParams = new URLSearchParams(window.location.search);
   const code = urlParams.get('code');
   if (code) {
+    // If returning via URL (e.g. sabotage.html?code=...), resume the game
+    if (!state.playerId) {
+      window.location.href = 'index.html'; // Must be logged in to resume
+      return;
+    }
     await resumeGame(code);
     return;
   }
   
-  const { data: { session } } = await db.auth.getSession();
-  if (session && session.user) {
-    await finishAuth(session.user);
-  } else {
+  // If not resuming a game and not logged in, show auth
+  if (!state.playerId) {
     showScreen('auth');
   }
 }
@@ -187,7 +197,11 @@ async function finishAuth(user) {
     $('#profile-avatar').src = state.profile.avatar_url;
     $('#profile-xp-bar').style.width = '0%';
   }
-  showScreen('menu');
+  
+  const path = window.location.pathname;
+  if (path === '/' || path.endsWith('index.html') || path.endsWith('index-az.html')) {
+    showScreen('menu');
+  }
 }
 
 window.updateUserAvatar = async function(src) {
