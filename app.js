@@ -515,8 +515,28 @@ function subscribeToRoom(roomCode) {
       table: 'rooms',
       filter: `code=eq.${roomCode}`
     }, handleRoomChange)
+    .on('broadcast', { event: 'state_update' }, (payload) => {
+      if (payload.payload && state.room) {
+        state.room.game_state = payload.payload;
+        onGameStateUpdate(payload.payload);
+      }
+    })
     .subscribe();
   state.channels.push(channel);
+}
+
+// Ultra-fast optimistic UI & broadcast update to bypass Postgres latency
+async function fastUpdateGameState(gs, extraUpdates = {}) {
+  if (!state.room) return;
+  state.room.game_state = gs;
+  onGameStateUpdate(gs); // Optimistic local update
+  
+  const channel = state.channels.find(c => c.topic === `realtime:room-${state.roomCode}`);
+  if (channel) {
+    channel.send({ type: 'broadcast', event: 'state_update', payload: gs });
+  }
+  
+  await db.from('rooms').update({ game_state: gs, ...extraUpdates }).eq('code', state.roomCode);
 }
 
 function subscribeToPlayers(roomCode) {
@@ -611,7 +631,7 @@ function processBotActions(gs) {
           setTimeout(async () => {
             const { data } = await db.from('rooms').select('game_state').eq('code', state.roomCode).single();
             if (data && !data.game_state.detective_used) {
-              await db.from('rooms').update({ game_state: { ...data.game_state, detective_used: true } }).eq('code', state.roomCode);
+              fastUpdateGameState({ ...data.game_state, detective_used: true });
             }
           }, 2000);
         }
@@ -625,7 +645,7 @@ function processBotActions(gs) {
             if (target) {
               const { data } = await db.from('rooms').select('game_state').eq('code', state.roomCode).single();
               if (data && !data.game_state.assassin_target) {
-                await db.from('rooms').update({ game_state: { ...data.game_state, assassin_target: target.id } }).eq('code', state.roomCode);
+                fastUpdateGameState({ ...data.game_state, assassin_target: target.id });
               }
             }
           }, 3000);
@@ -790,7 +810,7 @@ function handleSabotageState(gs) {
                 <p style="font-size:1.5rem;margin-top:1rem;">${target.nickname} is a <strong style="color:${isSab ? 'var(--accent-red)' : 'var(--accent-green)'};">${isSab ? 'SABOTEUR' : 'GUARD'}</strong>.</p>
               </div>
             `;
-            await db.from('rooms').update({ game_state: { ...gs, detective_used: true } }).eq('code', state.roomCode);
+            fastUpdateGameState({ ...gs, detective_used: true });
           });
         });
       } else {
@@ -825,7 +845,7 @@ function handleSabotageState(gs) {
                 <p>Assassination order placed. Resolving...</p>
               </div>
             `;
-            await db.from('rooms').update({ game_state: { ...gs, assassin_target: targetId } }).eq('code', state.roomCode);
+            fastUpdateGameState({ ...gs, assassin_target: targetId });
           });
         });
       } else if (gs.assassin_target) {
@@ -1036,9 +1056,9 @@ async function calculateMissionResult() {
   setTimeout(() => {
     if (!state.isHost) return;
     if (gScore >= 3) {
-      db.from('rooms').update({ game_state: { ...newGs, phase: 'assassin_phase' } }).eq('code', state.roomCode);
+      fastUpdateGameState({ ...newGs, phase: 'assassin_phase' });
     } else if (sScore >= 3) {
-      db.from('rooms').update({ game_state: { ...newGs, phase: 'game_over', winner: 'saboteurs' } }).eq('code', state.roomCode);
+      fastUpdateGameState({ ...newGs, phase: 'game_over', winner: 'saboteurs' });
       const saboteurIds = state.players.filter(p => p.role === 'saboteur' || p.role === 'assassin').map(p => p.id);
       window.distributeXP(saboteurIds);
     } else {
