@@ -108,7 +108,8 @@ async function resumeGame(code) {
   const { data: players } = await db.from('players').select('*').eq('room_code', code);
   if (players) state.players = players;
   
-  setupRealtimeSubscriptions(code);
+  subscribeToRoom(code);
+  subscribeToPlayers(code);
   onGameStateUpdate(state.room.game_state);
 }
 
