@@ -406,7 +406,12 @@ async function handleAddBot() {
   const botName = availableNames.length > 0 
     ? availableNames[Math.floor(Math.random() * availableNames.length)]
     : `Bot_${Math.floor(Math.random() * 1000)}`;
-  const botLevel = Math.floor(Math.random() * 100) + 1;
+    
+  // AI Bot matches host's level +/- 3 for fair gameplay
+  const hostLevel = state.profile?.level || 1;
+  const variance = Math.floor(Math.random() * 7) - 3; // -3 to +3
+  const botLevel = Math.max(1, Math.min(100, hostLevel + variance));
+  
   const botAvatar = `https://api.dicebear.com/7.x/bottts/svg?seed=${botName}`;
     
   try {
