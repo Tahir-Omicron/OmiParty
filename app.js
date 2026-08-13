@@ -166,15 +166,40 @@ function $$(selector) {
 // ============================================================================
 // 5. IDENTITY MANAGEMENT
 // ============================================================================
-function init() {
+async function resumeGame(code) {
+  state.roomCode = code;
+  const { data: room, error } = await db.from('rooms').select('*').eq('code', code).single();
+  if (error || !room) {
+    window.location.href = 'index.html';
+    return;
+  }
+  state.room = room;
+  state.isHost = (room.host_id === state.playerId);
+  
+  const { data: players } = await db.from('players').select('*').eq('room_code', code);
+  if (players) state.players = players;
+  
+  setupRealtimeSubscriptions(code);
+  enterGame();
+}
+
+async function init() {
   state.playerId = getPlayerId();
   const savedNickname = localStorage.getItem('otaq_nickname');
   
   bindEventListeners();
   
+  const urlParams = new URLSearchParams(window.location.search);
+  const code = urlParams.get('code');
+  if (code) {
+    await resumeGame(code);
+    return;
+  }
+  
   if (savedNickname) {
     state.nickname = savedNickname;
-    $('#menu-nickname').textContent = state.nickname;
+    const nickEl = $('#menu-nickname');
+    if (nickEl) nickEl.textContent = state.nickname;
     showScreen('menu');
   } else {
     showScreen('nickname');
@@ -606,6 +631,17 @@ function processBotActions(gs) {
 function onGameStateUpdate(gs) {
   if (!state.room) return;
   
+  if (state.room.game_mode && state.room.status === 'playing') {
+    let modeHtml = state.room.game_mode + '.html';
+    if (window.location.pathname.includes('-az.html')) {
+        modeHtml = state.room.game_mode + '-az.html';
+    }
+    if (!window.location.pathname.endsWith(modeHtml)) {
+      window.location.href = `${modeHtml}?code=${state.roomCode}`;
+      return;
+    }
+  }
+
   if (state.isHost) {
     processBotActions(gs);
     

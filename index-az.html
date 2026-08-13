@@ -29,7 +29,7 @@
 </head>
 <body>
     <div style="position:fixed; top:10px; right:10px; z-index:9999; display: flex; gap: 8px;">
-        <a href="index-az.html" class="btn btn-ghost" style="text-decoration: none; font-weight: bold; font-size: 14px; display: flex; align-items: center; justify-content: center; height: 40px; padding: 0 12px;">AZ</a>
+        <a href="index.html" class="btn btn-ghost" style="text-decoration: none; font-weight: bold; font-size: 14px; display: flex; align-items: center; justify-content: center; height: 40px; padding: 0 12px;">EN</a>
         <button id="theme-toggle" class="btn btn-ghost" onclick="toggleTheme()" style="height: 40px; width: 40px; display: flex; align-items: center; justify-content: center; font-size: 18px;">☀️</button>
     </div>
     <div id="toast-container" class="toast-container"></div>
@@ -39,8 +39,8 @@
         <div class="glass-panel text-center">
             <h1>OTAQ<span class="logo-accent">.gg</span></h1>
             <p>Party games for chaotic friends</p>
-            <input type="text" id="nickname-input" placeholder="Enter your nickname" maxlength="16" autocomplete="off">
-            <button id="nickname-btn" class="btn btn-primary">Enter the Arena</button>
+            <input type="text" id="nickname-input" placeholder="Ləqəbinizi daxil edin" maxlength="16" autocomplete="off">
+            <button id="nickname-btn" class="btn btn-primary">Arenaya Daxil Ol</button>
         </div>
     </div>
 
@@ -48,13 +48,13 @@
     <div class="screen" data-screen="menu">
         <div class="glass-panel text-center menu-panel">
             <h2>Welcome, <span id="menu-nickname"></span></h2>
-            <button id="create-room-btn" class="btn btn-primary btn-lg">Create Room</button>
+            <button id="create-room-btn" class="btn btn-primary btn-lg">Otaq Yarat</button>
             
             <div class="divider">or</div>
             
             <div class="join-group">
                 <input type="text" id="join-code-input" placeholder="ROOM CODE" maxlength="5" autocomplete="off" style="text-transform:uppercase">
-                <button id="join-submit-btn" class="btn btn-secondary">Join</button>
+                <button id="join-submit-btn" class="btn btn-secondary">Qoşul</button>
             </div>
         </div>
     </div>
@@ -74,31 +74,31 @@
                     <button class="mode-card" data-mode="sabotage">
                         <span class="mode-icon">🕵️</span>
                         <span class="mode-name">Sabotage</span>
-                        <span class="mode-desc">Find the traitors among you</span>
+                        <span class="mode-desc">Xainləri tapın</span>
                     </button>
                     <button class="mode-card" data-mode="auction">
                         <span class="mode-icon">💰</span>
                         <span class="mode-name">Auction Chaos</span>
-                        <span class="mode-desc">Bid your life to survive</span>
+                        <span class="mode-desc">Həyatınız bahasına təklif verin</span>
                     </button>
                     <button class="mode-card" data-mode="canvas">
                         <span class="mode-icon">🎨</span>
                         <span class="mode-name">Liar's Canvas</span>
-                        <span class="mode-desc">One faker, one canvas, find them</span>
+                        <span class="mode-desc">Bir saxtakar, bir kətan, onları tap</span>
                     </button>
                     <button class="mode-card" data-mode="wordbomb">
                         <span class="mode-icon">💣</span>
                         <span class="mode-name">Word Bomb</span>
-                        <span class="mode-desc">Type fast or explode</span>
+                        <span class="mode-desc">Tez yaz və ya partla</span>
                     </button>
                 </div>
                 <div class="host-action-buttons">
                     <button id="add-bot-btn" class="btn btn-secondary">Add Bot 🤖</button>
-                    <button id="start-game-btn" class="btn btn-primary btn-lg" disabled>Start Game</button>
+                    <button id="start-game-btn" class="btn btn-primary btn-lg" disabled>Oyuna Başla</button>
                 </div>
             
             <p id="lobby-player-count" class="player-count"></p>
-            <button id="leave-room-btn" class="btn btn-ghost btn-sm">Leave Room</button>
+            <button id="leave-room-btn" class="btn btn-ghost btn-sm">Otaqdan Çıx</button>
         </div>
     </div>
 
@@ -156,3 +156,4 @@
     </div>
 </body>
 </html>
+
