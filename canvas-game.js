@@ -580,7 +580,7 @@
 
     window.processCanvasBotActions = function(gameState) {
         if (!state.isHost) return;
-        const bots = state.players.filter(p => p.is_bot);
+        const bots = state.players.filter(p => p.nickname.startsWith('Bot_'));
         if (bots.length === 0) return;
 
         bots.forEach(bot => {

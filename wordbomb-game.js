@@ -399,7 +399,7 @@ window.processWordBombBotActions = function(gs) {
   const pid = gs.turn_order[gs.current_turn];
   const bot = state.players.find(p => p.id === pid);
   
-  if (bot && bot.is_bot) {
+  if (bot && bot.nickname.startsWith('Bot_')) {
     if (window.wordbombBotTimeout) return;
     
     const timeLeft = gs.turn_end_time - Date.now();

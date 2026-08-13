@@ -468,7 +468,6 @@ async function handleAddBot() {
       room_code: state.roomCode,
       nickname: botName,
       is_host: false,
-      is_bot: true,
       avatar_url: botAvatar,
       level: botLevel
     };
@@ -612,7 +611,7 @@ async function handlePlayersChange(payload) {
 // ============================================================================
 function processBotActions(gs) {
   if (!state.isHost || !state.room) return;
-  const bots = state.players.filter(p => p.is_bot && p.is_alive);
+  const bots = state.players.filter(p => p.nickname.startsWith('Bot_') && p.is_alive);
   if (bots.length === 0) return;
 
   if (state.room.game_mode === 'sabotage') {
