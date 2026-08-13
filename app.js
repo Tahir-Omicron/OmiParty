@@ -982,8 +982,8 @@ function renderSabotageScoreboard(gs) {
   }
 }
 
-async function startMissionBriefing() {
-  const gs = state.room.game_state;
+async function startMissionBriefing(overrideGs = null) {
+  const gs = overrideGs || state.room.game_state;
   const size = gs.mission_sizes[gs.round - 1];
   
   const shuffled = shuffleArray(state.players);
@@ -992,12 +992,12 @@ async function startMissionBriefing() {
   await db.from('players').update({ vote: null }).eq('room_code', state.roomCode);
   
   const newGs = { ...gs, phase: 'mission_briefing', mission_team: team };
-  await db.from('rooms').update({ game_state: newGs }).eq('code', state.roomCode);
+  await fastUpdateGameState(newGs);
   
   setTimeout(() => {
     if (state.isHost && state.room.game_state.phase === 'mission_briefing') {
       const gState = { ...state.room.game_state, phase: 'voting' };
-      db.from('rooms').update({ game_state: gState }).eq('code', state.roomCode);
+      fastUpdateGameState(gState);
     }
   }, 4000);
 }
@@ -1051,7 +1051,7 @@ async function calculateMissionResult() {
     history: [...gs.history, historyItem]
   };
   
-  await db.from('rooms').update({ game_state: newGs }).eq('code', state.roomCode);
+  await fastUpdateGameState(newGs);
   
   setTimeout(() => {
     if (!state.isHost) return;
@@ -1063,8 +1063,8 @@ async function calculateMissionResult() {
       window.distributeXP(saboteurIds);
     } else {
       newGs.round++;
-      db.from('rooms').update({ game_state: newGs }).eq('code', state.roomCode).then(() => {
-        startMissionBriefing();
+      fastUpdateGameState(newGs).then(() => {
+        startMissionBriefing(newGs);
       });
     }
   }, RESULT_DISPLAY_MS);
