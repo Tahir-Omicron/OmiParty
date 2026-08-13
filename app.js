@@ -382,6 +382,31 @@ async function handleStartGame() {
   }
 }
 
+async function handleAddBot() {
+  if (!state.roomCode || !state.isHost) return;
+  
+  const botId = `bot-${crypto.randomUUID()}`;
+  const botNames = ['Bot_Alpha', 'Bot_Bravo', 'Bot_Charlie', 'Bot_Delta', 'Bot_Echo'];
+  // Pick a random name not currently in the room (or just random if all taken)
+  const availableNames = botNames.filter(n => !state.players.some(p => p.nickname === n));
+  const botName = availableNames.length > 0 
+    ? availableNames[Math.floor(Math.random() * availableNames.length)]
+    : `Bot_${Math.floor(Math.random() * 1000)}`;
+    
+  try {
+    await db.from('players').insert({
+      id: botId,
+      room_code: state.roomCode,
+      nickname: botName,
+      is_host: false,
+      is_bot: true
+    });
+  } catch (err) {
+    console.error('Error adding bot:', err);
+    showToast('Failed to add bot', 'error');
+  }
+}
+
 async function handleLeaveRoom() {
   if (state.roomCode && state.playerId) {
     try {
@@ -482,8 +507,54 @@ async function handlePlayersChange(payload) {
 // ============================================================================
 // 10. GAME STATE ROUTER
 // ============================================================================
+function processBotActions(gs) {
+  if (!state.isHost || !state.room) return;
+  const bots = state.players.filter(p => p.is_bot && p.is_alive);
+  if (bots.length === 0) return;
+
+  if (state.room.game_mode === 'sabotage') {
+    if (gs.phase === 'voting') {
+      bots.forEach(bot => {
+        if (gs.mission_team.includes(bot.id) && !bot.vote) {
+          const delay = 1000 + Math.random() * 2000; // 1-3s delay
+          setTimeout(async () => {
+            // Check if already voted to avoid duplicate DB calls
+            const currentBot = state.players.find(p => p.id === bot.id);
+            if (currentBot && currentBot.vote) return;
+            
+            const vote = currentBot.role === 'saboteur' ? 'sabotage' : 'success';
+            await db.from('players').update({ vote }).eq('id', bot.id);
+          }, delay);
+        }
+      });
+    }
+  } else if (state.room.game_mode === 'auction') {
+    if (gs.phase === 'bidding') {
+      bots.forEach(bot => {
+        if (!bot.bid && bot.bid !== 0) {
+          const delay = 1500 + Math.random() * 3000; // 1.5-4.5s delay
+          setTimeout(async () => {
+            const currentBot = state.players.find(p => p.id === bot.id);
+            if (currentBot && (currentBot.bid || currentBot.bid === 0)) return;
+            
+            // Random bid between 0 and 50% of current HP
+            const maxBid = Math.floor(currentBot.hp * 0.5);
+            const bid = Math.floor(Math.random() * (maxBid + 1));
+            await db.from('players').update({ bid }).eq('id', bot.id);
+          }, delay);
+        }
+      });
+    }
+  }
+}
+
 function onGameStateUpdate(gs) {
   if (!state.room) return;
+  
+  if (state.isHost) {
+    processBotActions(gs);
+  }
+  
   if (state.room.game_mode === 'sabotage') {
     handleSabotageState(gs);
   } else if (state.room.game_mode === 'auction') {
@@ -1142,6 +1213,7 @@ function bindEventListeners() {
     card.addEventListener('click', () => handleGameModeSelect(card.dataset.mode));
   });
   
+  $('#add-bot-btn')?.addEventListener('click', handleAddBot);
   $('#start-game-btn')?.addEventListener('click', handleStartGame);
   $('#leave-room-btn')?.addEventListener('click', handleLeaveRoom);
   
