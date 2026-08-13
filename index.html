@@ -16,7 +16,14 @@
     <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
-    <!-- App Logic -->
+    <!-- Game Data -->
+    <script src="words.js" defer></script>
+    
+    <!-- Game Mode Modules -->
+    <script src="canvas-game.js" defer></script>
+    <script src="wordbomb-game.js" defer></script>
+    
+    <!-- App Logic (must load last) -->
     <script src="app.js" defer></script>
 </head>
 <body>
@@ -69,6 +76,16 @@
                         <span class="mode-name">Auction Chaos</span>
                         <span class="mode-desc">Bid your life to survive</span>
                     </button>
+                    <button class="mode-card" data-mode="canvas">
+                        <span class="mode-icon">🎨</span>
+                        <span class="mode-name">Liar's Canvas</span>
+                        <span class="mode-desc">One faker, one canvas, find them</span>
+                    </button>
+                    <button class="mode-card" data-mode="wordbomb">
+                        <span class="mode-icon">💣</span>
+                        <span class="mode-name">Word Bomb</span>
+                        <span class="mode-desc">Type fast or explode</span>
+                    </button>
                 </div>
                 <div class="host-action-buttons">
                     <button id="add-bot-btn" class="btn btn-secondary">Add Bot 🤖</button>
@@ -99,6 +116,27 @@
             </div>
             <div id="auction-hp-bars" class="hp-bars-container"></div>
             <div id="auction-main-area" class="game-main-area"></div>
+        </div>
+    </div>
+
+    <!-- Screen 6: Liar's Canvas -->
+    <div class="screen" data-screen="canvas">
+        <div class="canvas-container">
+            <div class="canvas-header">
+                <div id="canvas-round-info" class="round-info"></div>
+                <div id="canvas-player-turn" class="cv-player-turn"></div>
+            </div>
+            <div id="canvas-main-area" class="game-main-area"></div>
+        </div>
+    </div>
+
+    <!-- Screen 7: Word Bomb -->
+    <div class="screen" data-screen="wordbomb">
+        <div class="wordbomb-container">
+            <div class="wordbomb-header">
+                <div id="wordbomb-round-info" class="round-info"></div>
+            </div>
+            <div id="wordbomb-main-area" class="game-main-area"></div>
         </div>
     </div>
 

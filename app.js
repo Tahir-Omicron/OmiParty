@@ -26,7 +26,7 @@ const MISSION_CONFIG = {
 };
 
 const EVENT_CARDS = [
-  // Penalties (~65%)
+  // Penalties (~60%)
   { type: 'penalty', value: 10, text: 'Minor Glitch', description: 'A hiccup in the system.' },
   { type: 'penalty', value: 12, text: 'Pickpocket', description: 'Sticky fingers in the crowd.' },
   { type: 'penalty', value: 15, text: 'Tax Collector', description: 'The taxman cometh.' },
@@ -43,7 +43,7 @@ const EVENT_CARDS = [
   { type: 'penalty', value: 35, text: 'Armageddon', description: 'The big one. Brace yourself.' },
   { type: 'penalty', value: 15, text: 'Parking Ticket', description: 'Expired meter. Classic.' },
   { type: 'penalty', value: 20, text: 'Food Poisoning', description: 'That sushi was suspicious.' },
-  // Bonuses (~35%)
+  // Bonuses (~30%)
   { type: 'bonus', value: 8, text: 'Loose Change', description: 'Coins in the couch cushions.' },
   { type: 'bonus', value: 10, text: 'Lucky Break', description: 'Fortune favors the bold.' },
   { type: 'bonus', value: 12, text: 'Side Hustle', description: 'Weekend gig came through.' },
@@ -53,6 +53,10 @@ const EVENT_CARDS = [
   { type: 'bonus', value: 20, text: 'Jackpot', description: 'Three cherries. Cha-ching.' },
   { type: 'bonus', value: 25, text: 'Golden Ticket', description: 'Once in a lifetime opportunity.' },
   { type: 'bonus', value: 10, text: 'Tax Refund', description: 'The government giveth back.' },
+  // Complex Events (~10%)
+  { type: 'event_switcharoo', value: 0, text: 'Switcharoo', description: 'Highest and lowest bidders swap their HP.' },
+  { type: 'event_tax', value: 0, text: 'Wealth Tax', description: 'The player with the most HP loses 20% of their health.' },
+  { type: 'event_vampire', value: 0, text: 'Vampire Bat', description: 'Highest bidder steals 15 HP from the lowest bidder.' }
 ];
 
 const BID_TIMER_SECONDS = 15;
@@ -60,6 +64,8 @@ const RESULT_DISPLAY_MS = 5000;
 const ROLE_REVEAL_MS = 8000;
 const MIN_PLAYERS_SABOTAGE = 4;
 const MIN_PLAYERS_AUCTION = 3;
+const MIN_PLAYERS_CANVAS = 3;
+const MIN_PLAYERS_WORDBOMB = 3;
 
 // ============================================================================
 // 3. APP STATE
@@ -334,12 +340,12 @@ function renderLobby() {
   });
   
   const count = state.players.length;
-  const minSab = MIN_PLAYERS_SABOTAGE;
-  const minAuction = MIN_PLAYERS_AUCTION;
   let required = 0;
   let modeLabel = '';
-  if (state.selectedMode === 'sabotage') { required = minSab; modeLabel = 'Sabotage'; }
-  if (state.selectedMode === 'auction') { required = minAuction; modeLabel = 'Auction Chaos'; }
+  if (state.selectedMode === 'sabotage') { required = MIN_PLAYERS_SABOTAGE; modeLabel = 'Sabotage'; }
+  else if (state.selectedMode === 'auction') { required = MIN_PLAYERS_AUCTION; modeLabel = 'Auction Chaos'; }
+  else if (state.selectedMode === 'canvas') { required = MIN_PLAYERS_CANVAS; modeLabel = 'Canvas'; }
+  else if (state.selectedMode === 'wordbomb') { required = MIN_PLAYERS_WORDBOMB; modeLabel = 'Wordbomb'; }
   
   let countText = `${count} Player${count !== 1 ? 's' : ''} connected`;
   if (state.isHost && state.selectedMode && count < required) {
@@ -374,11 +380,23 @@ async function handleStartGame() {
     showToast(`Need at least ${MIN_PLAYERS_AUCTION} players.`, 'error');
     return;
   }
+  if (state.selectedMode === 'canvas' && count < MIN_PLAYERS_CANVAS) {
+    showToast(`Need at least ${MIN_PLAYERS_CANVAS} players.`, 'error');
+    return;
+  }
+  if (state.selectedMode === 'wordbomb' && count < MIN_PLAYERS_WORDBOMB) {
+    showToast(`Need at least ${MIN_PLAYERS_WORDBOMB} players.`, 'error');
+    return;
+  }
   
   if (state.selectedMode === 'sabotage') {
     await startSabotageGame();
   } else if (state.selectedMode === 'auction') {
     await startAuctionGame();
+  } else if (state.selectedMode === 'canvas') {
+    await window.startCanvasGame();
+  } else if (state.selectedMode === 'wordbomb') {
+    await window.startWordBombGame();
   }
 }
 
@@ -522,9 +540,35 @@ function processBotActions(gs) {
             const currentBot = state.players.find(p => p.id === bot.id);
             if (currentBot && currentBot.vote) return;
             
-            const vote = currentBot.role === 'saboteur' ? 'sabotage' : 'success';
+            const vote = (currentBot.role === 'saboteur' || currentBot.role === 'assassin') ? 'sabotage' : 'success';
             await db.from('players').update({ vote }).eq('id', bot.id);
           }, delay);
+        }
+      });
+    } else if (gs.phase === 'detective_phase' && !gs.detective_used) {
+      bots.forEach(bot => {
+        if (bot.role === 'detective') {
+          setTimeout(async () => {
+            const { data } = await db.from('rooms').select('game_state').eq('code', state.roomCode).single();
+            if (data && !data.game_state.detective_used) {
+              await db.from('rooms').update({ game_state: { ...data.game_state, detective_used: true } }).eq('code', state.roomCode);
+            }
+          }, 2000);
+        }
+      });
+    } else if (gs.phase === 'assassin_phase' && !gs.assassin_target) {
+      bots.forEach(bot => {
+        if (bot.role === 'assassin') {
+          setTimeout(async () => {
+            const guards = state.players.filter(p => p.role !== 'saboteur' && p.role !== 'assassin');
+            const target = guards[Math.floor(Math.random() * guards.length)];
+            if (target) {
+              const { data } = await db.from('rooms').select('game_state').eq('code', state.roomCode).single();
+              if (data && !data.game_state.assassin_target) {
+                await db.from('rooms').update({ game_state: { ...data.game_state, assassin_target: target.id } }).eq('code', state.roomCode);
+              }
+            }
+          }, 3000);
         }
       });
     }
@@ -532,12 +576,10 @@ function processBotActions(gs) {
     if (gs.phase === 'bidding') {
       bots.forEach(bot => {
         if (!bot.bid && bot.bid !== 0) {
-          const delay = 1500 + Math.random() * 3000; // 1.5-4.5s delay
+          const delay = 1500 + Math.random() * 3000;
           setTimeout(async () => {
             const currentBot = state.players.find(p => p.id === bot.id);
             if (currentBot && (currentBot.bid || currentBot.bid === 0)) return;
-            
-            // Random bid between 0 and 50% of current HP
             const maxBid = Math.floor(currentBot.hp * 0.5);
             const bid = Math.floor(Math.random() * (maxBid + 1));
             await db.from('players').update({ bid }).eq('id', bot.id);
@@ -545,6 +587,10 @@ function processBotActions(gs) {
         }
       });
     }
+  } else if (state.room.game_mode === 'canvas') {
+    if (window.processCanvasBotActions) window.processCanvasBotActions(gs);
+  } else if (state.room.game_mode === 'wordbomb') {
+    if (window.processWordBombBotActions) window.processWordBombBotActions(gs);
   }
 }
 
@@ -553,12 +599,38 @@ function onGameStateUpdate(gs) {
   
   if (state.isHost) {
     processBotActions(gs);
+    
+    // Host-driven state transitions for new Sabotage phases
+    if (state.room.game_mode === 'sabotage') {
+      if (gs.phase === 'detective_phase' && gs.detective_used) {
+        if (!state.detectiveTimeout) {
+          state.detectiveTimeout = setTimeout(() => {
+            startMissionBriefing();
+            state.detectiveTimeout = null;
+          }, 4000);
+        }
+      }
+      if (gs.phase === 'assassin_phase' && gs.assassin_target) {
+        if (!state.assassinTimeout) {
+          state.assassinTimeout = setTimeout(() => {
+            const target = state.players.find(p => p.id === gs.assassin_target);
+            const winner = (target && target.role === 'detective') ? 'saboteurs' : 'guards';
+            db.from('rooms').update({ game_state: { ...gs, phase: 'game_over', winner } }).eq('code', state.roomCode);
+            state.assassinTimeout = null;
+          }, 3000);
+        }
+      }
+    }
   }
   
   if (state.room.game_mode === 'sabotage') {
     handleSabotageState(gs);
   } else if (state.room.game_mode === 'auction') {
     handleAuctionState(gs);
+  } else if (state.room.game_mode === 'canvas') {
+    window.handleCanvasState(gs);
+  } else if (state.room.game_mode === 'wordbomb') {
+    window.handleWordBombState(gs);
   }
 }
 
@@ -573,8 +645,17 @@ async function startSabotageGame() {
   const sabsCount = config.saboteurs;
   
   // Assign roles
+  let hasAssassin = false;
+  let hasDetective = false;
   for (let i = 0; i < shuffled.length; i++) {
-    const role = i < sabsCount ? 'saboteur' : 'guard';
+    let role = 'guard';
+    if (i < sabsCount) {
+      role = !hasAssassin ? 'assassin' : 'saboteur';
+      hasAssassin = true;
+    } else {
+      role = !hasDetective ? 'detective' : 'guard';
+      hasDetective = true;
+    }
     await db.from('players').update({ role }).eq('id', shuffled[i].id);
   }
   
@@ -586,7 +667,9 @@ async function startSabotageGame() {
     mission_team: [],
     mission_sizes: config.sizes,
     history: [],
-    winner: null
+    winner: null,
+    detective_used: false,
+    assassin_target: null
   };
   
   await db.from('rooms').update({
@@ -597,7 +680,8 @@ async function startSabotageGame() {
   
   setTimeout(() => {
     if (state.isHost && state.room.status === 'playing') {
-      startMissionBriefing();
+      const gsPhase2 = { ...gs, phase: 'detective_phase' };
+      db.from('rooms').update({ game_state: gsPhase2 }).eq('code', state.roomCode);
     }
   }, ROLE_REVEAL_MS);
 }
@@ -607,6 +691,86 @@ function handleSabotageState(gs) {
     case 'role_reveal':
       showScreen('sabotage');
       renderRoleReveal();
+      break;
+    case 'detective_phase':
+      showScreen('sabotage');
+      const detMe = state.players.find(p => p.id === state.playerId);
+      if (detMe && detMe.role === 'detective' && !gs.detective_used) {
+        const others = state.players.filter(p => p.id !== state.playerId);
+        $('#sabotage-main-area').innerHTML = `
+          <div class="phase-panel">
+            <h3 style="text-align:center;">Detective Phase</h3>
+            <p style="text-align:center;">Select one player to reveal their true loyalty.</p>
+            <div class="player-grid" style="display:flex;gap:1rem;justify-content:center;margin-top:1rem;flex-wrap:wrap;">
+              ${others.map(p => `<button class="btn btn-secondary btn-peek" data-id="${p.id}">${p.nickname}</button>`).join('')}
+            </div>
+          </div>
+        `;
+        $$('.btn-peek').forEach(b => {
+          b.addEventListener('click', async (e) => {
+            const targetId = e.target.dataset.id;
+            const target = state.players.find(p => p.id === targetId);
+            const isSab = target.role === 'saboteur' || target.role === 'assassin';
+            $('#sabotage-main-area').innerHTML = `
+              <div class="phase-panel" style="text-align:center;">
+                <h3>Investigation Complete</h3>
+                <p style="font-size:1.5rem;margin-top:1rem;">${target.nickname} is a <strong style="color:${isSab ? 'var(--accent-red)' : 'var(--accent-green)'};">${isSab ? 'SABOTEUR' : 'GUARD'}</strong>.</p>
+              </div>
+            `;
+            await db.from('rooms').update({ game_state: { ...gs, detective_used: true } }).eq('code', state.roomCode);
+          });
+        });
+      } else {
+        $('#sabotage-main-area').innerHTML = `
+          <div class="waiting-msg">
+            <div class="spinner"></div>
+            <p>The Detective is investigating...</p>
+          </div>
+        `;
+      }
+      break;
+    case 'assassin_phase':
+      showScreen('sabotage');
+      const assMe = state.players.find(p => p.id === state.playerId);
+      if (assMe && assMe.role === 'assassin' && !gs.assassin_target) {
+        const guards = state.players.filter(p => p.role !== 'saboteur' && p.role !== 'assassin');
+        $('#sabotage-main-area').innerHTML = `
+          <div class="phase-panel">
+            <h3 style="text-align:center;color:var(--accent-red);">Assassin Phase</h3>
+            <p style="text-align:center;margin-bottom:1rem;">The Guards secured 3 missions. You have one chance to steal the win. Who is the Detective?</p>
+            <div class="player-grid" style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+              ${guards.map(p => `<button class="btn btn-danger btn-assassinate" data-id="${p.id}">${p.nickname}</button>`).join('')}
+            </div>
+          </div>
+        `;
+        $$('.btn-assassinate').forEach(b => {
+          b.addEventListener('click', async (e) => {
+            const targetId = e.target.dataset.id;
+            $('#sabotage-main-area').innerHTML = `
+              <div class="waiting-msg">
+                <div class="spinner"></div>
+                <p>Assassination order placed. Resolving...</p>
+              </div>
+            `;
+            await db.from('rooms').update({ game_state: { ...gs, assassin_target: targetId } }).eq('code', state.roomCode);
+          });
+        });
+      } else if (gs.assassin_target) {
+        const target = state.players.find(p => p.id === gs.assassin_target);
+        $('#sabotage-main-area').innerHTML = `
+          <div class="phase-panel" style="text-align:center;">
+            <h3 style="color:var(--accent-red);">Assassination Target Locked</h3>
+            <p style="font-size:1.5rem;margin-top:1rem;">The Assassin targeted <strong>${target ? target.nickname : 'Someone'}</strong>!</p>
+          </div>
+        `;
+      } else {
+        $('#sabotage-main-area').innerHTML = `
+          <div class="waiting-msg">
+            <div class="spinner"></div>
+            <p>The Assassin is making their move...</p>
+          </div>
+        `;
+      }
       break;
     case 'mission_briefing':
       showScreen('sabotage');
@@ -629,7 +793,7 @@ function handleSabotageState(gs) {
       renderSabotageScoreboard(gs);
       if (gs.mission_team.includes(state.playerId)) {
         const me = state.players.find(p => p.id === state.playerId);
-        const canSabotage = me?.role === 'saboteur';
+        const canSabotage = me?.role === 'saboteur' || me?.role === 'assassin';
         $('#sabotage-main-area').innerHTML = `
           <div class="phase-panel">
             <h3 style="text-align:center;">Cast Your Vote</h3>
@@ -675,7 +839,18 @@ function handleSabotageState(gs) {
 function renderRoleReveal() {
   const me = state.players.find(p => p.id === state.playerId);
   if (!me) return;
-  const isSab = me.role === 'saboteur';
+  const isSab = me.role === 'saboteur' || me.role === 'assassin';
+  
+  let icon = '🛡️';
+  let title = 'GUARD';
+  let desc = 'Protect the missions at all costs.';
+  if (me.role === 'saboteur') {
+    icon = '🗡️'; title = 'SABOTEUR'; desc = 'Secretly fail missions to win.';
+  } else if (me.role === 'assassin') {
+    icon = '☠️'; title = 'ASSASSIN'; desc = 'Fail missions, and assassinate the Detective if the Guards win.';
+  } else if (me.role === 'detective') {
+    icon = '🔍'; title = 'DETECTIVE'; desc = 'Protect missions. You will discover one player\'s true loyalty at the start.';
+  }
   
   $('#sabotage-main-area').innerHTML = `
     <div class="phase-panel" style="display:flex;justify-content:center;padding:2rem 0;">
@@ -683,9 +858,9 @@ function renderRoleReveal() {
         <div class="role-card-inner">
           <div class="role-card-front">?</div>
           <div class="role-card-back">
-            <span class="role-icon">${isSab ? '🗡️' : '🛡️'}</span>
-            <span class="role-name">${isSab ? 'SABOTEUR' : 'GUARD'}</span>
-            <span class="role-desc">${isSab ? 'Secretly fail missions to win.' : 'Protect the missions at all costs.'}</span>
+            <span class="role-icon">${icon}</span>
+            <span class="role-name">${title}</span>
+            <span class="role-desc">${desc}</span>
           </div>
         </div>
       </div>
@@ -788,7 +963,7 @@ async function calculateMissionResult() {
   setTimeout(() => {
     if (!state.isHost) return;
     if (gScore >= 3) {
-      db.from('rooms').update({ game_state: { ...newGs, phase: 'game_over', winner: 'guards' } }).eq('code', state.roomCode);
+      db.from('rooms').update({ game_state: { ...newGs, phase: 'assassin_phase' } }).eq('code', state.roomCode);
     } else if (sScore >= 3) {
       db.from('rooms').update({ game_state: { ...newGs, phase: 'game_over', winner: 'saboteurs' } }).eq('code', state.roomCode);
     } else {
@@ -902,8 +1077,8 @@ function renderEventCard(event) {
   const cClass = event.type === 'penalty' ? 'penalty' : 'bonus';
   container.innerHTML = `
     <div class="event-card ${cClass}">
-      <span class="event-type">${event.type.toUpperCase()}</span>
-      <div class="event-value">${sign}${event.value} HP</div>
+      <span class="event-type">${event.type.replace('event_', '').toUpperCase()}</span>
+      <div class="event-value">${event.value ? sign + event.value + ' HP' : 'SPECIAL'}</div>
       <div class="event-text">${event.text}</div>
       <div class="event-description">${event.description}</div>
     </div>
@@ -1031,11 +1206,14 @@ async function processBids() {
         hpChange = -(p.bid + event.value);
         newHp += hpChange;
         status = 'hit';
+      } else {
+        hpChange = -p.bid;
+        newHp += hpChange;
       }
       
       resultsData.push({ id: p.id, nickname: p.nickname, bid: p.bid, hpChange, newHp, status });
     });
-  } else { // bonus
+  } else if (event.type === 'bonus') {
     let maxBid = -1;
     alivePlayers.forEach(p => { if (p.bid > maxBid) maxBid = p.bid; });
     const winners = alivePlayers.filter(p => p.bid === maxBid);
@@ -1050,6 +1228,102 @@ async function processBids() {
         hpChange = -p.bid + splitBonus;
         newHp += hpChange;
         status = 'reward';
+      } else {
+        hpChange = -p.bid;
+        newHp += hpChange;
+      }
+      
+      resultsData.push({ id: p.id, nickname: p.nickname, bid: p.bid, hpChange, newHp, status });
+    });
+  } else if (event.type === 'event_switcharoo') {
+    let maxBid = -1;
+    let minBid = Infinity;
+    alivePlayers.forEach(p => {
+      if (p.bid > maxBid) maxBid = p.bid;
+      if (p.bid < minBid) minBid = p.bid;
+    });
+    
+    const highestBidders = alivePlayers.filter(p => p.bid === maxBid);
+    const lowestBidders = alivePlayers.filter(p => p.bid === minBid);
+    
+    // Pick first if multiple
+    const highest = highestBidders[0];
+    const lowest = lowestBidders[0];
+    
+    alivePlayers.forEach(p => {
+      let newHp = p.hp;
+      let hpChange = 0;
+      let status = 'safe';
+      
+      if (highest && lowest && highest.id !== lowest.id) {
+        if (p.id === highest.id) {
+          newHp = lowest.hp;
+          hpChange = newHp - p.hp;
+          status = hpChange > 0 ? 'reward' : 'hit';
+        } else if (p.id === lowest.id) {
+          newHp = highest.hp;
+          hpChange = newHp - p.hp;
+          status = hpChange > 0 ? 'reward' : 'hit';
+        }
+      } else {
+        hpChange = -p.bid;
+        newHp += hpChange;
+      }
+      
+      resultsData.push({ id: p.id, nickname: p.nickname, bid: p.bid, hpChange, newHp, status });
+    });
+  } else if (event.type === 'event_tax') {
+    let maxHp = -1;
+    alivePlayers.forEach(p => { if (p.hp > maxHp) maxHp = p.hp; });
+    const richest = alivePlayers.filter(p => p.hp === maxHp);
+    
+    alivePlayers.forEach(p => {
+      let newHp = p.hp;
+      let hpChange = 0;
+      let status = 'safe';
+      
+      if (richest.includes(p)) {
+        hpChange = -Math.floor(p.hp * 0.2); // lose 20%
+        newHp += hpChange;
+        status = 'hit';
+      } else {
+        hpChange = -p.bid; // pay bid anyway
+        newHp += hpChange;
+      }
+      
+      resultsData.push({ id: p.id, nickname: p.nickname, bid: p.bid, hpChange, newHp, status });
+    });
+  } else if (event.type === 'event_vampire') {
+    let maxBid = -1;
+    let minBid = Infinity;
+    alivePlayers.forEach(p => {
+      if (p.bid > maxBid) maxBid = p.bid;
+      if (p.bid < minBid) minBid = p.bid;
+    });
+    const highest = alivePlayers.find(p => p.bid === maxBid);
+    const lowest = alivePlayers.find(p => p.bid === minBid);
+    
+    alivePlayers.forEach(p => {
+      let newHp = p.hp;
+      let hpChange = 0;
+      let status = 'safe';
+      
+      if (highest && lowest && highest.id !== lowest.id) {
+        if (p.id === highest.id) {
+          hpChange = 15;
+          newHp += hpChange;
+          status = 'reward';
+        } else if (p.id === lowest.id) {
+          hpChange = -15;
+          newHp += hpChange;
+          status = 'hit';
+        } else {
+          hpChange = -p.bid;
+          newHp += hpChange;
+        }
+      } else {
+        hpChange = -p.bid;
+        newHp += hpChange;
       }
       
       resultsData.push({ id: p.id, nickname: p.nickname, bid: p.bid, hpChange, newHp, status });
@@ -1106,7 +1380,7 @@ function renderAuctionResults(gs) {
     if (r.status === 'hit') rowClass += ' loser';
     if (r.status === 'reward') rowClass += ' winner';
     
-    const sign = r.hpChange > 0 ? '+' : '';
+    const sign = r.hpChange > 0 ? '+' : (r.hpChange === 0 ? '' : '');
     const changeColor = r.hpChange < 0 ? 'var(--accent-red)' : (r.hpChange > 0 ? 'var(--accent-green)' : 'var(--text-muted)');
     
     html += `
@@ -1141,7 +1415,7 @@ function showGameOver(gs) {
       msg.textContent = 'Chaos reigns supreme.';
     }
     
-    const sabs = state.players.filter(p => p.role === 'saboteur').map(p => p.nickname).join(', ');
+    const sabs = state.players.filter(p => p.role === 'saboteur' || p.role === 'assassin').map(p => p.nickname).join(', ');
     details.innerHTML = `<p>The Saboteurs were: <strong>${sabs}</strong></p>`;
     
   } else if (state.room.game_mode === 'auction') {
@@ -1156,6 +1430,20 @@ function showGameOver(gs) {
     });
     standings += '</ul>';
     details.innerHTML = standings;
+  } else if (state.room.game_mode === 'canvas') {
+    if (window.showCanvasGameOver) {
+      window.showCanvasGameOver(gs);
+      return;
+    }
+    title.textContent = 'Game Over!';
+    msg.textContent = 'The canvas has spoken.';
+  } else if (state.room.game_mode === 'wordbomb') {
+    if (window.showWordBombGameOver) {
+      window.showWordBombGameOver(gs);
+      return;
+    }
+    title.textContent = 'Game Over!';
+    msg.textContent = 'The bombs have been defused.';
   }
   
   const lobbyBtn = $('#gameover-lobby-btn');

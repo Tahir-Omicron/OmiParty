@@ -369,9 +369,9 @@ input[type="text"]::placeholder {
 }
 
 .mode-cards {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
 }
 
 .mode-card {
@@ -988,7 +988,9 @@ input[type="text"]::placeholder {
     }
     
     .sabotage-container,
-    .auction-container {
+    .auction-container,
+    .canvas-container,
+    .wordbomb-container {
         padding: 2rem;
     }
     
@@ -1001,8 +1003,49 @@ input[type="text"]::placeholder {
 
 @media (min-width: 1024px) {
     .sabotage-container,
-    .auction-container {
+    .auction-container,
+    .canvas-container,
+    .wordbomb-container {
         max-width: 900px;
         margin: 0 auto;
     }
+}
+
+/* ============================================================================
+   NEW GAME MODE CONTAINERS
+   ============================================================================ */
+
+.canvas-container,
+.wordbomb-container {
+    padding: 1rem;
+    width: 100%;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.canvas-header,
+.wordbomb-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.cv-player-turn {
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    color: var(--accent-cyan);
+    font-weight: 600;
+}
+
+/* Drawing Canvas Wrapper */
+#drawing-canvas {
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    touch-action: none;
+    cursor: crosshair;
+    max-width: 100%;
+    height: auto;
 }
