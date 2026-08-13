@@ -7,10 +7,7 @@
 // ============================================================================
 // 1. CONFIG & INIT
 // ============================================================================
-const SUPABASE_URL = 'https://rnwpljhmflnxxefamfid.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJud3BsamhtZmxueHhlZmFtZmlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2MTMzNzUsImV4cCI6MjEwMjE4OTM3NX0.Rb21vhDbnT0l94z6uCwpYRldHObR_7KwFslDuWTdnEA';
-const { createClient } = window.supabase;
-const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Supabase init moved to shared.js
 
 // ============================================================================
 // 2. CONSTANTS
@@ -71,21 +68,7 @@ const MIN_PLAYERS_WORDBOMB = 3;
 // ============================================================================
 // 3. APP STATE
 // ============================================================================
-const state = {
-  playerId: null,
-  nickname: null,
-  roomCode: null,
-  isHost: false,
-  room: null,
-  players: [],
-  channels: [],
-  selectedMode: null,
-  bidTimerInterval: null,
-  bidLocked: false,
-  voteCast: false,
-  usedCardIndices: [],
-  timerTimeout: null
-};
+// App state moved to shared.js
 
 // ============================================================================
 // 4. UTILITY FUNCTIONS
@@ -108,61 +91,7 @@ function showScreen(screenName) {
   }
 }
 
-function showToast(message, type = 'info') {
-  const container = $('#toast-container');
-  if (!container) return;
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  toast.textContent = message;
-  container.appendChild(toast);
-  
-  // Trigger reflow to animate
-  void toast.offsetWidth;
-  toast.classList.add('show');
-  
-  setTimeout(() => {
-    toast.classList.remove('show');
-    toast.classList.add('hide');
-    setTimeout(() => {
-      toast.remove();
-    }, 300);
-  }, 3000);
-}
-
-function getPlayerId() {
-  let id = localStorage.getItem('otaq_player_id');
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  
-  if (!id || !uuidRegex.test(id)) {
-    try {
-      id = crypto.randomUUID();
-    } catch (e) {
-      id = '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, c =>
-        (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
-      );
-    }
-    localStorage.setItem('otaq_player_id', id);
-  }
-  return id;
-}
-
-function shuffleArray(arr) {
-  const copy = [...arr];
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-}
-
-function $(selector) {
-  return document.querySelector(selector);
-}
-
-function $$(selector) {
-  return document.querySelectorAll(selector);
-}
-
+// Utilities moved to shared.js
 // ============================================================================
 // 5. IDENTITY MANAGEMENT
 // ============================================================================

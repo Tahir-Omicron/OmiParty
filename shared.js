@@ -26,7 +26,13 @@ let state = {
   isHost: false,
   room: null,
   players: [],
-  selectedMode: null
+  channels: [],
+  selectedMode: null,
+  bidTimerInterval: null,
+  bidLocked: false,
+  voteCast: false,
+  usedCardIndices: [],
+  timerTimeout: null
 };
 
 function $(selector) { return document.querySelector(selector); }
