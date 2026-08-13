@@ -175,6 +175,14 @@ async function finishAuth(user) {
     $('#profile-avatar').src = profile.avatar_url;
     const progress = (profile.xp % 100) + '%';
     $('#profile-xp-bar').style.width = progress;
+  } else {
+    // Fallback if SQL trigger failed or hasn't run yet
+    state.nickname = user.user_metadata?.nickname || 'Player';
+    state.profile = { level: 1, xp: 0, avatar_url: 'https://api.dicebear.com/7.x/bottts/svg?seed=default' };
+    $('#menu-nickname').textContent = state.nickname;
+    $('#profile-level').textContent = '1';
+    $('#profile-avatar').src = state.profile.avatar_url;
+    $('#profile-xp-bar').style.width = '0%';
   }
   showScreen('menu');
 }
