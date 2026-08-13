@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Otaq.gg — Party Games</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- App Logic -->
+    <script src="app.js" defer></script>
+</head>
+<body>
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Screen 1: Nickname -->
+    <div class="screen active" data-screen="nickname">
+        <div class="glass-panel text-center">
+            <h1>OTAQ<span class="logo-accent">.gg</span></h1>
+            <p>Party games for chaotic friends</p>
+            <input type="text" id="nickname-input" placeholder="Enter your nickname" maxlength="16" autocomplete="off">
+            <button id="nickname-btn" class="btn btn-primary">Enter the Arena</button>
+        </div>
+    </div>
+
+    <!-- Screen 2: Menu -->
+    <div class="screen" data-screen="menu">
+        <div class="glass-panel text-center menu-panel">
+            <h2>Welcome, <span id="menu-nickname"></span></h2>
+            <button id="create-room-btn" class="btn btn-primary btn-lg">Create Room</button>
+            
+            <div class="divider">or</div>
+            
+            <div class="join-group">
+                <input type="text" id="join-code-input" placeholder="ROOM CODE" maxlength="5" autocomplete="off" style="text-transform:uppercase">
+                <button id="join-submit-btn" class="btn btn-secondary">Join</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen 3: Lobby -->
+    <div class="screen" data-screen="lobby">
+        <div class="glass-panel lobby-panel">
+            <div class="lobby-header">
+                <h2>Room: <span id="lobby-code" class="room-code"></span><button id="copy-code-btn" class="btn btn-ghost" title="Copy Room Code">📋</button></h2>
+            </div>
+            
+            <div id="lobby-players" class="player-grid"></div>
+            
+            <div id="lobby-host-controls" class="host-controls" style="display: none;">
+                <h3>Select Game Mode</h3>
+                <div class="mode-cards">
+                    <button class="mode-card" data-mode="sabotage">
+                        <span class="mode-icon">🕵️</span>
+                        <span class="mode-name">Sabotage</span>
+                        <span class="mode-desc">Find the traitors among you</span>
+                    </button>
+                    <button class="mode-card" data-mode="auction">
+                        <span class="mode-icon">💰</span>
+                        <span class="mode-name">Auction Chaos</span>
+                        <span class="mode-desc">Bid your life to survive</span>
+                    </button>
+                </div>
+                <button id="start-game-btn" class="btn btn-primary btn-lg" disabled>Start Game</button>
+            </div>
+            
+            <p id="lobby-player-count" class="player-count"></p>
+            <button id="leave-room-btn" class="btn btn-ghost btn-sm">Leave Room</button>
+        </div>
+    </div>
+
+    <!-- Screen 4: Sabotage -->
+    <div class="screen" data-screen="sabotage">
+        <div class="sabotage-container">
+            <div class="sabotage-header">
+                <div id="sabotage-scoreboard" class="scoreboard"></div>
+                <div id="sabotage-round-info" class="round-info"></div>
+            </div>
+            <div id="sabotage-main-area" class="game-main-area"></div>
+        </div>
+    </div>
+
+    <!-- Screen 5: Auction -->
+    <div class="screen" data-screen="auction">
+        <div class="auction-container">
+            <div class="auction-header">
+                <div id="auction-round-info" class="round-info"></div>
+            </div>
+            <div id="auction-hp-bars" class="hp-bars-container"></div>
+            <div id="auction-main-area" class="game-main-area"></div>
+        </div>
+    </div>
+
+    <!-- Screen 6: Game Over -->
+    <div class="screen" data-screen="gameover">
+        <div class="glass-panel gameover-panel text-center">
+            <h1 id="gameover-title" class="gameover-title"></h1>
+            <p id="gameover-message" class="gameover-message"></p>
+            <div id="gameover-details" class="gameover-details"></div>
+            <button id="gameover-lobby-btn" class="btn btn-primary btn-lg mt-4">Back to Lobby</button>
+        </div>
+    </div>
+</body>
+</html>

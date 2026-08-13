@@ -1,0 +1,1150 @@
+/**
+ * Otaq.gg - app.js
+ * Handles Supabase init, player identity, room management, realtime subscriptions,
+ * and complete game logic for Sabotage and Auction Chaos.
+ */
+
+// ============================================================================
+// 1. CONFIG & INIT
+// ============================================================================
+const SUPABASE_URL = 'https://rnwpljhmflnxxefamfid.supabase.co';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'; // Paste from: Supabase Dashboard → Settings → API → anon public
+const { createClient } = window.supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ============================================================================
+// 2. CONSTANTS
+// ============================================================================
+const MISSION_CONFIG = {
+  4: { sizes: [2, 2, 2, 3, 3], saboteurs: 1 },
+  5: { sizes: [2, 3, 2, 3, 3], saboteurs: 2 },
+  6: { sizes: [2, 3, 4, 3, 4], saboteurs: 2 },
+  7: { sizes: [2, 3, 3, 4, 4], saboteurs: 3 },
+  8: { sizes: [3, 4, 4, 5, 5], saboteurs: 3 },
+  9: { sizes: [3, 4, 4, 5, 5], saboteurs: 3 },
+  10: { sizes: [3, 4, 4, 5, 5], saboteurs: 4 },
+};
+
+const EVENT_CARDS = [
+  // Penalties (~65%)
+  { type: 'penalty', value: 10, text: 'Minor Glitch', description: 'A hiccup in the system.' },
+  { type: 'penalty', value: 12, text: 'Pickpocket', description: 'Sticky fingers in the crowd.' },
+  { type: 'penalty', value: 15, text: 'Tax Collector', description: 'The taxman cometh.' },
+  { type: 'penalty', value: 15, text: 'Bad Investment', description: 'Should have read the fine print.' },
+  { type: 'penalty', value: 18, text: 'Caught Speeding', description: 'Those fines add up fast.' },
+  { type: 'penalty', value: 20, text: 'System Crash', description: 'A server meltdown costs someone dearly.' },
+  { type: 'penalty', value: 20, text: 'Bar Tab', description: 'Somebody ran up the tab.' },
+  { type: 'penalty', value: 22, text: 'Lawsuit', description: 'See you in court. Bring your wallet.' },
+  { type: 'penalty', value: 25, text: 'Hostile Takeover', description: 'Corporate raiders strike.' },
+  { type: 'penalty', value: 25, text: 'Identity Theft', description: 'Your credit score just tanked.' },
+  { type: 'penalty', value: 28, text: 'Market Crash', description: 'Everything just halved in value.' },
+  { type: 'penalty', value: 30, text: 'Total Wipeout', description: 'Catastrophic failure.' },
+  { type: 'penalty', value: 30, text: 'Ransom Note', description: 'They have your cat. Pay up.' },
+  { type: 'penalty', value: 35, text: 'Armageddon', description: 'The big one. Brace yourself.' },
+  { type: 'penalty', value: 15, text: 'Parking Ticket', description: 'Expired meter. Classic.' },
+  { type: 'penalty', value: 20, text: 'Food Poisoning', description: 'That sushi was suspicious.' },
+  // Bonuses (~35%)
+  { type: 'bonus', value: 8, text: 'Loose Change', description: 'Coins in the couch cushions.' },
+  { type: 'bonus', value: 10, text: 'Lucky Break', description: 'Fortune favors the bold.' },
+  { type: 'bonus', value: 12, text: 'Side Hustle', description: 'Weekend gig came through.' },
+  { type: 'bonus', value: 15, text: 'Inheritance', description: 'A distant relative remembered you.' },
+  { type: 'bonus', value: 15, text: 'Windfall', description: 'Money from the sky.' },
+  { type: 'bonus', value: 18, text: 'Stock Surge', description: 'Diamond hands paid off.' },
+  { type: 'bonus', value: 20, text: 'Jackpot', description: 'Three cherries. Cha-ching.' },
+  { type: 'bonus', value: 25, text: 'Golden Ticket', description: 'Once in a lifetime opportunity.' },
+  { type: 'bonus', value: 10, text: 'Tax Refund', description: 'The government giveth back.' },
+];
+
+const BID_TIMER_SECONDS = 15;
+const RESULT_DISPLAY_MS = 5000;
+const ROLE_REVEAL_MS = 8000;
+const MIN_PLAYERS_SABOTAGE = 4;
+const MIN_PLAYERS_AUCTION = 3;
+
+// ============================================================================
+// 3. APP STATE
+// ============================================================================
+const state = {
+  playerId: null,
+  nickname: null,
+  roomCode: null,
+  isHost: false,
+  room: null,
+  players: [],
+  channels: [],
+  selectedMode: null,
+  bidTimerInterval: null,
+  bidLocked: false,
+  voteCast: false,
+  usedCardIndices: [],
+  timerTimeout: null
+};
+
+// ============================================================================
+// 4. UTILITY FUNCTIONS
+// ============================================================================
+function generateRoomCode() {
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // Excluded I, L, O, 0, 1
+  let code = '';
+  for (let i = 0; i < 5; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
+function showScreen(screenName) {
+  const screens = $$('.screen');
+  screens.forEach(s => s.classList.remove('active'));
+  const target = $(`[data-screen="${screenName}"]`);
+  if (target) {
+    target.classList.add('active');
+  }
+}
+
+function showToast(message, type = 'info') {
+  const container = $('#toast-container');
+  if (!container) return;
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+  
+  // Trigger reflow to animate
+  void toast.offsetWidth;
+  toast.classList.add('show');
+  
+  setTimeout(() => {
+    toast.classList.remove('show');
+    toast.classList.add('hide');
+    setTimeout(() => {
+      toast.remove();
+    }, 300);
+  }, 3000);
+}
+
+function getPlayerId() {
+  let id = localStorage.getItem('otaq_player_id');
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem('otaq_player_id', id);
+  }
+  return id;
+}
+
+function shuffleArray(arr) {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function $(selector) {
+  return document.querySelector(selector);
+}
+
+function $$(selector) {
+  return document.querySelectorAll(selector);
+}
+
+// ============================================================================
+// 5. IDENTITY MANAGEMENT
+// ============================================================================
+function init() {
+  state.playerId = getPlayerId();
+  const savedNickname = localStorage.getItem('otaq_nickname');
+  
+  bindEventListeners();
+  
+  if (savedNickname) {
+    state.nickname = savedNickname;
+    $('#menu-nickname').textContent = state.nickname;
+    showScreen('menu');
+  } else {
+    showScreen('nickname');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+
+// ============================================================================
+// 6. SCREEN: NICKNAME
+// ============================================================================
+function handleNicknameSubmit() {
+  const input = $('#nickname-input');
+  const val = input.value.trim();
+  
+  if (!val) {
+    showToast('Please enter a nickname.', 'error');
+    return;
+  }
+  if (val.length < 2 || val.length > 16) {
+    showToast('Nickname must be between 2 and 16 characters.', 'error');
+    return;
+  }
+  
+  state.nickname = val;
+  localStorage.setItem('otaq_nickname', val);
+  
+  $('#menu-nickname').textContent = state.nickname;
+  showScreen('menu');
+}
+
+// ============================================================================
+// 7. SCREEN: MENU
+// ============================================================================
+async function handleCreateRoom() {
+  const code = generateRoomCode();
+  try {
+    const { error: roomError } = await db.from('rooms').insert({
+      code: code,
+      host_id: state.playerId,
+      status: 'lobby'
+    });
+    
+    if (roomError) throw roomError;
+
+    const { error: playerError } = await db.from('players').insert({
+      id: state.playerId,
+      room_code: code,
+      nickname: state.nickname,
+      is_host: true
+    });
+    
+    if (playerError) throw playerError;
+
+    state.isHost = true;
+    enterLobby(code);
+    
+  } catch (err) {
+    console.error('Error creating room:', err);
+    showToast('Failed to create room. Please try again.', 'error');
+  }
+}
+
+async function handleJoinRoom() {
+  const input = $('#join-code-input');
+  const code = input.value.toUpperCase().trim();
+  
+  if (code.length !== 5) {
+    showToast('Room code must be 5 characters.', 'error');
+    return;
+  }
+  
+  try {
+    // Check if room exists and is in lobby
+    const { data: rooms, error: roomError } = await db
+      .from('rooms')
+      .select('*')
+      .eq('code', code)
+      .eq('status', 'lobby');
+      
+    if (roomError) throw roomError;
+    
+    if (!rooms || rooms.length === 0) {
+      showToast('Room not found or game already started.', 'error');
+      return;
+    }
+    
+    // Attempt to insert player
+    const { error: playerError } = await db.from('players').insert({
+      id: state.playerId,
+      room_code: code,
+      nickname: state.nickname,
+      is_host: false
+    });
+    
+    // If it fails with a duplicate key, they are already in the room. Just proceed.
+    if (playerError && playerError.code !== '23505') { 
+      throw playerError;
+    }
+
+    state.isHost = false;
+    enterLobby(code);
+    
+  } catch (err) {
+    console.error('Error joining room:', err);
+    showToast('Failed to join room.', 'error');
+  }
+}
+
+// ============================================================================
+// 8. SCREEN: LOBBY
+// ============================================================================
+async function enterLobby(roomCode) {
+  state.roomCode = roomCode;
+  localStorage.setItem('otaq_current_room', roomCode);
+  
+  $('#lobby-code').textContent = roomCode;
+  
+  // Host UI setup
+  const hostControls = $('#lobby-host-controls');
+  if (state.isHost) {
+    hostControls.style.display = 'flex';
+  } else {
+    hostControls.style.display = 'none';
+  }
+
+  // Initial data fetch
+  await fetchRoomAndPlayers();
+  
+  // Setup Realtime
+  subscribeToRoom(roomCode);
+  subscribeToPlayers(roomCode);
+  
+  showScreen('lobby');
+}
+
+async function fetchRoomAndPlayers() {
+  if (!state.roomCode) return;
+  try {
+    const { data: roomData } = await db.from('rooms').select('*').eq('code', state.roomCode).single();
+    if (roomData) state.room = roomData;
+    
+    const { data: playersData } = await db.from('players').select('*').eq('room_code', state.roomCode);
+    if (playersData) {
+      state.players = playersData;
+      renderLobby();
+    }
+  } catch (e) {
+    console.error('Initial fetch failed:', e);
+  }
+}
+
+function renderLobby() {
+  const container = $('#lobby-players');
+  container.innerHTML = '';
+  
+  state.players.forEach(player => {
+    const card = document.createElement('div');
+    card.className = `player-card ${player.is_host ? 'host' : ''}`;
+    
+    const avatar = document.createElement('div');
+    avatar.className = 'player-avatar';
+    avatar.textContent = player.nickname.charAt(0).toUpperCase();
+    
+    const name = document.createElement('span');
+    name.className = 'player-name';
+    name.textContent = player.nickname;
+    
+    card.appendChild(avatar);
+    card.appendChild(name);
+    container.appendChild(card);
+  });
+  
+  const count = state.players.length;
+  const minSab = MIN_PLAYERS_SABOTAGE;
+  const minAuction = MIN_PLAYERS_AUCTION;
+  let required = 0;
+  let modeLabel = '';
+  if (state.selectedMode === 'sabotage') { required = minSab; modeLabel = 'Sabotage'; }
+  if (state.selectedMode === 'auction') { required = minAuction; modeLabel = 'Auction Chaos'; }
+  
+  let countText = `${count} Player${count !== 1 ? 's' : ''} connected`;
+  if (state.isHost && state.selectedMode && count < required) {
+    countText += ` — Need ${required - count} more for ${modeLabel}`;
+  }
+  $('#lobby-player-count').textContent = countText;
+  
+  const startBtn = $('#start-game-btn');
+  if (startBtn) {
+    startBtn.disabled = !(state.selectedMode && count >= required);
+  }
+}
+
+function handleGameModeSelect(mode) {
+  $$('.mode-card').forEach(c => c.classList.remove('selected'));
+  const card = $(`[data-mode="${mode}"]`);
+  if (card) card.classList.add('selected');
+  
+  state.selectedMode = mode;
+  renderLobby(); // re-evaluates button disabled state
+}
+
+async function handleStartGame() {
+  if (!state.isHost || !state.selectedMode) return;
+  const count = state.players.length;
+  
+  if (state.selectedMode === 'sabotage' && count < MIN_PLAYERS_SABOTAGE) {
+    showToast(`Need at least ${MIN_PLAYERS_SABOTAGE} players.`, 'error');
+    return;
+  }
+  if (state.selectedMode === 'auction' && count < MIN_PLAYERS_AUCTION) {
+    showToast(`Need at least ${MIN_PLAYERS_AUCTION} players.`, 'error');
+    return;
+  }
+  
+  if (state.selectedMode === 'sabotage') {
+    await startSabotageGame();
+  } else if (state.selectedMode === 'auction') {
+    await startAuctionGame();
+  }
+}
+
+async function handleLeaveRoom() {
+  if (state.roomCode && state.playerId) {
+    try {
+      await db.from('players').delete().eq('id', state.playerId);
+    } catch (e) {
+      console.error('Error leaving room', e);
+    }
+  }
+  
+  unsubscribeAll();
+  state.roomCode = null;
+  state.room = null;
+  state.players = [];
+  state.isHost = false;
+  state.selectedMode = null;
+  localStorage.removeItem('otaq_current_room');
+  showScreen('menu');
+}
+
+// ============================================================================
+// 9. REALTIME SUBSCRIPTIONS
+// ============================================================================
+function subscribeToRoom(roomCode) {
+  const channel = db.channel(`room-${roomCode}`)
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'rooms',
+      filter: `code=eq.${roomCode}`
+    }, handleRoomChange)
+    .subscribe();
+  state.channels.push(channel);
+}
+
+function subscribeToPlayers(roomCode) {
+  const channel = db.channel(`players-${roomCode}`)
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'players',
+      filter: `room_code=eq.${roomCode}`
+    }, handlePlayersChange)
+    .subscribe();
+  state.channels.push(channel);
+}
+
+function unsubscribeAll() {
+  state.channels.forEach(ch => db.removeChannel(ch));
+  state.channels = [];
+}
+
+function handleRoomChange(payload) {
+  if (payload.eventType === 'UPDATE') {
+    state.room = payload.new;
+    
+    if (state.room.status === 'playing' && state.room.game_state) {
+      onGameStateUpdate(state.room.game_state);
+    } else if (state.room.status === 'lobby') {
+      // Reset local game state
+      state.voteCast = false;
+      state.bidLocked = false;
+      state.selectedMode = null;
+      state.usedCardIndices = [];
+      clearInterval(state.bidTimerInterval);
+      if (state.timerTimeout) clearTimeout(state.timerTimeout);
+      fetchRoomAndPlayers();
+      showScreen('lobby');
+    }
+  }
+}
+
+async function handlePlayersChange(payload) {
+  // Always fetch fresh list to avoid tricky state issues
+  const { data } = await db.from('players').select('*').eq('room_code', state.roomCode);
+  if (data) {
+    state.players = data;
+    
+    const isLobby = $$('.screen.active')[0]?.dataset.screen === 'lobby';
+    if (isLobby) {
+      renderLobby();
+    }
+    
+    if (state.isHost && state.room && state.room.status === 'playing' && state.room.game_state) {
+      const gs = state.room.game_state;
+      if (state.room.game_mode === 'sabotage' && gs.phase === 'voting') {
+        checkAllVotesIn();
+      } else if (state.room.game_mode === 'auction' && gs.phase === 'bidding') {
+        const aliveCount = state.players.filter(p => p.is_alive).length;
+        const bidCount = state.players.filter(p => p.is_alive && p.bid !== null).length;
+        if (bidCount === aliveCount && aliveCount > 0) {
+          processBids();
+        }
+      }
+    }
+  }
+}
+
+// ============================================================================
+// 10. GAME STATE ROUTER
+// ============================================================================
+function onGameStateUpdate(gs) {
+  if (!state.room) return;
+  if (state.room.game_mode === 'sabotage') {
+    handleSabotageState(gs);
+  } else if (state.room.game_mode === 'auction') {
+    handleAuctionState(gs);
+  }
+}
+
+// ============================================================================
+// 11. SABOTAGE GAME LOGIC
+// ============================================================================
+async function startSabotageGame() {
+  const count = Math.min(state.players.length, 10);
+  const config = MISSION_CONFIG[count] || MISSION_CONFIG[4];
+  
+  const shuffled = shuffleArray(state.players);
+  const sabsCount = config.saboteurs;
+  
+  // Assign roles
+  for (let i = 0; i < shuffled.length; i++) {
+    const role = i < sabsCount ? 'saboteur' : 'guard';
+    await db.from('players').update({ role }).eq('id', shuffled[i].id);
+  }
+  
+  const gs = {
+    phase: 'role_reveal',
+    round: 1,
+    guards_score: 0,
+    saboteurs_score: 0,
+    mission_team: [],
+    mission_sizes: config.sizes,
+    history: [],
+    winner: null
+  };
+  
+  await db.from('rooms').update({
+    status: 'playing',
+    game_mode: 'sabotage',
+    game_state: gs
+  }).eq('code', state.roomCode);
+  
+  setTimeout(() => {
+    if (state.isHost && state.room.status === 'playing') {
+      startMissionBriefing();
+    }
+  }, ROLE_REVEAL_MS);
+}
+
+function handleSabotageState(gs) {
+  switch (gs.phase) {
+    case 'role_reveal':
+      showScreen('sabotage');
+      renderRoleReveal();
+      break;
+    case 'mission_briefing':
+      showScreen('sabotage');
+      renderSabotageScoreboard(gs);
+      $('#sabotage-round-info').textContent = `ROUND ${gs.round} OF 5`;
+      const mTeam = state.players.filter(p => gs.mission_team.includes(p.id));
+      const isOnTeam = gs.mission_team.includes(state.playerId);
+      $('#sabotage-main-area').innerHTML = `
+        <div class="phase-panel">
+          <h3 style="text-align:center;">Mission ${gs.round} — Team Selected</h3>
+          <div class="mission-team">
+            ${mTeam.map(p => `<div class="mission-player ${p.id === state.playerId ? 'you' : ''}">${p.nickname}</div>`).join('')}
+          </div>
+          <p class="mission-instruction">${isOnTeam ? 'You are on this mission. Prepare to vote!' : 'Waiting for the mission team to return...'}</p>
+        </div>
+      `;
+      break;
+    case 'voting':
+      state.voteCast = false;
+      renderSabotageScoreboard(gs);
+      if (gs.mission_team.includes(state.playerId)) {
+        const me = state.players.find(p => p.id === state.playerId);
+        const canSabotage = me?.role === 'saboteur';
+        $('#sabotage-main-area').innerHTML = `
+          <div class="phase-panel">
+            <h3 style="text-align:center;">Cast Your Vote</h3>
+            <div class="vote-area">
+              <button id="vote-success-btn" class="btn btn-success btn-vote">✓ Success</button>
+              ${canSabotage ? '<button id="vote-sabotage-btn" class="btn btn-danger btn-vote">✗ Sabotage</button>' : ''}
+            </div>
+          </div>
+        `;
+        $('#vote-success-btn').addEventListener('click', () => handleVote('success'));
+        if (canSabotage) {
+          $('#vote-sabotage-btn').addEventListener('click', () => handleVote('sabotage'));
+        }
+      } else {
+        $('#sabotage-main-area').innerHTML = `
+          <div class="waiting-msg">
+            <div class="spinner"></div>
+            <p>The team is on a mission...</p>
+          </div>
+        `;
+      }
+      break;
+    case 'result':
+      renderSabotageScoreboard(gs);
+      const lastResult = gs.history[gs.history.length - 1];
+      const sabs = lastResult.sabotage_count;
+      const resultColor = lastResult.result === 'success' ? 'var(--accent-green)' : 'var(--accent-red)';
+      $('#sabotage-main-area').innerHTML = `
+        <div class="phase-panel" style="text-align:center;">
+          <div class="result-card">
+            <h2 style="color:${resultColor};font-size:2rem;">Mission ${lastResult.result === 'success' ? 'SUCCESS' : 'FAILED'}!</h2>
+            <p style="color:var(--text-secondary);margin-top:1rem;">Sabotage votes cast: ${sabs}</p>
+          </div>
+        </div>
+      `;
+      break;
+    case 'game_over':
+      showGameOver(gs);
+      break;
+  }
+}
+
+function renderRoleReveal() {
+  const me = state.players.find(p => p.id === state.playerId);
+  if (!me) return;
+  const isSab = me.role === 'saboteur';
+  
+  $('#sabotage-main-area').innerHTML = `
+    <div class="phase-panel" style="display:flex;justify-content:center;padding:2rem 0;">
+      <div id="sabotage-role-card" class="role-card ${isSab ? 'saboteur' : 'guard'}">
+        <div class="role-card-inner">
+          <div class="role-card-front">?</div>
+          <div class="role-card-back">
+            <span class="role-icon">${isSab ? '🗡️' : '🛡️'}</span>
+            <span class="role-name">${isSab ? 'SABOTEUR' : 'GUARD'}</span>
+            <span class="role-desc">${isSab ? 'Secretly fail missions to win.' : 'Protect the missions at all costs.'}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  setTimeout(() => {
+    const rc = $('#sabotage-role-card');
+    if (rc) rc.classList.add('revealed');
+  }, 1000);
+}
+
+function renderSabotageScoreboard(gs) {
+  // Use history to render dots
+  const sb = $('#sabotage-scoreboard');
+  if (!sb) return;
+  sb.innerHTML = '';
+  
+  for (let i = 0; i < 5; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'score-dot';
+    if (i < gs.history.length) {
+      dot.classList.add(gs.history[i].result); // 'success' or 'fail'
+    }
+    sb.appendChild(dot);
+  }
+}
+
+async function startMissionBriefing() {
+  const gs = state.room.game_state;
+  const size = gs.mission_sizes[gs.round - 1];
+  
+  const shuffled = shuffleArray(state.players);
+  const team = shuffled.slice(0, size).map(p => p.id);
+  
+  await db.from('players').update({ vote: null }).eq('room_code', state.roomCode);
+  
+  const newGs = { ...gs, phase: 'mission_briefing', mission_team: team };
+  await db.from('rooms').update({ game_state: newGs }).eq('code', state.roomCode);
+  
+  setTimeout(() => {
+    if (state.isHost && state.room.game_state.phase === 'mission_briefing') {
+      const gState = { ...state.room.game_state, phase: 'voting' };
+      db.from('rooms').update({ game_state: gState }).eq('code', state.roomCode);
+    }
+  }, 4000);
+}
+
+async function handleVote(voteValue) {
+  if (state.voteCast) return;
+  state.voteCast = true;
+  
+  $('#sabotage-main-area').innerHTML = `
+    <div class="waiting-msg">
+      <div class="spinner"></div>
+      <p>Vote cast! Waiting for others...</p>
+    </div>
+  `;
+  
+  await db.from('players').update({ vote: voteValue }).eq('id', state.playerId);
+}
+
+async function checkAllVotesIn() {
+  const gs = state.room.game_state;
+  const team = state.players.filter(p => gs.mission_team.includes(p.id));
+  const missing = team.filter(p => p.vote === null);
+  
+  if (missing.length === 0) {
+    calculateMissionResult();
+  }
+}
+
+async function calculateMissionResult() {
+  const gs = state.room.game_state;
+  const team = state.players.filter(p => gs.mission_team.includes(p.id));
+  
+  let sabotageCount = 0;
+  team.forEach(p => {
+    if (p.vote === 'sabotage') sabotageCount++;
+  });
+  
+  const result = sabotageCount > 0 ? 'fail' : 'success';
+  let gScore = gs.guards_score;
+  let sScore = gs.saboteurs_score;
+  
+  if (result === 'success') gScore++;
+  else sScore++;
+  
+  const historyItem = { round: gs.round, result, sabotage_count: sabotageCount };
+  const newGs = { 
+    ...gs, 
+    phase: 'result', 
+    guards_score: gScore, 
+    saboteurs_score: sScore,
+    history: [...gs.history, historyItem]
+  };
+  
+  await db.from('rooms').update({ game_state: newGs }).eq('code', state.roomCode);
+  
+  setTimeout(() => {
+    if (!state.isHost) return;
+    if (gScore >= 3) {
+      db.from('rooms').update({ game_state: { ...newGs, phase: 'game_over', winner: 'guards' } }).eq('code', state.roomCode);
+    } else if (sScore >= 3) {
+      db.from('rooms').update({ game_state: { ...newGs, phase: 'game_over', winner: 'saboteurs' } }).eq('code', state.roomCode);
+    } else {
+      newGs.round++;
+      db.from('rooms').update({ game_state: newGs }).eq('code', state.roomCode).then(() => {
+        startMissionBriefing();
+      });
+    }
+  }, RESULT_DISPLAY_MS);
+}
+
+// ============================================================================
+// 12. AUCTION CHAOS GAME LOGIC
+// ============================================================================
+async function startAuctionGame() {
+  await db.from('players').update({ hp: 100, is_alive: true, bid: null }).eq('room_code', state.roomCode);
+  state.usedCardIndices = [];
+  
+  const eventCard = drawEventCard();
+  
+  const gs = {
+    phase: 'event_reveal',
+    round: 1,
+    current_event: eventCard,
+    bid_deadline: null,
+    history: [],
+    winner: null,
+    results_summary: null
+  };
+  
+  await db.from('rooms').update({
+    status: 'playing',
+    game_mode: 'auction',
+    game_state: gs
+  }).eq('code', state.roomCode);
+  
+  setTimeout(() => {
+    if (state.isHost && state.room.status === 'playing') {
+      startBiddingPhase();
+    }
+  }, 4000);
+}
+
+function drawEventCard() {
+  if (state.usedCardIndices.length >= EVENT_CARDS.length) {
+    state.usedCardIndices = [];
+  }
+  let index;
+  do {
+    index = Math.floor(Math.random() * EVENT_CARDS.length);
+  } while (state.usedCardIndices.includes(index));
+  
+  state.usedCardIndices.push(index);
+  return EVENT_CARDS[index];
+}
+
+function handleAuctionState(gs) {
+  showScreen('auction');
+  const main = $('#auction-main-area');
+  
+  switch (gs.phase) {
+    case 'event_reveal':
+      state.bidLocked = false;
+      main.innerHTML = `<div id="event-card-container"></div>`;
+      renderEventCard(gs.current_event);
+      renderHPBars();
+      $('#auction-round-info').textContent = `ROUND ${gs.round}`;
+      break;
+    case 'bidding':
+      renderHPBars();
+      const me = state.players.find(p => p.id === state.playerId);
+      if (!me.is_alive) {
+        main.innerHTML = `<div class="waiting-msg"><p>You have been eliminated. Spectating...</p></div>`;
+      } else if (me.bid !== null || state.bidLocked) {
+        main.innerHTML = `<div class="waiting-msg"><div class="spinner"></div><p>Bid locked! Waiting for others...</p></div>`;
+      } else {
+        main.innerHTML = `
+          <div class="phase-panel">
+            <div class="timer-container">
+              <div class="timer-bar"><div id="timer-fill" class="timer-fill"></div></div>
+              <span id="timer-seconds"></span>
+            </div>
+            <div class="bid-controls">
+              <input type="range" id="auction-bid-slider" class="bid-slider" min="0" max="${me.hp}" value="0">
+              <div class="bid-display">Your bid: <span id="bid-value" class="bid-value">0</span> HP</div>
+              <button id="auction-bid-btn" class="btn btn-gold">Lock In Bid</button>
+            </div>
+          </div>
+        `;
+        $('#auction-bid-slider').addEventListener('input', (e) => {
+          $('#bid-value').textContent = `${e.target.value}`;
+        });
+        $('#auction-bid-btn').addEventListener('click', handleBidSubmit);
+        startBidTimer(gs.bid_deadline);
+      }
+      break;
+    case 'results':
+      clearInterval(state.bidTimerInterval);
+      renderAuctionResults(gs);
+      break;
+    case 'game_over':
+      showGameOver(gs);
+      break;
+  }
+}
+
+function renderEventCard(event) {
+  const container = $('#event-card-container');
+  if (!container) return;
+  const sign = event.type === 'penalty' ? '-' : '+';
+  const cClass = event.type === 'penalty' ? 'penalty' : 'bonus';
+  container.innerHTML = `
+    <div class="event-card ${cClass}">
+      <span class="event-type">${event.type.toUpperCase()}</span>
+      <div class="event-value">${sign}${event.value} HP</div>
+      <div class="event-text">${event.text}</div>
+      <div class="event-description">${event.description}</div>
+    </div>
+  `;
+}
+
+function renderHPBars() {
+  const container = $('#auction-hp-bars');
+  if (!container) return;
+  container.innerHTML = '';
+  
+  const sorted = [...state.players].sort((a, b) => b.hp - a.hp);
+  
+  sorted.forEach(p => {
+    const row = document.createElement('div');
+    row.className = `hp-bar-row ${!p.is_alive ? 'eliminated' : ''}`;
+    
+    let pct = Math.min(Math.max((p.hp / 100) * 100, 0), 100);
+    
+    let barColor = 'var(--accent-green)';
+    if (pct <= 30) barColor = 'var(--accent-red)';
+    else if (pct <= 60) barColor = 'var(--accent-gold)';
+    
+    row.innerHTML = `
+      <div class="hp-bar-name">${p.nickname}</div>
+      <div class="hp-bar">
+        <div class="hp-bar-fill" style="width:${pct}%;background-color:${barColor};"></div>
+      </div>
+      <div class="hp-bar-value">${p.hp}</div>
+    `;
+    container.appendChild(row);
+  });
+}
+
+async function startBiddingPhase() {
+  await db.from('players').update({ bid: null }).eq('room_code', state.roomCode).eq('is_alive', true);
+  
+  const deadline = new Date(Date.now() + BID_TIMER_SECONDS * 1000).toISOString();
+  const gs = state.room.game_state;
+  
+  const newGs = { ...gs, phase: 'bidding', bid_deadline: deadline };
+  await db.from('rooms').update({ game_state: newGs }).eq('code', state.roomCode);
+}
+
+function startBidTimer(deadlineISO) {
+  clearInterval(state.bidTimerInterval);
+  const deadline = new Date(deadlineISO).getTime();
+  
+  state.bidTimerInterval = setInterval(() => {
+    const now = Date.now();
+    const remaining = Math.max(0, deadline - now);
+    const secs = Math.ceil(remaining / 1000);
+    
+    const txt = $('#timer-seconds');
+    const fill = $('#timer-fill');
+    if (txt) txt.textContent = `${secs}s`;
+    if (fill) {
+      const pct = (remaining / (BID_TIMER_SECONDS * 1000)) * 100;
+      fill.style.width = `${pct}%`;
+      if (secs <= 5) {
+        fill.classList.add('danger');
+      } else {
+        fill.classList.remove('danger');
+      }
+    }
+    
+    if (remaining <= 0) {
+      clearInterval(state.bidTimerInterval);
+      if (state.isHost) {
+        processBids();
+      }
+    }
+  }, 100);
+}
+
+async function handleBidSubmit() {
+  if (state.bidLocked) return;
+  const slider = $('#auction-bid-slider');
+  if (!slider) return;
+  const val = parseInt(slider.value, 10);
+  
+  state.bidLocked = true;
+  await db.from('players').update({ bid: val }).eq('id', state.playerId);
+  
+  const main = $('#auction-main-area');
+  if (main) main.innerHTML = `<div class="waiting-msg"><div class="spinner"></div><p>Bid locked! Waiting...</p></div>`;
+}
+
+async function processBids() {
+  // Prevent double processing
+  if (state.timerTimeout) clearTimeout(state.timerTimeout);
+
+  const gs = state.room.game_state;
+  const alivePlayers = state.players.filter(p => p.is_alive);
+  
+  // Fill in missing bids
+  const updates = [];
+  alivePlayers.forEach(p => {
+    if (p.bid === null) {
+      p.bid = 0;
+      updates.push({ id: p.id, bid: 0 });
+    }
+  });
+  
+  if (updates.length > 0) {
+    for (const u of updates) {
+      await db.from('players').update({ bid: u.bid }).eq('id', u.id);
+    }
+  }
+  
+  const event = gs.current_event;
+  const resultsData = [];
+  
+  if (event.type === 'penalty') {
+    let minBid = Infinity;
+    alivePlayers.forEach(p => { if (p.bid < minBid) minBid = p.bid; });
+    const losers = alivePlayers.filter(p => p.bid === minBid);
+    
+    alivePlayers.forEach(p => {
+      let newHp = p.hp;
+      let hpChange = 0;
+      let status = 'safe';
+      
+      if (losers.includes(p)) {
+        hpChange = -(p.bid + event.value);
+        newHp += hpChange;
+        status = 'hit';
+      }
+      
+      resultsData.push({ id: p.id, nickname: p.nickname, bid: p.bid, hpChange, newHp, status });
+    });
+  } else { // bonus
+    let maxBid = -1;
+    alivePlayers.forEach(p => { if (p.bid > maxBid) maxBid = p.bid; });
+    const winners = alivePlayers.filter(p => p.bid === maxBid);
+    const splitBonus = Math.floor(event.value / winners.length);
+    
+    alivePlayers.forEach(p => {
+      let newHp = p.hp;
+      let hpChange = 0;
+      let status = 'miss';
+      
+      if (winners.includes(p)) {
+        hpChange = -p.bid + splitBonus;
+        newHp += hpChange;
+        status = 'reward';
+      }
+      
+      resultsData.push({ id: p.id, nickname: p.nickname, bid: p.bid, hpChange, newHp, status });
+    });
+  }
+  
+  // Apply HP updates and eliminations
+  for (const r of resultsData) {
+    const finalHp = Math.max(0, r.newHp);
+    const alive = finalHp > 0;
+    await db.from('players').update({ hp: finalHp, is_alive: alive }).eq('id', r.id);
+  }
+  
+  const newGs = { ...gs, phase: 'results', results_summary: resultsData };
+  await db.from('rooms').update({ game_state: newGs }).eq('code', state.roomCode);
+  
+  state.timerTimeout = setTimeout(async () => {
+    const { data: freshPlayers } = await db.from('players').select('*').eq('room_code', state.roomCode);
+    const stillAlive = freshPlayers.filter(p => p.is_alive);
+    
+    if (stillAlive.length <= 1) {
+      let winnerId = null;
+      if (stillAlive.length === 1) {
+        winnerId = stillAlive[0].id;
+      } else {
+        // all died, find max hp among dead as fallback
+        const sorted = [...freshPlayers].sort((a,b) => b.hp - a.hp);
+        winnerId = sorted[0]?.id;
+      }
+      db.from('rooms').update({ game_state: { ...newGs, phase: 'game_over', winner: winnerId } }).eq('code', state.roomCode);
+    } else {
+      newGs.round++;
+      newGs.current_event = drawEventCard();
+      newGs.phase = 'event_reveal';
+      db.from('rooms').update({ game_state: newGs }).eq('code', state.roomCode).then(() => {
+        setTimeout(() => {
+          if (state.isHost) startBiddingPhase();
+        }, 4000);
+      });
+    }
+  }, RESULT_DISPLAY_MS);
+}
+
+function renderAuctionResults(gs) {
+  const main = $('#auction-main-area');
+  main.innerHTML = `<div id="event-card-container"></div>`;
+  renderEventCard(gs.current_event);
+  
+  const summary = gs.results_summary || [];
+  let html = '<div class="auction-results" style="margin-top:1.5rem;">';
+  
+  summary.forEach(r => {
+    let rowClass = 'result-row';
+    if (r.status === 'hit') rowClass += ' loser';
+    if (r.status === 'reward') rowClass += ' winner';
+    
+    const sign = r.hpChange > 0 ? '+' : '';
+    const changeColor = r.hpChange < 0 ? 'var(--accent-red)' : (r.hpChange > 0 ? 'var(--accent-green)' : 'var(--text-muted)');
+    
+    html += `
+      <div class="${rowClass}">
+        <span>${r.nickname} <span style="color:var(--text-muted);">(Bid: ${r.bid})</span></span>
+        <span style="font-weight:700;color:${changeColor};">${sign}${r.hpChange} HP</span>
+      </div>
+    `;
+  });
+  html += '</div>';
+  main.insertAdjacentHTML('beforeend', html);
+  renderHPBars();
+}
+
+// ============================================================================
+// 13. GAME OVER
+// ============================================================================
+function showGameOver(gs) {
+  showScreen('gameover');
+  const title = $('#gameover-title');
+  const msg = $('#gameover-message');
+  const details = $('#gameover-details');
+  
+  details.innerHTML = '';
+  
+  if (state.room.game_mode === 'sabotage') {
+    if (gs.winner === 'guards') {
+      title.textContent = 'Guards Win!';
+      msg.textContent = 'The missions were successfully protected.';
+    } else {
+      title.textContent = 'Saboteurs Win!';
+      msg.textContent = 'Chaos reigns supreme.';
+    }
+    
+    const sabs = state.players.filter(p => p.role === 'saboteur').map(p => p.nickname).join(', ');
+    details.innerHTML = `<p>The Saboteurs were: <strong>${sabs}</strong></p>`;
+    
+  } else if (state.room.game_mode === 'auction') {
+    const winner = state.players.find(p => p.id === gs.winner);
+    title.textContent = winner ? `${winner.nickname} Wins!` : 'Everyone Died!';
+    msg.textContent = 'The auction has concluded.';
+    
+    let standings = '<h3>Final Standings</h3><ul class="standings-list">';
+    const sorted = [...state.players].sort((a,b) => b.hp - a.hp);
+    sorted.forEach(p => {
+      standings += `<li>${p.nickname}: ${p.hp} HP</li>`;
+    });
+    standings += '</ul>';
+    details.innerHTML = standings;
+  }
+  
+  const lobbyBtn = $('#gameover-lobby-btn');
+  if (state.isHost) {
+    lobbyBtn.style.display = 'block';
+  } else {
+    lobbyBtn.style.display = 'none';
+  }
+}
+
+async function handlePlayAgain() {
+  if (!state.isHost) return;
+  
+  await db.from('players').update({ 
+    role: null, 
+    hp: 100, 
+    is_alive: true, 
+    vote: null, 
+    bid: null 
+  }).eq('room_code', state.roomCode);
+  
+  await db.from('rooms').update({ 
+    status: 'lobby', 
+    game_mode: null, 
+    game_state: null 
+  }).eq('code', state.roomCode);
+}
+
+// ============================================================================
+// 14. EVENT LISTENERS
+// ============================================================================
+function bindEventListeners() {
+  // Nickname
+  $('#nickname-btn')?.addEventListener('click', handleNicknameSubmit);
+  $('#nickname-input')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleNicknameSubmit();
+  });
+  
+  // Menu
+  $('#create-room-btn')?.addEventListener('click', handleCreateRoom);
+  $('#join-submit-btn')?.addEventListener('click', handleJoinRoom);
+  $('#join-code-input')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleJoinRoom();
+  });
+  
+  // Lobby
+  $('#copy-code-btn')?.addEventListener('click', () => {
+    if (state.roomCode) {
+      navigator.clipboard.writeText(state.roomCode);
+      showToast('Room code copied to clipboard!', 'success');
+    }
+  });
+  
+  $$('.mode-card').forEach(card => {
+    card.addEventListener('click', () => handleGameModeSelect(card.dataset.mode));
+  });
+  
+  $('#start-game-btn')?.addEventListener('click', handleStartGame);
+  $('#leave-room-btn')?.addEventListener('click', handleLeaveRoom);
+  
+  // Game Over
+  $('#gameover-lobby-btn')?.addEventListener('click', handlePlayAgain);
+}
