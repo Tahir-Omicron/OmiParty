@@ -153,7 +153,10 @@ async function handleRegister() {
   if (!email || !password || !nickname) return showToast('Please fill all fields.', 'error');
   
   const { data, error } = await db.auth.signUp({
-    email, password, options: { data: { nickname } }
+    email, password, options: { 
+      data: { nickname },
+      emailRedirectTo: 'https://omi-party.vercel.app/'
+    }
   });
   if (error) return showToast(error.message, 'error');
   
@@ -211,16 +214,24 @@ async function handleCreateRoom() {
     
     if (roomError) throw roomError;
 
-    const { error: playerError } = await db.from('players').upsert({
+    const playerData = {
       id: state.playerId,
       room_code: code,
       nickname: state.nickname,
       is_host: true,
       avatar_url: state.profile?.avatar_url,
       level: state.profile?.level || 1
-    });
+    };
+
+    const { error: playerError } = await db.from('players').upsert(playerData);
     
-    if (playerError) throw playerError;
+    if (playerError) {
+      console.warn("Upsert with avatar failed, trying without (SQL not updated?):", playerError);
+      delete playerData.avatar_url;
+      delete playerData.level;
+      const { error: fallbackError } = await db.from('players').upsert(playerData);
+      if (fallbackError) throw fallbackError;
+    }
 
     state.isHost = true;
     enterLobby(code);
@@ -256,20 +267,26 @@ async function handleJoinRoom() {
     }
     
     // Attempt to insert player
-    const { error: playerError } = await db.from('players').upsert({
+    const playerData = {
       id: state.playerId,
       room_code: code,
       nickname: state.nickname,
       is_host: false,
       avatar_url: state.profile?.avatar_url,
       level: state.profile?.level || 1
-    });
+    };
+    
+    const { error: playerError } = await db.from('players').upsert(playerData);
     
     // If it fails with a duplicate key, they are already in the room. Just proceed.
-    if (playerError && playerError.code !== '23505') { 
-      throw playerError;
+    if (playerError && playerError.code !== '23505') {
+      console.warn("Upsert with avatar failed, trying without:", playerError);
+      delete playerData.avatar_url;
+      delete playerData.level;
+      const { error: fallbackError } = await db.from('players').upsert(playerData);
+      if (fallbackError && fallbackError.code !== '23505') throw fallbackError;
     }
-
+    
     state.isHost = false;
     enterLobby(code);
     
@@ -423,7 +440,7 @@ async function handleAddBot() {
   const botAvatar = `https://api.dicebear.com/7.x/bottts/svg?seed=${botName}`;
     
   try {
-    await db.from('players').insert({
+    const botData = {
       id: botId,
       room_code: state.roomCode,
       nickname: botName,
@@ -431,10 +448,19 @@ async function handleAddBot() {
       is_bot: true,
       avatar_url: botAvatar,
       level: botLevel
-    });
+    };
+    
+    const { error } = await db.from('players').insert(botData);
+    if (error) {
+      console.warn("Bot insert with avatar failed, trying without:", error);
+      delete botData.avatar_url;
+      delete botData.level;
+      const { error: fallbackError } = await db.from('players').insert(botData);
+      if (fallbackError) throw fallbackError;
+    }
   } catch (err) {
     console.error('Error adding bot:', err);
-    showToast('Failed to add bot', 'error');
+    showToast('Failed to add bot.', 'error');
   }
 }
 
