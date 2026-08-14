@@ -1240,3 +1240,50 @@ input:checked + .slider:before {
   border-radius: 50%;
 }
 
+
+.lobby-chat-container {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 10px;
+    margin: 20px 0;
+    display: flex;
+    flex-direction: column;
+    height: 180px;
+}
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding-right: 5px;
+    text-align: left;
+    font-size: 0.9rem;
+}
+.chat-message {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 6px 10px;
+    border-radius: 8px;
+    word-break: break-word;
+}
+.chat-message .sender {
+    font-weight: bold;
+    color: var(--accent-cyan);
+    margin-right: 5px;
+}
+.chat-input-wrapper {
+    display: flex;
+    gap: 8px;
+}
+.chat-input-wrapper input {
+    flex: 1;
+    margin: 0;
+    padding: 8px 12px;
+    background: rgba(0,0,0,0.3);
+}
+.chat-input-wrapper button {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+}

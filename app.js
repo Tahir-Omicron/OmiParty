@@ -425,7 +425,7 @@ function renderLobby() {
     
     card.appendChild(avatar);
     card.appendChild(name);
-    container.appendChild(card);
+    list.appendChild(card);
   });
   
   const count = state.players.length;
@@ -549,26 +549,27 @@ async function handleLeaveRoom() {
   localStorage.removeItem('otaq_current_room');
   showScreen('menu');
 }
-
-// ============================================================================
 // 9. REALTIME SUBSCRIPTIONS
 // ============================================================================
 function subscribeToRoom(roomCode) {
-  const channel = db.channel(`room-${roomCode}`)
-    .on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'rooms',
-      filter: `code=eq.${roomCode}`
-    }, handleRoomChange)
+  state.channel = db.channel(`room:${roomCode}`)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms', filter: `code=eq.${roomCode}` }, handleRoomChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'players', filter: `room_code=eq.${roomCode}` }, handlePlayersChange)
+    .on('broadcast', { event: 'chat_message' }, (payload) => {
+      if (payload.payload) {
+        appendChatMessage(payload.payload.sender, payload.payload.text);
+      }
+    })
     .on('broadcast', { event: 'state_update' }, (payload) => {
       if (payload.payload && state.room) {
         state.room.game_state = payload.payload;
         onGameStateUpdate(payload.payload);
       }
     })
-    .subscribe();
-  state.channels.push(channel);
+    .subscribe((status) => {
+      console.log('Subscription status:', status);
+    });
+  state.channels.push(state.channel);
 }
 
 // Ultra-fast optimistic UI & broadcast update to bypass Postgres latency
@@ -603,6 +604,44 @@ function subscribeToPlayers(roomCode) {
 function unsubscribeAll() {
   state.channels.forEach(ch => db.removeChannel(ch));
   state.channels = [];
+}
+
+function sendChatMessage() {
+  const input = $('#lobby-chat-input');
+  if (!input || !input.value.trim()) return;
+  const text = input.value.trim();
+  input.value = '';
+  
+  if (state.channel) {
+    state.channel.send({
+      type: 'broadcast',
+      event: 'chat_message',
+      payload: { sender: state.nickname, text: text }
+    });
+  }
+  // Show locally immediately
+  appendChatMessage(state.nickname, text);
+}
+
+function appendChatMessage(sender, text) {
+  const messagesDiv = $('#lobby-chat-messages');
+  if (!messagesDiv) return;
+  
+  const msgDiv = document.createElement('div');
+  msgDiv.className = 'chat-message';
+  
+  const senderSpan = document.createElement('span');
+  senderSpan.className = 'sender';
+  senderSpan.textContent = sender + ':';
+  
+  const textSpan = document.createElement('span');
+  textSpan.textContent = text;
+  
+  msgDiv.appendChild(senderSpan);
+  msgDiv.appendChild(textSpan);
+  messagesDiv.appendChild(msgDiv);
+  
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
 function handleRoomChange(payload) {
@@ -1644,6 +1683,12 @@ function bindEventListeners() {
   $('#logout-btn')?.addEventListener('click', handleLogout);
   $('#join-code-input')?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') handleJoinRoom();
+  });
+  
+  // Lobby Chat
+  $('#lobby-chat-send')?.addEventListener('click', sendChatMessage);
+  $('#lobby-chat-input')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendChatMessage();
   });
   
   // Lobby
