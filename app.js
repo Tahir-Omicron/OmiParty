@@ -190,6 +190,9 @@ function processGuestLogin() {
   
   state.playerId = crypto.randomUUID();
   state.nickname = nickname.substring(0, 16) || 'Guest';
+  localStorage.setItem('otaq_player_id', state.playerId);
+  localStorage.setItem('otaq_nickname', state.nickname);
+  
   state.profile = { level: 1, xp: 0, avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${state.playerId}` };
   
   if ($('#menu-nickname')) {
@@ -265,6 +268,9 @@ window.updateUserAvatar = async function(src) {
 // ============================================================================
 async function handleCreateRoom() {
   const code = generateRoomCode();
+  state.playerId = state.playerId || getPlayerId();
+  state.nickname = state.nickname || localStorage.getItem('otaq_nickname') || ('Player_' + Math.floor(Math.random() * 1000));
+  
   try {
     const { error: roomError } = await db.from('rooms').insert({
       code: code,
@@ -279,14 +285,14 @@ async function handleCreateRoom() {
       room_code: code,
       nickname: state.nickname,
       is_host: true,
-      avatar_url: state.profile?.avatar_url,
+      avatar_url: state.profile?.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${state.playerId}`,
       level: state.profile?.level || 1
     };
 
     const { error: playerError } = await db.from('players').upsert(playerData);
     
     if (playerError) {
-      console.warn("Upsert with avatar failed, trying without (SQL not updated?):", playerError);
+      console.warn("Upsert with avatar failed, trying without:", playerError);
       delete playerData.avatar_url;
       delete playerData.level;
       const { error: fallbackError } = await db.from('players').upsert(playerData);
@@ -294,25 +300,24 @@ async function handleCreateRoom() {
     }
 
     state.isHost = true;
-    enterLobby(code);
+    await enterLobby(code);
     
   } catch (err) {
     console.error('Error creating room:', err);
-    showToast('Failed to create room. Please try again.', 'error');
+    showToast(isAz() ? 'Otaq yaradılmadı. Zəhmət olmasa yenidən cəhd edin.' : 'Failed to create room. Please try again.', 'error');
   }
 }
 
 async function handleJoinRoom() {
   const input = $('#join-code-input');
-  const code = input.value.toUpperCase().trim();
+  const code = input ? input.value.toUpperCase().trim() : '';
   
   if (code.length !== 5) {
-    showToast('Room code must be 5 characters.', 'error');
+    showToast(isAz() ? 'Otaq kodu 5 simvol olmalıdır.' : 'Room code must be 5 characters.', 'error');
     return;
   }
   
   try {
-    // Check if room exists and is in lobby
     const { data: rooms, error: roomError } = await db
       .from('rooms')
       .select('*')
@@ -322,37 +327,35 @@ async function handleJoinRoom() {
     if (roomError) throw roomError;
     
     if (!rooms || rooms.length === 0) {
-      showToast('Room not found or game already started.', 'error');
+      showToast(isAz() ? 'Otaq tapılmadı və ya oyun artıq başlayıb.' : 'Room not found or game already started.', 'error');
       return;
     }
     
-    // Attempt to insert player
+    state.playerId = state.playerId || getPlayerId();
+    state.nickname = state.nickname || localStorage.getItem('otaq_nickname') || ('Player_' + Math.floor(Math.random() * 1000));
+    
     const playerData = {
       id: state.playerId,
       room_code: code,
       nickname: state.nickname,
       is_host: false,
-      avatar_url: state.profile?.avatar_url,
+      avatar_url: state.profile?.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${state.playerId}`,
       level: state.profile?.level || 1
     };
     
     const { error: playerError } = await db.from('players').upsert(playerData);
-    
-    // If it fails with a duplicate key, they are already in the room. Just proceed.
-    if (playerError && playerError.code !== '23505') {
-      console.warn("Upsert with avatar failed, trying without:", playerError);
+    if (playerError) {
       delete playerData.avatar_url;
       delete playerData.level;
-      const { error: fallbackError } = await db.from('players').upsert(playerData);
-      if (fallbackError && fallbackError.code !== '23505') throw fallbackError;
+      await db.from('players').upsert(playerData);
     }
     
     state.isHost = false;
-    enterLobby(code);
+    await enterLobby(code);
     
   } catch (err) {
     console.error('Error joining room:', err);
-    showToast('Failed to join room.', 'error');
+    showToast(isAz() ? 'Otağa qoşulmaq mümkün olmadı.' : 'Failed to join room.', 'error');
   }
 }
 
@@ -363,14 +366,24 @@ async function enterLobby(roomCode) {
   state.roomCode = roomCode;
   localStorage.setItem('otaq_current_room', roomCode);
   
-  $('#lobby-code').textContent = roomCode;
+  const roomCodeBadge = $('#lobby-room-code') || $('#lobby-code');
+  if (roomCodeBadge) {
+    roomCodeBadge.textContent = roomCode;
+  }
   
   // Host UI setup
-  const hostControls = $('#lobby-host-controls');
+  const addBotBtn = $('#add-bot-btn');
+  const startGameBtn = $('#start-game-btn');
+  const hardcoreContainer = $('#hardcore-container') || document.querySelector('.hardcore-toggle-container');
+  
   if (state.isHost) {
-    hostControls.style.display = 'flex';
+    if (addBotBtn) addBotBtn.style.display = 'inline-flex';
+    if (startGameBtn) startGameBtn.style.display = 'block';
+    if (hardcoreContainer) hardcoreContainer.style.display = 'flex';
   } else {
-    hostControls.style.display = 'none';
+    if (addBotBtn) addBotBtn.style.display = 'none';
+    if (startGameBtn) startGameBtn.style.display = 'none';
+    if (hardcoreContainer) hardcoreContainer.style.display = 'none';
   }
 
   // Initial data fetch
@@ -400,15 +413,24 @@ async function fetchRoomAndPlayers() {
 }
 
 function renderLobby() {
-  if (!$('#lobby-players')) return; // Ensure we are on index.html
+  const list = $('#lobby-players-list') || $('#lobby-players');
+  if (!list) return;
   
-  const list = $('#lobby-players');
   list.innerHTML = '';
   
   // Show host-only controls
-  const hardcoreContainer = document.querySelector('.hardcore-toggle-container');
-  if (hardcoreContainer) {
-    hardcoreContainer.style.display = state.isHost ? 'flex' : 'none';
+  const addBotBtn = $('#add-bot-btn');
+  const startGameBtn = $('#start-game-btn');
+  const hardcoreContainer = $('#hardcore-container') || document.querySelector('.hardcore-toggle-container');
+  
+  if (state.isHost) {
+    if (addBotBtn) addBotBtn.style.display = 'inline-flex';
+    if (startGameBtn) startGameBtn.style.display = 'block';
+    if (hardcoreContainer) hardcoreContainer.style.display = 'flex';
+  } else {
+    if (addBotBtn) addBotBtn.style.display = 'none';
+    if (startGameBtn) startGameBtn.style.display = 'none';
+    if (hardcoreContainer) hardcoreContainer.style.display = 'none';
   }
   
   state.players.forEach(player => {
@@ -462,11 +484,14 @@ function renderLobby() {
   else if (state.selectedMode === 'canvas') { required = MIN_PLAYERS_CANVAS; modeLabel = 'Canvas'; }
   else if (state.selectedMode === 'wordbomb') { required = MIN_PLAYERS_WORDBOMB; modeLabel = 'Wordbomb'; }
   
-  let countText = `${count} Player${count !== 1 ? 's' : ''} connected`;
-  if (state.isHost && state.selectedMode && count < required) {
-    countText += ` — Need ${required - count} more for ${modeLabel}`;
+  const playerCountEl = $('#lobby-player-count');
+  if (playerCountEl) {
+    let countText = isAz() ? `${count} Oyunçu qoşuldu` : `${count} Player${count !== 1 ? 's' : ''} connected`;
+    if (state.isHost && state.selectedMode && count < required) {
+      countText += isAz() ? ` — ${modeLabel} üçün daha ${required - count} oyunçu lazımdır` : ` — Need ${required - count} more for ${modeLabel}`;
+    }
+    playerCountEl.textContent = countText;
   }
-  $('#lobby-player-count').textContent = countText;
   
   const startBtn = $('#start-game-btn');
   if (startBtn) {
