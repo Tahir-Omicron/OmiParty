@@ -337,7 +337,9 @@
             renderAvatarGrid();
         }
         async function selectAvatar(src) {
-            document.getElementById('profile-avatar').src = src;
+            const profileAvatar = document.getElementById('profile-avatar');
+            if (profileAvatar) profileAvatar.src = src;
+            localStorage.setItem('otaq_avatar_url', src);
             document.getElementById('avatar-modal').style.display = 'none';
             if (window.updateUserAvatar) window.updateUserAvatar(src);
         }

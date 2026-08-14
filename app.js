@@ -126,6 +126,33 @@ async function init() {
   const { data: { session } } = await db.auth.getSession();
   if (session && session.user) {
     await finishAuth(session.user);
+  } else {
+    // Restore guest session if present
+    const savedPlayerId = localStorage.getItem('otaq_player_id');
+    const savedNickname = localStorage.getItem('otaq_nickname');
+    const savedAvatar = localStorage.getItem('otaq_avatar_url');
+    
+    if (savedPlayerId && savedNickname) {
+      state.playerId = savedPlayerId;
+      state.nickname = savedNickname;
+      state.profile = { 
+        level: 1, 
+        xp: 0, 
+        avatar_url: savedAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${savedPlayerId}` 
+      };
+      
+      if ($('#menu-nickname')) {
+        $('#menu-nickname').textContent = state.nickname;
+        $('#profile-level').textContent = '1';
+        $('#profile-avatar').src = state.profile.avatar_url;
+        $('#profile-xp-bar').style.width = '0%';
+      }
+      
+      const path = window.location.pathname;
+      if (path === '/' || path.endsWith('index.html') || path.endsWith('index-az.html')) {
+        showScreen('menu');
+      }
+    }
   }
   
   const urlParams = new URLSearchParams(window.location.search);
@@ -193,7 +220,9 @@ function processGuestLogin() {
   localStorage.setItem('otaq_player_id', state.playerId);
   localStorage.setItem('otaq_nickname', state.nickname);
   
-  state.profile = { level: 1, xp: 0, avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${state.playerId}` };
+  const savedAvatar = localStorage.getItem('otaq_avatar_url') || `https://api.dicebear.com/7.x/bottts/svg?seed=${state.playerId}`;
+  state.profile = { level: 1, xp: 0, avatar_url: savedAvatar };
+  localStorage.setItem('otaq_avatar_url', savedAvatar);
   
   if ($('#menu-nickname')) {
     $('#menu-nickname').textContent = state.nickname;
@@ -214,10 +243,16 @@ async function finishAuth(user) {
   // Wait a sec for the trigger to insert the profile if they just registered
   await new Promise(r => setTimeout(r, 1000));
   
+  const savedLocalAvatar = localStorage.getItem('otaq_avatar_url');
   const { data: profile } = await db.from('profiles').select('*').eq('id', user.id).single();
   if (profile) {
     state.nickname = profile.nickname;
     state.profile = profile;
+    if (savedLocalAvatar && !profile.avatar_url) {
+      state.profile.avatar_url = savedLocalAvatar;
+      db.from('profiles').update({ avatar_url: savedLocalAvatar }).eq('id', user.id);
+    }
+    localStorage.setItem('otaq_avatar_url', state.profile.avatar_url);
     
     if ($('#menu-nickname')) {
       $('#menu-nickname').textContent = state.nickname;
@@ -229,7 +264,9 @@ async function finishAuth(user) {
   } else {
     // Fallback if SQL trigger failed or hasn't run yet
     state.nickname = user.user_metadata?.nickname || 'Player';
-    state.profile = { level: 1, xp: 0, avatar_url: 'https://api.dicebear.com/7.x/bottts/svg?seed=default' };
+    const fallbackAvatar = savedLocalAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.id}`;
+    state.profile = { level: 1, xp: 0, avatar_url: fallbackAvatar };
+    localStorage.setItem('otaq_avatar_url', fallbackAvatar);
     
     if ($('#menu-nickname')) {
       $('#menu-nickname').textContent = state.nickname;
@@ -254,13 +291,37 @@ async function handleLogout() {
 }
 
 window.updateUserAvatar = async function(src) {
-    if(!state.profile) return;
-    await db.from('profiles').update({ avatar_url: src }).eq('id', state.playerId);
+    state.profile = state.profile || { level: 1, xp: 0 };
     state.profile.avatar_url = src;
-    $('#profile-avatar').src = src;
-    if(state.roomCode) {
-        db.from('players').update({ avatar_url: src }).eq('id', state.playerId);
+    localStorage.setItem('otaq_avatar_url', src);
+    
+    if ($('#profile-avatar')) {
+      $('#profile-avatar').src = src;
     }
+    
+    // Update profiles table if authenticated
+    try {
+      const { data: { session } } = await db.auth.getSession();
+      if (session && session.user && state.playerId === session.user.id) {
+        await db.from('profiles').update({ avatar_url: src }).eq('id', state.playerId);
+      }
+    } catch(e) {
+      console.warn("Profile update ignored:", e);
+    }
+    
+    // Update players table if in a room
+    if (state.roomCode && state.playerId) {
+      await db.from('players').update({ avatar_url: src }).eq('id', state.playerId).eq('room_code', state.roomCode);
+      if (state.players) {
+        const me = state.players.find(p => p.id === state.playerId);
+        if (me) {
+          me.avatar_url = src;
+          renderLobby();
+        }
+      }
+    }
+    
+    showToast(isAz() ? 'Profil şəkli yadda saxlanıldı!' : 'Profile avatar saved!', 'success');
 }
 
 // ============================================================================
@@ -456,6 +517,14 @@ function renderLobby() {
     const name = document.createElement('span');
     name.className = 'player-name';
     name.textContent = player.nickname;
+    
+    if (player.id === state.playerId) {
+      avatar.style.cursor = 'pointer';
+      avatar.title = isAz() ? 'Avatarı dəyişmək üçün klikləyin' : 'Click to change avatar';
+      avatar.onclick = () => {
+        if (typeof showAvatarModal === 'function') showAvatarModal();
+      };
+    }
     
     card.appendChild(avatar);
     card.appendChild(name);
