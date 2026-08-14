@@ -99,7 +99,7 @@ async function resumeGame(code) {
   state.roomCode = code;
   const { data: room, error } = await db.from('rooms').select('*').eq('code', code).single();
   if (error || !room) {
-    window.location.href = 'index.html';
+    window.location.href = isAz() ? 'index-az.html' : 'index.html';
     return;
   }
   state.room = room;
@@ -110,7 +110,13 @@ async function resumeGame(code) {
   
   subscribeToRoom(code);
   subscribeToPlayers(code);
-  onGameStateUpdate(state.room.game_state);
+  
+  if (state.room.status === 'playing' && state.room.game_state) {
+    onGameStateUpdate(state.room.game_state);
+  } else {
+    let indexHtml = isAz() ? 'index-az.html' : 'index.html';
+    window.location.href = `${indexHtml}?code=${code}`;
+  }
 }
 
 async function init() {
@@ -119,18 +125,12 @@ async function init() {
   // Always fetch session first so state.playerId is populated
   const { data: { session } } = await db.auth.getSession();
   if (session && session.user) {
-    // This sets state.playerId, state.profile, etc.
     await finishAuth(session.user);
   }
   
   const urlParams = new URLSearchParams(window.location.search);
   const code = urlParams.get('code');
   if (code) {
-    // If returning via URL (e.g. sabotage.html?code=...), resume the game
-    if (!state.playerId) {
-      window.location.href = 'index.html'; // Must be logged in to resume
-      return;
-    }
     await resumeGame(code);
     return;
   }
@@ -892,6 +892,7 @@ async function startSabotageGame() {
   // Assign roles
   let hasAssassin = false;
   let hasDetective = false;
+  const rolesMap = {};
   for (let i = 0; i < shuffled.length; i++) {
     let role = 'guard';
     if (i < sabsCount) {
@@ -901,8 +902,11 @@ async function startSabotageGame() {
       role = !hasDetective ? 'detective' : 'guard';
       hasDetective = true;
     }
-    await db.from('players').update({ role }).eq('id', shuffled[i].id);
+    shuffled[i].role = role;
+    rolesMap[shuffled[i].id] = role;
+    db.from('players').update({ role }).eq('id', shuffled[i].id);
   }
+  state.players = shuffled;
   
   const gs = {
     phase: 'role_reveal',
@@ -914,7 +918,8 @@ async function startSabotageGame() {
     history: [],
     winner: null,
     detective_used: false,
-    assassin_target: null
+    assassin_target: null,
+    roles: rolesMap
   };
   
   await fastUpdateGameState(gs, {
@@ -923,7 +928,7 @@ async function startSabotageGame() {
   });
   
   setTimeout(() => {
-    if (state.isHost && state.room.status === 'playing') {
+    if (state.isHost && state.room && state.room.status === 'playing') {
       const gsPhase2 = { ...gs, phase: 'detective_phase' };
       fastUpdateGameState(gsPhase2);
     }
@@ -934,7 +939,7 @@ function handleSabotageState(gs) {
   switch (gs.phase) {
     case 'role_reveal':
       showScreen('sabotage');
-      renderRoleReveal();
+      renderRoleReveal(gs);
       break;
     case 'detective_phase':
       showScreen('sabotage');
@@ -1082,47 +1087,51 @@ function handleSabotageState(gs) {
   }
 }
 
-function renderRoleReveal() {
+function renderRoleReveal(gs) {
   const me = state.players.find(p => p.id === state.playerId);
-  if (!me) return;
-  const isSab = me.role === 'saboteur' || me.role === 'assassin';
+  const myRole = (gs && gs.roles && gs.roles[state.playerId]) || me?.role || 'guard';
+  const isSab = myRole === 'saboteur' || myRole === 'assassin';
   
   let iconSvg = `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>`;
   let title = t('guard_title');
   let desc = t('guard_desc');
   
-  if (me.role === 'saboteur') {
+  if (myRole === 'saboteur') {
     iconSvg = `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m14 13-7.5 7.5c-.8.8-2 .8-2.8 0l-.2-.2c-.8-.8-.8-2 0-2.8L11 10"></path><path d="m16 16 6-6"></path><path d="m8 8 6-6"></path><path d="m9 7 8 8"></path><path d="m21 11-8-8"></path></svg>`;
     title = t('saboteur_title');
     desc = t('saboteur_desc');
-  } else if (me.role === 'assassin') {
+  } else if (myRole === 'assassin') {
     iconSvg = `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="12" r="1"></circle><circle cx="15" cy="12" r="1"></circle><path d="M8 20v2h8v-2"></path><path d="m12.5 17-.5-1-.5 1h1z"></path><path d="M16 20a4 4 0 0 0 4-4V9a8 8 0 0 0-16 0v7a4 4 0 0 0 4 4z"></path></svg>`;
     title = t('assassin_title');
     desc = t('assassin_desc');
-  } else if (me.role === 'detective') {
+  } else if (myRole === 'detective') {
     iconSvg = `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>`;
     title = t('detective_title');
     desc = t('detective_desc');
   }
   
-  $('#sabotage-round-info').textContent = t('round_of', 1);
+  const roundInfo = $('#sabotage-round-info');
+  if (roundInfo) roundInfo.textContent = t('round_of', (gs && gs.round) || 1);
   
-  $('#sabotage-main-area').innerHTML = `
-    <div class="phase-panel" style="display:flex;flex-direction:column;align-items:center;padding:1.5rem 1rem;gap:1.25rem;">
-      <div style="background:rgba(255,255,255,0.05);padding:6px 16px;border-radius:20px;border:1px solid var(--glass-border);font-size:0.85rem;font-weight:600;color:var(--accent-cyan);display:flex;align-items:center;gap:8px;">
-        <span class="spinner" style="width:14px;height:14px;border-width:2px;"></span>
-        ${t('game_starting_in', 3)}
-      </div>
-      
-      <div id="sabotage-role-card" class="role-card ${me.role}">
-        <div class="role-icon" style="color:${isSab ? 'var(--accent-red)' : 'var(--accent-cyan)'};">
-          ${iconSvg}
+  const mainArea = $('#sabotage-main-area');
+  if (mainArea) {
+    mainArea.innerHTML = `
+      <div class="phase-panel" style="display:flex;flex-direction:column;align-items:center;padding:1.5rem 1rem;gap:1.25rem;">
+        <div style="background:rgba(255,255,255,0.05);padding:6px 16px;border-radius:20px;border:1px solid var(--glass-border);font-size:0.85rem;font-weight:600;color:var(--accent-cyan);display:flex;align-items:center;gap:8px;">
+          <span class="spinner" style="width:14px;height:14px;border-width:2px;"></span>
+          ${t('game_starting_in', 3)}
         </div>
-        <div class="role-name" style="color:${isSab ? 'var(--accent-red)' : 'var(--accent-cyan)'};">${title}</div>
-        <div class="role-desc">${desc}</div>
+        
+        <div id="sabotage-role-card" class="role-card ${myRole}">
+          <div class="role-icon" style="color:${isSab ? 'var(--accent-red)' : 'var(--accent-cyan)'};">
+            ${iconSvg}
+          </div>
+          <div class="role-name" style="color:${isSab ? 'var(--accent-red)' : 'var(--accent-cyan)'};">${title}</div>
+          <div class="role-desc">${desc}</div>
+        </div>
       </div>
-    </div>
-  `;
+    `;
+  }
 }
 
 function renderSabotageScoreboard(gs) {

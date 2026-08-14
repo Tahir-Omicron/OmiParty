@@ -1,9 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">    <title>Sabotage - Otaq.gg</title>
+    <title>Sabotage - Otaq.gg</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -18,11 +19,15 @@
                 <div id="sabotage-scoreboard" class="scoreboard"></div>
                 <div id="sabotage-round-info" class="round-info"></div>
             </div>
-            <div id="sabotage-main-area" class="game-main-area"></div>
+            <div id="sabotage-main-area" class="game-main-area">
+                <div class="waiting-msg" style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:3rem;">
+                    <div class="spinner"></div>
+                    <p style="color:var(--text-secondary);">Loading game...</p>
+                </div>
+            </div>
         </div>
     </div>
     
-    <!-- Game Over Screen is shared or local? Local to the game page. -->
     <div class="screen" data-screen="gameover">
         <div class="glass-panel gameover-panel text-center">
             <h1 id="gameover-title" class="gameover-title"></h1>
@@ -38,7 +43,3 @@
     <script src="wordbomb-game.js"></script>
 </body>
 </html>
-
-
-
-
