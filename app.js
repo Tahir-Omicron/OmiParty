@@ -89,6 +89,13 @@ function showScreen(screenName) {
   if (target) {
     target.classList.add('active');
   }
+  
+  // Cleanly toggle top action bar buttons based on auth state
+  const profileBtn = $('#profile-header-btn');
+  const friendsBtn = $('#friends-btn');
+  const isAuth = (screenName === 'auth');
+  if (profileBtn) profileBtn.style.display = isAuth ? 'none' : 'inline-flex';
+  if (friendsBtn) friendsBtn.style.display = isAuth ? 'none' : 'inline-flex';
 }
 
 // Utilities moved to shared.js
@@ -202,7 +209,13 @@ async function handleRegister() {
 }
 
 function handleGuestLogin() {
-  let defaultName = 'Guest_' + Math.floor(Math.random() * 1000);
+  const azNames = ['XaosKralı', 'BombaUstası', 'Dedektiv', 'ŞənRəssam', 'GizliXain', 'CyberQəhrəman', 'QalibOyunçu', 'Partiyaçı', 'NeonNinja'];
+  const enNames = ['ChaosKing', 'BombMaster', 'Detective', 'ArtWhiz', 'SecretFaker', 'CyberHero', 'Victor', 'PartyPro', 'NeonNinja'];
+  const pool = isAz() ? azNames : enNames;
+  const randPrefix = pool[Math.floor(Math.random() * pool.length)];
+  const randNum = Math.floor(10 + Math.random() * 90);
+  const defaultName = `${randPrefix}_${randNum}`;
+
   const input = $('#guest-nickname-input');
   if (input) {
       input.value = defaultName;
@@ -223,6 +236,13 @@ function processGuestLogin() {
   const savedAvatar = localStorage.getItem('otaq_avatar_url') || `https://api.dicebear.com/7.x/bottts/svg?seed=${state.playerId}`;
   state.profile = { level: 1, xp: 0, avatar_url: savedAvatar };
   localStorage.setItem('otaq_avatar_url', savedAvatar);
+  
+  if (typeof getUserProfile === 'function' && typeof saveUserProfile === 'function') {
+    const p = getUserProfile();
+    p.nickname = state.nickname;
+    p.avatar_url = savedAvatar;
+    saveUserProfile(p);
+  }
   
   if ($('#menu-nickname')) {
     $('#menu-nickname').textContent = state.nickname;
