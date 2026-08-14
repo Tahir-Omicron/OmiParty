@@ -1076,9 +1076,32 @@ function handleSabotageState(gs) {
     case 'role_reveal':
       showScreen('sabotage');
       renderRoleReveal(gs);
+      if (state.isHost && !state.sabotageRoleTimeout) {
+        state.sabotageRoleTimeout = setTimeout(() => {
+          state.sabotageRoleTimeout = null;
+          const currentGs = state.room?.game_state;
+          if (currentGs && currentGs.phase === 'role_reveal') {
+            const hasDetective = state.players.some(p => p.role === 'detective');
+            if (hasDetective && !currentGs.detective_used) {
+              fastUpdateGameState({ ...currentGs, phase: 'detective_phase' });
+            } else {
+              startMissionBriefing(currentGs);
+            }
+          }
+        }, gs.is_hardcore ? 2500 : 3800);
+      }
       break;
     case 'detective_phase':
       showScreen('sabotage');
+      if (state.isHost && !state.sabotageDetectiveTimeout) {
+        state.sabotageDetectiveTimeout = setTimeout(() => {
+          state.sabotageDetectiveTimeout = null;
+          const currentGs = state.room?.game_state;
+          if (currentGs && currentGs.phase === 'detective_phase') {
+            startMissionBriefing(currentGs);
+          }
+        }, 4500);
+      }
       const detMe = state.players.find(p => p.id === state.playerId);
       if (detMe && detMe.role === 'detective' && !gs.detective_used) {
         const others = state.players.filter(p => p.id !== state.playerId);
@@ -1116,6 +1139,16 @@ function handleSabotageState(gs) {
       break;
     case 'assassin_phase':
       showScreen('sabotage');
+      if (state.isHost && !state.sabotageAssassinTimeout) {
+        state.sabotageAssassinTimeout = setTimeout(() => {
+          state.sabotageAssassinTimeout = null;
+          const currentGs = state.room?.game_state;
+          if (currentGs && currentGs.phase === 'assassin_phase') {
+            const winner = 'saboteurs';
+            fastUpdateGameState({ ...currentGs, phase: 'game_over', winner });
+          }
+        }, 8000);
+      }
       const assMe = state.players.find(p => p.id === state.playerId);
       if (assMe && assMe.role === 'assassin' && !gs.assassin_target) {
         const guards = state.players.filter(p => p.role !== 'saboteur' && p.role !== 'assassin');
@@ -1172,6 +1205,15 @@ function handleSabotageState(gs) {
           <p class="mission-instruction" style="color:var(--text-secondary);margin-top:1rem;">${isOnTeam ? t('on_team_prompt') : t('waiting_team')}</p>
         </div>
       `;
+      if (state.isHost && !state.sabotageBriefingTimeout) {
+        state.sabotageBriefingTimeout = setTimeout(() => {
+          state.sabotageBriefingTimeout = null;
+          const currentGs = state.room?.game_state;
+          if (currentGs && currentGs.phase === 'mission_briefing') {
+            fastUpdateGameState({ ...currentGs, phase: 'voting' });
+          }
+        }, gs.is_hardcore ? 2000 : 3500);
+      }
       break;
     case 'voting':
       state.voteCast = false;
@@ -1201,6 +1243,28 @@ function handleSabotageState(gs) {
           </div>
         `;
       }
+      if (state.isHost) {
+        if (state.sabotageVoteCheckInterval) clearInterval(state.sabotageVoteCheckInterval);
+        state.sabotageVoteCheckInterval = setInterval(async () => {
+          const currentGs = state.room?.game_state;
+          if (!currentGs || currentGs.phase !== 'voting') {
+            clearInterval(state.sabotageVoteCheckInterval);
+            state.sabotageVoteCheckInterval = null;
+            return;
+          }
+          const { data: players } = await db.from('players').select('*').eq('room_code', state.roomCode);
+          if (players) {
+            state.players = players;
+            const team = players.filter(p => currentGs.mission_team.includes(p.id));
+            const missing = team.filter(p => p.vote === null);
+            if (missing.length === 0 && team.length > 0) {
+              clearInterval(state.sabotageVoteCheckInterval);
+              state.sabotageVoteCheckInterval = null;
+              calculateMissionResult();
+            }
+          }
+        }, 600);
+      }
       break;
     case 'result':
       renderSabotageScoreboard(gs);
@@ -1208,6 +1272,8 @@ function handleSabotageState(gs) {
       const sabs = lastResult ? lastResult.sabotage_count : 0;
       const isSuccess = lastResult && lastResult.result === 'success';
       const resultColor = isSuccess ? 'var(--accent-green)' : 'var(--accent-red)';
+      if (isSuccess) playSound('win');
+      else playSound('bomb');
       $('#sabotage-main-area').innerHTML = `
         <div class="phase-panel" style="text-align:center;">
           <div class="result-card" style="background:var(--bg-surface);padding:2rem;border-radius:var(--radius-lg);border:1px solid var(--glass-border);max-width:400px;margin:0 auto;">
@@ -1255,7 +1321,7 @@ function renderRoleReveal(gs) {
       <div class="phase-panel" style="display:flex;flex-direction:column;align-items:center;padding:1.5rem 1rem;gap:1.25rem;">
         <div style="background:rgba(255,255,255,0.05);padding:6px 16px;border-radius:20px;border:1px solid var(--glass-border);font-size:0.85rem;font-weight:600;color:var(--accent-cyan);display:flex;align-items:center;gap:8px;">
           <span class="spinner" style="width:14px;height:14px;border-width:2px;"></span>
-          ${t('game_starting_in', 3)}
+          <span id="role-countdown-txt">${t('game_starting_in', 3)}</span>
         </div>
         
         <div id="sabotage-role-card" class="role-card ${myRole}">
@@ -1267,6 +1333,18 @@ function renderRoleReveal(gs) {
         </div>
       </div>
     `;
+    
+    let countdown = 3;
+    const cdTxt = document.getElementById('role-countdown-txt');
+    const cdInterval = setInterval(() => {
+      countdown--;
+      if (countdown > 0) {
+        if (cdTxt) cdTxt.textContent = t('game_starting_in', countdown);
+      } else {
+        if (cdTxt) cdTxt.textContent = isAz() ? 'Missiya başlayır...' : 'Starting mission...';
+        clearInterval(cdInterval);
+      }
+    }, 1000);
   }
 }
 
@@ -1287,8 +1365,9 @@ function renderSabotageScoreboard(gs) {
 }
 
 async function startMissionBriefing(overrideGs = null) {
-  const gs = overrideGs || state.room.game_state;
-  const size = gs.mission_sizes[gs.round - 1];
+  const gs = overrideGs || state.room?.game_state;
+  if (!gs) return;
+  const size = gs.mission_sizes[gs.round - 1] || 2;
   
   const shuffled = shuffleArray(state.players);
   const team = shuffled.slice(0, size).map(p => p.id);
@@ -1297,13 +1376,6 @@ async function startMissionBriefing(overrideGs = null) {
   
   const newGs = { ...gs, phase: 'mission_briefing', mission_team: team };
   await fastUpdateGameState(newGs);
-  
-  setTimeout(() => {
-    if (state.isHost && state.room.game_state.phase === 'mission_briefing') {
-      const gState = { ...state.room.game_state, phase: 'voting' };
-      fastUpdateGameState(gState);
-    }
-  }, 4000);
 }
 
 async function handleVote(voteValue) {
@@ -1313,7 +1385,7 @@ async function handleVote(voteValue) {
   $('#sabotage-main-area').innerHTML = `
     <div class="waiting-msg">
       <div class="spinner"></div>
-      <p>Vote cast! Waiting for others...</p>
+      <p>${isAz() ? 'Səsiniz qeydə alındı! Digərləri gözlənilir...' : 'Vote cast! Waiting for others...'}</p>
     </div>
   `;
   
@@ -1321,17 +1393,19 @@ async function handleVote(voteValue) {
 }
 
 async function checkAllVotesIn() {
-  const gs = state.room.game_state;
+  const gs = state.room?.game_state;
+  if (!gs || gs.phase !== 'voting') return;
   const team = state.players.filter(p => gs.mission_team.includes(p.id));
   const missing = team.filter(p => p.vote === null);
   
-  if (missing.length === 0) {
+  if (missing.length === 0 && team.length > 0) {
     calculateMissionResult();
   }
 }
 
 async function calculateMissionResult() {
-  const gs = state.room.game_state;
+  const gs = state.room?.game_state;
+  if (!gs) return;
   const team = state.players.filter(p => gs.mission_team.includes(p.id));
   
   let sabotageCount = 0;
@@ -1360,7 +1434,14 @@ async function calculateMissionResult() {
   setTimeout(() => {
     if (!state.isHost) return;
     if (gScore >= 3) {
-      fastUpdateGameState({ ...newGs, phase: 'assassin_phase' });
+      const hasAssassin = state.players.some(p => p.role === 'assassin');
+      if (hasAssassin) {
+        fastUpdateGameState({ ...newGs, phase: 'assassin_phase' });
+      } else {
+        fastUpdateGameState({ ...newGs, phase: 'game_over', winner: 'guards' });
+        const guardIds = state.players.filter(p => p.role !== 'saboteur' && p.role !== 'assassin').map(p => p.id);
+        window.distributeXP(guardIds);
+      }
     } else if (sScore >= 3) {
       fastUpdateGameState({ ...newGs, phase: 'game_over', winner: 'saboteurs' });
       const saboteurIds = state.players.filter(p => p.role === 'saboteur' || p.role === 'assassin').map(p => p.id);
@@ -1429,6 +1510,15 @@ function handleAuctionState(gs) {
       renderEventCard(gs.current_event);
       renderHPBars();
       $('#auction-round-info').textContent = `ROUND ${gs.round}`;
+      if (state.isHost && !state.auctionEventTimeout) {
+        state.auctionEventTimeout = setTimeout(() => {
+          state.auctionEventTimeout = null;
+          const currentGs = state.room?.game_state;
+          if (currentGs && currentGs.phase === 'event_reveal') {
+            startBiddingPhase();
+          }
+        }, 3800);
+      }
       break;
     case 'bidding':
       renderHPBars();
