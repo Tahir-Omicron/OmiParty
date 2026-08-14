@@ -210,6 +210,17 @@
         </div>
     </div>
 
+    <div id="guest-modal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10000; align-items:center; justify-content:center; backdrop-filter: blur(5px);">
+        <div class="glass-panel text-center" style="max-width: 350px; width: 90%;">
+            <h3 style="margin-top: 0;">Enter Nickname</h3>
+            <input type="text" id="guest-nickname-input" placeholder="Nickname" maxlength="16" autocomplete="off" style="margin: 15px 0;">
+            <div style="display:flex; gap:10px; justify-content:space-between;">
+                <button class="btn btn-secondary" style="flex:1;" onclick="document.getElementById('guest-modal').style.display='none'">Cancel</button>
+                <button id="guest-modal-submit" class="btn btn-primary" style="flex:1;">Play 🎲</button>
+            </div>
+        </div>
+    </div>
+
     <!-- App Logic (must load last) -->
     <script>
         function toggleAuthMode(mode) {

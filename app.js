@@ -176,11 +176,20 @@ async function handleRegister() {
 
 function handleGuestLogin() {
   let defaultName = 'Guest_' + Math.floor(Math.random() * 1000);
-  let nickname = prompt('Enter Nickname / Ləqəb daxil edin:', defaultName);
-  if (!nickname) return;
+  const input = $('#guest-nickname-input');
+  if (input) {
+      input.value = defaultName;
+      $('#guest-modal').style.display = 'flex';
+      input.focus();
+  }
+}
+
+function processGuestLogin() {
+  const input = $('#guest-nickname-input');
+  const nickname = input ? input.value.trim() : 'Guest';
   
   state.playerId = crypto.randomUUID();
-  state.nickname = nickname.trim().substring(0, 16);
+  state.nickname = nickname.substring(0, 16) || 'Guest';
   state.profile = { level: 1, xp: 0, avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${state.playerId}` };
   
   if ($('#menu-nickname')) {
@@ -190,6 +199,9 @@ function handleGuestLogin() {
     $('#profile-xp-bar').style.width = '0%';
   }
   
+  if ($('#guest-modal')) {
+      $('#guest-modal').style.display = 'none';
+  }
   showScreen('menu');
 }
 
@@ -1617,6 +1629,14 @@ function bindEventListeners() {
   $('#login-btn')?.addEventListener('click', handleLogin);
   $('#register-btn')?.addEventListener('click', handleRegister);
   $$('#guest-btn').forEach(btn => btn.addEventListener('click', handleGuestLogin));
+  
+  // Guest Modal
+  $$('#guest-modal-submit').forEach(btn => btn.addEventListener('click', processGuestLogin));
+  $$('#guest-nickname-input').forEach(input => {
+      input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') processGuestLogin();
+      });
+  });
   
   // Menu
   $('#create-room-btn')?.addEventListener('click', handleCreateRoom);
