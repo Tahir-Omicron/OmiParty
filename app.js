@@ -725,6 +725,11 @@ function subscribeToRoom(roomCode) {
         appendChatMessage(payload.payload.sender, payload.payload.text);
       }
     })
+    .on('broadcast', { event: 'reaction_emote' }, (payload) => {
+      if (payload.payload) {
+        showFloatingEmote(payload.payload.emoji, payload.payload.sender);
+      }
+    })
     .on('broadcast', { event: 'state_update' }, (payload) => {
       if (payload.payload && state.room) {
         state.room.game_state = payload.payload;
@@ -735,6 +740,47 @@ function subscribeToRoom(roomCode) {
       console.log('Subscription status:', status);
     });
   state.channels.push(state.channel);
+}
+
+// Global Reaction Emote Emitter
+window.sendReactionEmote = function(emoji) {
+  if (!state.roomCode) return;
+  playSound('click');
+  showFloatingEmote(emoji, state.nickname || 'You');
+  
+  if (state.channel) {
+    try {
+      state.channel.send({
+        type: 'broadcast',
+        event: 'reaction_emote',
+        payload: { emoji, sender: state.nickname || 'Player' }
+      });
+    } catch (e) {
+      console.warn("Emote broadcast error:", e);
+    }
+  }
+};
+
+function showFloatingEmote(emoji, sender) {
+  let container = document.querySelector('.floating-emote-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.className = 'floating-emote-container';
+    document.body.appendChild(container);
+  }
+
+  const el = document.createElement('div');
+  el.className = 'floating-emote';
+  const randomX = 15 + Math.random() * 70; // 15% to 85% width
+  el.style.left = `${randomX}%`;
+  
+  el.innerHTML = `
+    <span>${emoji}</span>
+    ${sender ? `<span class="floating-emote-sender">${sender}</span>` : ''}
+  `;
+  
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 2600);
 }
 
 // Ultra-fast optimistic UI & broadcast update to bypass Postgres latency
@@ -2044,16 +2090,27 @@ function bindEventListeners() {
   $('#gameover-lobby-btn')?.addEventListener('click', handlePlayAgain);
 }
 
-window.distributeXP = async function(winnersList) {
-  if (!state.isHost) return;
-  if (!winnersList || winnersList.length === 0) return;
+window.distributeXP = async function(winnersList, mode = 'party') {
+  const isMeWinner = Array.isArray(winnersList) ? winnersList.includes(state.playerId) : (winnersList === state.playerId);
+  const xpEarned = isMeWinner ? 150 : 50;
+  const coinsEarned = isMeWinner ? 50 : 15;
   
-  for (const id of winnersList) {
-    const { data: profile } = await db.from('profiles').select('xp, level').eq('id', id).single();
-    if (profile) {
-      const newXp = profile.xp + 50;
-      const newLevel = Math.min(100, Math.floor(Math.sqrt(newXp / 100)) + 1);
-      await db.from('profiles').update({ xp: newXp, level: newLevel }).eq('id', id);
+  if (typeof window.recordGameResult === 'function') {
+    window.recordGameResult(mode, isMeWinner, xpEarned, coinsEarned);
+  }
+  
+  if (state.isHost && winnersList && winnersList.length > 0) {
+    for (const id of winnersList) {
+      try {
+        const { data: profile } = await db.from('profiles').select('xp, level').eq('id', id).single();
+        if (profile) {
+          const newXp = (profile.xp || 0) + 150;
+          const newLevel = Math.floor(Math.sqrt(newXp / 75)) + 1;
+          await db.from('profiles').update({ xp: newXp, level: newLevel }).eq('id', id);
+        }
+      } catch (err) {
+        console.warn("Could not sync profile XP with Supabase:", err);
+      }
     }
   }
-}
+};

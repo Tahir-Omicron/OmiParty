@@ -563,9 +563,385 @@ function handleRemoveFriend(id) {
   playSound('click');
 }
 
-// Global button sound listener
+// ============================================================================
+// COMPREHENSIVE ACCOUNT & PROFILE ECOSYSTEM (OTAQ.GG IDENTITY)
+// ============================================================================
+
+const ACHIEVEMENTS = [
+  { id: 'first_win', icon: '🏆', title_az: 'İlk Qələbə', title_en: 'First Win', desc_az: 'Hər hansı bir rejimdə ilk qələbənizi qazanın.', desc_en: 'Win your first game in any mode.', xp: 50, coins: 100, condition: p => (p.stats.games_won >= 1) },
+  { id: 'word_master', icon: '💣', title_az: 'Söz Ustası', title_en: 'Word Master', desc_az: 'Word Bomb rejimində 3 qələbə qazanın.', desc_en: 'Win 3 games in Word Bomb.', xp: 100, coins: 200, condition: p => (p.stats.wordbomb_wins >= 3) },
+  { id: 'sabotage_pro', icon: '🕵️', title_az: 'Gizli Xəfiyyə', title_en: 'Master Detective', desc_az: 'Sabotage rejimində 3 qələbə qazanın.', desc_en: 'Win 3 games in Sabotage.', xp: 100, coins: 200, condition: p => (p.stats.sabotage_wins >= 3) },
+  { id: 'auction_shark', icon: '🦈', title_az: 'Hərrac Köpəkbalığı', title_en: 'Auction Shark', desc_az: 'Auction Chaos rejimində 3 qələbə qazanın.', desc_en: 'Win 3 games in Auction Chaos.', xp: 100, coins: 200, condition: p => (p.stats.auction_wins >= 3) },
+  { id: 'canvas_picasso', icon: '🎨', title_az: 'Müasir Pikasso', title_en: 'Modern Picasso', desc_az: 'Liar\'s Canvas rejimində 3 qələbə qazanın.', desc_en: 'Win 3 games in Liar\'s Canvas.', xp: 100, coins: 200, condition: p => (p.stats.canvas_wins >= 3) },
+  { id: 'streak_3', icon: '🔥', title_az: 'Dayandırılmaz!', title_en: 'Unstoppable!', desc_az: 'Ardıcıl 3 oyun qələbə qazanın.', desc_en: 'Achieve a 3-game win streak.', xp: 150, coins: 300, condition: p => (p.stats.max_win_streak >= 3) },
+  { id: 'veteran_10', icon: '⭐', title_az: 'Təcrübəli Partiyaçı', title_en: 'Party Veteran', desc_az: 'Cəmi 10 oyun oynayın.', desc_en: 'Play a total of 10 matches.', xp: 150, coins: 300, condition: p => (p.stats.games_played >= 10) },
+  { id: 'socialite', icon: '🤝', title_az: 'Dostcanlı', title_en: 'Social Butterfly', desc_az: '3 dost əlavə edin.', desc_en: 'Add 3 or more friends.', xp: 75, coins: 150, condition: p => (getFriends().length >= 3) }
+];
+
+function calculateLevel(xp) {
+  // XP formula: Level = floor(sqrt(xp / 75)) + 1
+  return Math.floor(Math.sqrt((xp || 0) / 75)) + 1;
+}
+
+function getXPForNextLevel(level) {
+  return level * level * 75;
+}
+
+function getPlayerRankTitle(level) {
+  if (level >= 30) return isAz() ? '👑 Əfsanəvi Qəhrəman' : '👑 Legendary Hero';
+  if (level >= 20) return isAz() ? '💎 Partiya Kralı' : '💎 Party King';
+  if (level >= 10) return isAz() ? '🥇 Xaos Ustası' : '🥇 Chaos Master';
+  if (level >= 5) return isAz() ? '🥈 Təcrübəli Oyunçu' : '🥈 Veteran Player';
+  return isAz() ? '🥉 Acemi Partiyaçı' : '🥉 Rookie Partygoer';
+}
+
+function getUserProfile() {
+  const defaultProfile = {
+    id: getPlayerId(),
+    email: localStorage.getItem('otaq_auth_email') || null,
+    is_guest: !localStorage.getItem('otaq_auth_token'),
+    nickname: localStorage.getItem('otaq_nickname') || 'Oyunçu',
+    avatar_url: localStorage.getItem('otaq_avatar_url') || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(localStorage.getItem('otaq_nickname') || 'Oyunçu')}`,
+    friend_code: getFriendCode(),
+    title: 'Acemi Partiyaçı',
+    xp: 0,
+    coins: 100,
+    stats: {
+      games_played: 0,
+      games_won: 0,
+      sabotage_wins: 0,
+      wordbomb_wins: 0,
+      auction_wins: 0,
+      canvas_wins: 0,
+      win_streak: 0,
+      max_win_streak: 0
+    },
+    match_history: [],
+    unlocked_achievements: [],
+    created_at: Date.now()
+  };
+
+  try {
+    const saved = localStorage.getItem('otaq_account_profile');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return { ...defaultProfile, ...parsed, stats: { ...defaultProfile.stats, ...(parsed.stats || {}) } };
+    }
+  } catch (e) {
+    console.warn("Failed to parse account profile:", e);
+  }
+  return defaultProfile;
+}
+
+function saveUserProfile(profile) {
+  if (!profile) return;
+  localStorage.setItem('otaq_account_profile', JSON.stringify(profile));
+  if (profile.nickname) localStorage.setItem('otaq_nickname', profile.nickname);
+  if (profile.avatar_url) localStorage.setItem('otaq_avatar_url', profile.avatar_url);
+  updateProfileHeaderUI();
+}
+
+window.distributeXP = function(winnerIds, gameMode = 'party') {
+  const isMeWinner = Array.isArray(winnerIds) ? winnerIds.includes(state.playerId) : (winnerIds === state.playerId);
+  const xpEarned = isMeWinner ? 150 : 50;
+  const coinsEarned = isMeWinner ? 50 : 15;
+  
+  window.recordGameResult(gameMode, isMeWinner, xpEarned, coinsEarned);
+};
+
+window.recordGameResult = function(mode, isWin, xpEarned = 100, coinsEarned = 30) {
+  const profile = getUserProfile();
+  const oldLevel = calculateLevel(profile.xp);
+  
+  profile.xp += xpEarned;
+  profile.coins = (profile.coins || 0) + coinsEarned;
+  profile.stats.games_played++;
+  
+  if (isWin) {
+    profile.stats.games_won++;
+    profile.stats.win_streak++;
+    if (profile.stats.win_streak > profile.stats.max_win_streak) {
+      profile.stats.max_win_streak = profile.stats.win_streak;
+    }
+    if (mode === 'sabotage') profile.stats.sabotage_wins++;
+    else if (mode === 'wordbomb') profile.stats.wordbomb_wins++;
+    else if (mode === 'auction') profile.stats.auction_wins++;
+    else if (mode === 'canvas') profile.stats.canvas_wins++;
+  } else {
+    profile.stats.win_streak = 0;
+  }
+
+  // Record match history
+  const matchEntry = {
+    id: 'm_' + Date.now(),
+    mode: mode,
+    won: isWin,
+    xp_earned: xpEarned,
+    coins_earned: coinsEarned,
+    date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })
+  };
+  
+  if (!profile.match_history) profile.match_history = [];
+  profile.match_history.unshift(matchEntry);
+  if (profile.match_history.length > 15) profile.match_history.pop();
+
+  // Check achievements
+  ACHIEVEMENTS.forEach(ach => {
+    if (!profile.unlocked_achievements.includes(ach.id) && ach.condition(profile)) {
+      profile.unlocked_achievements.push(ach.id);
+      profile.xp += ach.xp;
+      profile.coins += ach.coins;
+      showToast(`🎉 Nailiyyət Açıldı: ${isAz() ? ach.title_az : ach.title_en} (+${ach.xp} XP)`, 'success');
+      playSound('win');
+    }
+  });
+
+  const newLevel = calculateLevel(profile.xp);
+  if (newLevel > oldLevel) {
+    showToast(`🌟 TƏBRİKLƏR! Səviyyə ${newLevel} oldunuz!`, 'success');
+    playSound('win');
+  }
+
+  saveUserProfile(profile);
+};
+
+function updateProfileHeaderUI() {
+  const profile = getUserProfile();
+  const level = calculateLevel(profile.xp);
+  const nextLvlXP = getXPForNextLevel(level);
+  const prevLvlXP = getXPForNextLevel(level - 1);
+  const currentLvlProgress = Math.max(0, profile.xp - prevLvlXP);
+  const totalLvlSpan = Math.max(1, nextLvlXP - prevLvlXP);
+  const pct = Math.min(100, Math.round((currentLvlProgress / totalLvlSpan) * 100));
+
+  // Menu username & avatar updates
+  const menuNick = document.getElementById('menu-nickname');
+  if (menuNick) menuNick.textContent = profile.nickname;
+  
+  const menuAvatar = document.getElementById('menu-avatar-img');
+  if (menuAvatar) menuAvatar.src = profile.avatar_url;
+
+  const userBadge = document.getElementById('user-header-badge');
+  if (userBadge) {
+    userBadge.innerHTML = `
+      <div class="user-profile-badge" onclick="openProfileModal()" style="cursor:pointer;" title="${isAz() ? 'Profil və Nailiyyətlər' : 'Profile & Achievements'}">
+        <img src="${profile.avatar_url}" style="width:38px; height:38px; border-radius:50%; border:2px solid var(--accent-cyan);" />
+        <div style="text-align:left;">
+          <div style="font-weight:800; font-size:0.9rem; display:flex; align-items:center; gap:6px;">
+            <span>${profile.nickname}</span>
+            <span style="font-size:0.75rem; background:rgba(56,189,248,0.15); color:var(--accent-cyan); padding:2px 8px; border-radius:10px; border:1px solid rgba(56,189,248,0.3);">LVL ${level}</span>
+          </div>
+          <div class="xp-progress-bar" style="width:110px;">
+            <div class="xp-progress-fill" style="width:${pct}%;"></div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+}
+
+function openProfileModal(tab = 'overview') {
+  let modal = document.getElementById('profile-modal');
+  if (!modal) {
+    createProfileModalDOM();
+    modal = document.getElementById('profile-modal');
+  }
+  if (modal) {
+    modal.style.display = 'flex';
+    renderProfileModal(tab);
+    playSound('click');
+  }
+}
+
+function closeProfileModal() {
+  const modal = document.getElementById('profile-modal');
+  if (modal) modal.style.display = 'none';
+  playSound('click');
+}
+
+function createProfileModalDOM() {
+  const div = document.createElement('div');
+  div.id = 'profile-modal';
+  div.className = 'modal-backdrop';
+  div.style.cssText = 'display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); backdrop-filter:blur(8px); z-index:99999; align-items:center; justify-content:center; padding:15px;';
+  
+  div.innerHTML = `
+    <div class="glass-panel" style="max-width:540px; width:100%; max-height:90vh; display:flex; flex-direction:column; padding:1.5rem; position:relative; overflow:hidden;">
+      <button class="btn btn-ghost" onclick="closeProfileModal()" style="position:absolute; top:12px; right:12px; width:36px; height:36px; padding:0; border-radius:50%; font-size:1.2rem;">✕</button>
+      <div id="profile-modal-body" style="overflow-y:auto; padding-right:4px;"></div>
+    </div>
+  `;
+  document.body.appendChild(div);
+}
+
+function renderProfileModal(activeTab = 'overview') {
+  const body = document.getElementById('profile-modal-body');
+  if (!body) return;
+  
+  const profile = getUserProfile();
+  const level = calculateLevel(profile.xp);
+  const rankTitle = getPlayerRankTitle(level);
+  const nextLvlXP = getXPForNextLevel(level);
+  const prevLvlXP = getXPForNextLevel(level - 1);
+  const currentLvlProgress = Math.max(0, profile.xp - prevLvlXP);
+  const totalLvlSpan = Math.max(1, nextLvlXP - prevLvlXP);
+  const pct = Math.min(100, Math.round((currentLvlProgress / totalLvlSpan) * 100));
+  const winRate = profile.stats.games_played > 0 ? Math.round((profile.stats.games_won / profile.stats.games_played) * 100) : 0;
+
+  const tabs = [
+    { id: 'overview', name: isAz() ? 'Ümumi Baxış' : 'Overview', icon: '👤' },
+    { id: 'achievements', name: isAz() ? 'Nailiyyətlər' : 'Badges', icon: '🏆' },
+    { id: 'history', name: isAz() ? 'Tarixçə' : 'History', icon: '📜' },
+    { id: 'settings', name: isAz() ? 'Tənzimləmələr' : 'Settings', icon: '⚙️' }
+  ];
+
+  let tabContent = '';
+
+  if (activeTab === 'overview') {
+    tabContent = `
+      <div style="text-align:center; margin-bottom:1.5rem;">
+        <div style="position:relative; width:88px; height:88px; margin:0 auto 10px auto;">
+          <img src="${profile.avatar_url}" style="width:100%; height:100%; border-radius:50%; border:3px solid var(--accent-cyan); background:rgba(255,255,255,0.05);" />
+          <span style="position:absolute; bottom:0; right:0; background:var(--accent-gold); color:#000; font-weight:900; font-size:0.75rem; padding:2px 6px; border-radius:10px;">LVL ${level}</span>
+        </div>
+        <h2 style="margin:0; font-size:1.4rem; font-weight:800;">${profile.nickname}</h2>
+        <div style="font-size:0.85rem; color:var(--accent-cyan); font-weight:700; margin-top:2px;">${rankTitle}</div>
+        <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">${profile.friend_code}</div>
+      </div>
+
+      <!-- XP Bar -->
+      <div style="background:rgba(255,255,255,0.03); padding:12px; border-radius:var(--radius-md); border:1px solid var(--glass-border); margin-bottom:1.25rem;">
+        <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:700; margin-bottom:6px;">
+          <span>Səviyyə İrəliləyişi</span>
+          <span style="color:var(--accent-cyan);">${profile.xp} / ${nextLvlXP} XP (${pct}%)</span>
+        </div>
+        <div class="xp-progress-bar" style="height:8px;">
+          <div class="xp-progress-fill" style="width:${pct}%;"></div>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; margin-bottom:1.25rem;">
+        <div style="background:rgba(255,255,255,0.03); padding:12px; border-radius:var(--radius-md); border:1px solid var(--glass-border); text-align:center;">
+          <div style="font-size:1.5rem; font-weight:900; color:var(--text-primary);">${profile.stats.games_played}</div>
+          <div style="font-size:0.75rem; color:var(--text-secondary);">Oynanılan Oyun</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03); padding:12px; border-radius:var(--radius-md); border:1px solid var(--glass-border); text-align:center;">
+          <div style="font-size:1.5rem; font-weight:900; color:var(--accent-green);">${profile.stats.games_won}</div>
+          <div style="font-size:0.75rem; color:var(--text-secondary);">Qələbələr (${winRate}%)</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03); padding:12px; border-radius:var(--radius-md); border:1px solid var(--glass-border); text-align:center;">
+          <div style="font-size:1.5rem; font-weight:900; color:var(--accent-gold);">${profile.coins || 100} 🪙</div>
+          <div style="font-size:0.75rem; color:var(--text-secondary);">Partiya Sikkəsi</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03); padding:12px; border-radius:var(--radius-md); border:1px solid var(--glass-border); text-align:center;">
+          <div style="font-size:1.5rem; font-weight:900; color:var(--accent-red);">${profile.stats.win_streak} 🔥</div>
+          <div style="font-size:0.75rem; color:var(--text-secondary);">Cari Qələbə Seriyası</div>
+        </div>
+      </div>
+    `;
+  } else if (activeTab === 'achievements') {
+    tabContent = `
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        ${ACHIEVEMENTS.map(ach => {
+          const unlocked = profile.unlocked_achievements.includes(ach.id);
+          return `
+            <div style="display:flex; align-items:center; gap:12px; padding:10px 14px; background:${unlocked ? 'rgba(16, 185, 129, 0.08)' : 'rgba(255,255,255,0.02)'}; border-radius:var(--radius-md); border:1px solid ${unlocked ? 'rgba(16, 185, 129, 0.3)' : 'var(--glass-border)'};">
+              <div style="font-size:2rem; filter:${unlocked ? 'none' : 'grayscale(100%) opacity(0.4)'};">${ach.icon}</div>
+              <div style="flex:1;">
+                <div style="font-weight:800; font-size:0.95rem; color:${unlocked ? 'var(--accent-green)' : 'var(--text-secondary)'}; display:flex; justify-content:space-between;">
+                  <span>${isAz() ? ach.title_az : ach.title_en}</span>
+                  <span style="font-size:0.75rem; color:var(--accent-gold);">+${ach.xp} XP</span>
+                </div>
+                <div style="font-size:0.8rem; color:var(--text-secondary); margin-top:2px;">${isAz() ? ach.desc_az : ach.desc_en}</div>
+              </div>
+              <div>
+                ${unlocked ? '<span style="color:var(--accent-green); font-weight:800; font-size:0.9rem;">✓</span>' : '<span style="color:var(--text-muted); font-size:0.8rem;">🔒</span>'}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  } else if (activeTab === 'history') {
+    const history = profile.match_history || [];
+    tabContent = `
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        ${history.length === 0 ? `
+          <div style="text-align:center; padding:2rem; color:var(--text-secondary);">
+            Hələ heç bir oyun qeydə alınmayıb.
+          </div>
+        ` : history.map(m => `
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:rgba(255,255,255,0.03); border-radius:var(--radius-md); border:1px solid var(--glass-border);">
+            <div>
+              <div style="font-weight:800; text-transform:uppercase; font-size:0.9rem; color:var(--accent-cyan);">${m.mode}</div>
+              <div style="font-size:0.75rem; color:var(--text-secondary);">${m.date}</div>
+            </div>
+            <div style="text-align:right;">
+              <span style="font-weight:800; font-size:0.85rem; padding:3px 10px; border-radius:12px; background:${m.won ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}; color:${m.won ? 'var(--accent-green)' : 'var(--accent-red)'};">
+                ${m.won ? (isAz() ? 'QƏLƏBƏ 🏆' : 'VICTORY 🏆') : (isAz() ? 'MƏĞLUBİYYƏT 💀' : 'DEFEAT 💀')}
+              </span>
+              <div style="font-size:0.75rem; color:var(--accent-gold); margin-top:4px;">+${m.xp_earned} XP</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } else if (activeTab === 'settings') {
+    tabContent = `
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <div>
+          <label style="display:block; font-size:0.85rem; font-weight:700; margin-bottom:6px;">Ləqəbi Dəyiş</label>
+          <input type="text" id="profile-edit-nickname" class="input-field" value="${profile.nickname}" maxlength="16" style="margin:0;" />
+        </div>
+        <div>
+          <button class="btn btn-secondary" onclick="showAvatarModal()" style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px;">
+            <img src="${profile.avatar_url}" style="width:24px; height:24px; border-radius:50%;" />
+            Avatarı Fərdiləşdir
+          </button>
+        </div>
+        <button class="btn btn-primary" onclick="handleSaveProfileSettings()" style="width:100%; font-weight:800; margin-top:8px;">
+          Yadda Saxla
+        </button>
+      </div>
+    `;
+  }
+
+  body.innerHTML = `
+    <!-- Header Tabs -->
+    <div style="display:flex; gap:6px; background:rgba(0,0,0,0.3); padding:4px; border-radius:var(--radius-lg); margin-bottom:1.25rem;">
+      ${tabs.map(t => `
+        <button class="btn btn-ghost btn-sm" onclick="renderProfileModal('${t.id}')" style="flex:1; padding:8px 4px; font-size:0.8rem; font-weight:700; border-radius:var(--radius-md); background:${activeTab === t.id ? 'var(--accent-cyan)' : 'transparent'}; color:${activeTab === t.id ? '#000' : 'var(--text-secondary)'};">
+          ${t.icon} ${t.name}
+        </button>
+      `).join('')}
+    </div>
+
+    <!-- Active Tab Content -->
+    ${tabContent}
+  `;
+}
+
+function handleSaveProfileSettings() {
+  const input = document.getElementById('profile-edit-nickname');
+  if (!input) return;
+  const newNick = input.value.trim();
+  if (!newNick) {
+    showToast('Ləqəb boş ola bilməz!', 'error');
+    return;
+  }
+  const profile = getUserProfile();
+  profile.nickname = newNick;
+  saveUserProfile(profile);
+  showToast('Profil yeniləndi! 🎉', 'success');
+  closeProfileModal();
+}
+
+// Global DOM Ready Handlers
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
+  updateProfileHeaderUI();
+  
   document.body.addEventListener('mousedown', (e) => {
     if (e.target.tagName === 'BUTTON' || e.target.closest('button') || e.target.classList.contains('btn') || e.target.classList.contains('mode-card')) {
       if (e.target.id === 'start-game-btn') {
@@ -576,3 +952,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+

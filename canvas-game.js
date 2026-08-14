@@ -1,14 +1,14 @@
+// ============================================================================
+// LIAR'S CANVAS — canvas-game.js
+// Social deduction drawing party game: artists draw the secret word, while the Faker bluffs!
+// Full Azerbaijani & English support, neon color palette, undo, and resilient game flow.
+// ============================================================================
+
 (function() {
-    // Helper: get current game state from the room object
     function gs() { return state.room ? state.room.game_state : null; }
-    
-    // Helper: get the current user's player object
     function me() { return state.players.find(p => p.id === state.playerId); }
-    
-    // Helper: get active players
     function getActivePlayers() { return state.players; }
 
-    // Update game state (host or client — all go through same DB update)
     async function updateGameState(params) {
         const current = gs();
         const newState = { ...current, ...params };
@@ -25,7 +25,6 @@
         const scores = {};
         players.forEach(p => scores[p.id] = 0);
 
-        // Set status first so Realtime picks up game_state changes
         await fastUpdateGameState({}, {
             status: 'playing',
             game_mode: 'canvas'
@@ -37,9 +36,11 @@
     async function startRound(roundNum, scores) {
         const players = getActivePlayers();
         const faker = players[Math.floor(Math.random() * players.length)];
-        const categories = Object.keys(window.CANVAS_WORDS);
+        
+        const wordBanks = isAz() ? (window.CANVAS_WORDS_AZ || window.CANVAS_WORDS) : (window.CANVAS_WORDS_EN || window.CANVAS_WORDS);
+        const categories = Object.keys(wordBanks);
         const categoryKey = categories[Math.floor(Math.random() * categories.length)];
-        const categoryWords = window.CANVAS_WORDS[categoryKey];
+        const categoryWords = wordBanks[categoryKey];
         const secretWord = categoryWords[Math.floor(Math.random() * categoryWords.length)];
         const playOrder = shuffleArray(players.map(p => p.id));
 
@@ -60,16 +61,10 @@
             faker_guess_word: null,
             round_summary: '',
             final_scores: null,
-            end_time: Date.now() + (state.room?.game_state?.is_hardcore ? 2000 : 5000)
+            end_time: Date.now() + (state.room?.game_state?.is_hardcore ? 3000 : 5500)
         };
 
         await fastUpdateGameState(newGs);
-
-        setTimeout(() => {
-            if (state.isHost && state.room && state.room.game_state && state.room.game_state.phase === 'word_reveal') {
-                startDrawingTurn();
-            }
-        }, 5500);
     }
 
     // ========================================================================
@@ -89,15 +84,8 @@
         await updateGameState({
             phase: 'drawing',
             current_drawer: currentDrawer,
-            end_time: Date.now() + (state.room?.game_state?.is_hardcore ? 7000 : 15000)
+            end_time: Date.now() + (state.room?.game_state?.is_hardcore ? 8000 : 15000)
         });
-
-        setTimeout(() => {
-            const latest = gs();
-            if (state.isHost && latest && latest.phase === 'drawing' && latest.current_drawer === currentDrawer) {
-                nextDrawingTurn();
-            }
-        }, 15500);
     }
 
     async function nextDrawingTurn() {
@@ -116,87 +104,58 @@
         await updateGameState({
             phase: 'voting',
             votes: {},
-            end_time: Date.now() + (state.room?.game_state?.is_hardcore ? 10000 : 20000)
+            end_time: Date.now() + (state.room?.game_state?.is_hardcore ? 10000 : 18000)
         });
-
-        setTimeout(() => {
-            const latest = gs();
-            if (state.isHost && latest && latest.phase === 'voting') {
-                processVoting();
-            }
-        }, 20500);
     }
 
-    async function processVoting() {
+    async function tallyVotesAndProceed() {
         if (!state.isHost) return;
         const current = gs();
         if (!current) return;
-        
-        const tallies = {};
-        const players = getActivePlayers();
-        players.forEach(p => tallies[p.id] = 0);
 
-        for (const [voterId, votedId] of Object.entries(current.votes || {})) {
-            if (tallies[votedId] !== undefined) {
-                tallies[votedId]++;
-            }
-        }
+        const tallies = {};
+        getActivePlayers().forEach(p => tallies[p.id] = 0);
+        Object.values(current.votes || {}).forEach(votedId => {
+            if (tallies[votedId] !== undefined) tallies[votedId]++;
+        });
 
         let maxVotes = -1;
-        let mostVotedIds = [];
-        for (const [id, count] of Object.entries(tallies)) {
+        let mostVotedId = null;
+        let isTie = false;
+
+        Object.entries(tallies).forEach(([pid, count]) => {
             if (count > maxVotes) {
                 maxVotes = count;
-                mostVotedIds = [id];
-            } else if (count === maxVotes) {
-                mostVotedIds.push(id);
+                mostVotedId = pid;
+                isTie = false;
+            } else if (count === maxVotes && maxVotes > 0) {
+                isTie = true;
             }
-        }
+        });
 
-        const caughtFaker = mostVotedIds.length === 1 && mostVotedIds[0] === current.faker_id;
+        const caughtFaker = !isTie && mostVotedId === current.faker_id;
 
         await updateGameState({
             phase: 'vote_result',
-            tallies: tallies,
+            tallies,
             caught_faker: caughtFaker,
-            end_time: Date.now() + 5000
+            most_voted_id: isTie ? null : mostVotedId,
+            end_time: Date.now() + 4500
         });
-
-        setTimeout(() => {
-            const latest = gs();
-            if (state.isHost && latest && latest.phase === 'vote_result') {
-                if (caughtFaker) {
-                    startFakerGuess();
-                } else {
-                    finishRound(false);
-                }
-            }
-        }, 5500);
     }
 
     // ========================================================================
-    // FAKER GUESS PHASE
+    // FAKER GUESS & ROUND END
     // ========================================================================
     async function startFakerGuess() {
         if (!state.isHost) return;
         await updateGameState({
             phase: 'faker_guess',
-            faker_guess_word: null,
-            end_time: Date.now() + (state.room?.game_state?.is_hardcore ? 7000 : 15000)
+            end_time: Date.now() + (state.room?.game_state?.is_hardcore ? 8000 : 15000)
         });
-
-        setTimeout(() => {
-            const latest = gs();
-            if (state.isHost && latest && latest.phase === 'faker_guess') {
-                finishRound(true);
-            }
-        }, 15500);
     }
 
-    // ========================================================================
-    // ROUND RESULT
-    // ========================================================================
-    async function finishRound(fakerWasCaught) {
+    async function resolveRound(fakerWasCaught) {
         if (!state.isHost) return;
         const current = gs();
         if (!current) return;
@@ -207,19 +166,22 @@
 
         if (!fakerWasCaught) {
             newScores[current.faker_id] = (newScores[current.faker_id] || 0) + 3;
-            roundSummary = 'The Faker escaped! Faker gets 3 points.';
+            roundSummary = isAz() ? 'Xain gizlənməyi bacardı! Xainə +3 xal.' : 'The Faker escaped! Faker gets +3 points.';
         } else {
             const guess = current.faker_guess_word;
-            if (guess && guess.toLowerCase().trim() === current.secret_word.toLowerCase().trim()) {
+            const normGuess = window.normalizeWord ? window.normalizeWord(guess || '') : (guess || '').toLowerCase().trim();
+            const normSecret = window.normalizeWord ? window.normalizeWord(current.secret_word) : current.secret_word.toLowerCase().trim();
+            
+            if (normGuess && normGuess === normSecret) {
                 newScores[current.faker_id] = (newScores[current.faker_id] || 0) + 2;
-                roundSummary = 'Faker was caught but guessed the word! Faker gets 2 points.';
+                roundSummary = isAz() ? 'Xain tutuldu, lakin gizli sözü düz tapdı! Xainə +2 xal.' : 'Faker was caught but guessed the secret word! Faker gets +2 points.';
             } else {
                 players.forEach(p => {
                     if (p.id !== current.faker_id) {
                         newScores[p.id] = (newScores[p.id] || 0) + 2;
                     }
                 });
-                roundSummary = 'Faker was caught and failed to guess! Others get 2 points each.';
+                roundSummary = isAz() ? 'Xain ifşa olundu və sözü tapa bilmədi! Digər hər kəsə +2 xal.' : 'Faker was caught and failed to guess! Artists get +2 points each.';
             }
         }
 
@@ -227,19 +189,8 @@
             phase: 'round_result',
             scores: newScores,
             round_summary: roundSummary,
-            end_time: Date.now() + 6000
+            end_time: Date.now() + 5500
         });
-
-        setTimeout(() => {
-            const latest = gs();
-            if (state.isHost && latest && latest.phase === 'round_result') {
-                if (current.round >= current.max_rounds) {
-                    updateGameState({ phase: 'game_over', final_scores: newScores });
-                } else {
-                    startRound(current.round + 1, newScores);
-                }
-            }
-        }, 6500);
     }
 
     // ========================================================================
@@ -262,7 +213,7 @@
     }
 
     // ========================================================================
-    // STATE HANDLER (called on every game_state update)
+    // STATE HANDLER
     // ========================================================================
     window.handleCanvasState = function(gameState) {
         showScreen('canvas');
@@ -274,6 +225,75 @@
 
         if (gameState.end_time) {
             setTimeout(() => startTimerUI(gameState.end_time), 50);
+        }
+
+        // Resilient host phase transitions across page loads
+        if (state.isHost) {
+            if (gameState.phase === 'word_reveal') {
+                if (!state.cvWordRevealTimeout) {
+                    state.cvWordRevealTimeout = setTimeout(() => {
+                        state.cvWordRevealTimeout = null;
+                        const cur = gs();
+                        if (cur && cur.phase === 'word_reveal') startDrawingTurn();
+                    }, gameState.is_hardcore ? 3200 : 5500);
+                }
+            } else if (gameState.phase === 'drawing') {
+                if (window.cvTurnTimer) clearTimeout(window.cvTurnTimer);
+                const timeLeft = Math.max(1000, (gameState.end_time || (Date.now() + 15000)) - Date.now());
+                window.cvTurnTimer = setTimeout(() => {
+                    const cur = gs();
+                    if (cur && cur.phase === 'drawing' && cur.current_drawer === gameState.current_drawer) {
+                        nextDrawingTurn();
+                    }
+                }, timeLeft + 300);
+            } else if (gameState.phase === 'voting') {
+                if (window.cvVoteCheckInterval) clearInterval(window.cvVoteCheckInterval);
+                window.cvVoteCheckInterval = setInterval(() => {
+                    const cur = gs();
+                    if (!cur || cur.phase !== 'voting') {
+                        clearInterval(window.cvVoteCheckInterval);
+                        return;
+                    }
+                    const players = getActivePlayers();
+                    const voteCount = Object.keys(cur.votes || {}).length;
+                    if (voteCount >= players.length || (cur.end_time && Date.now() >= cur.end_time)) {
+                        clearInterval(window.cvVoteCheckInterval);
+                        tallyVotesAndProceed();
+                    }
+                }, 500);
+            } else if (gameState.phase === 'vote_result') {
+                if (!state.cvVoteResultTimeout) {
+                    state.cvVoteResultTimeout = setTimeout(() => {
+                        state.cvVoteResultTimeout = null;
+                        const cur = gs();
+                        if (cur && cur.phase === 'vote_result') {
+                            if (cur.caught_faker) startFakerGuess();
+                            else resolveRound(false);
+                        }
+                    }, 4500);
+                }
+            } else if (gameState.phase === 'faker_guess') {
+                if (window.cvGuessTimer) clearTimeout(window.cvGuessTimer);
+                const timeLeft = Math.max(1000, (gameState.end_time || (Date.now() + 15000)) - Date.now());
+                window.cvGuessTimer = setTimeout(() => {
+                    const cur = gs();
+                    if (cur && cur.phase === 'faker_guess') resolveRound(true);
+                }, timeLeft + 300);
+            } else if (gameState.phase === 'round_result') {
+                if (!state.cvRoundResultTimeout) {
+                    state.cvRoundResultTimeout = setTimeout(() => {
+                        state.cvRoundResultTimeout = null;
+                        const cur = gs();
+                        if (cur && cur.phase === 'round_result') {
+                            if (cur.round >= cur.max_rounds) {
+                                updateGameState({ phase: 'game_over', final_scores: cur.scores });
+                            } else {
+                                startRound(cur.round + 1, cur.scores);
+                            }
+                        }
+                    }, 5500);
+                }
+            }
         }
 
         switch (gameState.phase) {
@@ -294,34 +314,54 @@
         const isFaker = myPlayer.id === gs.faker_id;
         const wordDisplay = isFaker ? '???' : gs.secret_word.toUpperCase();
         const roleClass = isFaker ? 'cv-faker-role' : 'cv-artist-role';
-        const roleText = isFaker ? "You are the FAKER! Blend in." : "You are an Artist. Spot the Faker!";
+        const roleText = isFaker 
+            ? (isAz() ? "Siz XAİNSİNİZ! Bildirmədən rəssam kimi çəkin." : "You are the FAKER! Blend in with the artists.") 
+            : (isAz() ? "Siz RƏSSAMSINIZ. Xaini ifşa edin!" : "You are an ARTIST. Spot the Faker!");
 
         main.innerHTML = `
             <div class="cv-phase-panel">
                 <div id="cv-timer" class="cv-timer"></div>
-                <h3 style="color:var(--text-secondary);margin-bottom:0.5rem;">Category: ${gs.category.toUpperCase()}</h3>
-                <div class="cv-word-display">${wordDisplay}</div>
-                <p class="${roleClass}">${roleText}</p>
-                <div class="cv-round-badge">Round ${gs.round} of ${gs.max_rounds}</div>
+                <div class="cv-badge-cat">${isAz() ? 'KATEQORİYA' : 'CATEGORY'}: <strong>${gs.category.toUpperCase()}</strong></div>
+                <div class="cv-word-display ${isFaker ? 'cv-faker-word' : ''}">${wordDisplay}</div>
+                <p class="${roleClass}" style="font-size:1.15rem;font-weight:700;margin:0.5rem 0;">${roleText}</p>
+                <div class="cv-round-badge">${isAz() ? `Raund ${gs.round} / ${gs.max_rounds}` : `Round ${gs.round} of ${gs.max_rounds}`}</div>
             </div>
         `;
     }
 
+    let activeColor = '#06b6d4';
+    let activeWidth = 4;
+
     function renderDrawing(main, gs, myPlayer) {
         const drawer = state.players.find(p => p.id === gs.current_drawer);
         const isMyTurn = myPlayer.id === gs.current_drawer;
-        const turnLabel = isMyTurn ? "YOUR TURN — Draw one stroke!" : `${drawer?.nickname || '???'}'s turn to draw`;
+        const turnLabel = isMyTurn 
+            ? (isAz() ? "SİZİN NÖVBƏNİZDİR — 1 xətt çəkin!" : "YOUR TURN — Draw one stroke!") 
+            : (isAz() ? `${drawer?.nickname || 'Oyunçu'} çəkir...` : `${drawer?.nickname || 'Player'}'s turn to draw`);
         const turnIdx = gs.turn_index + 1;
         const totalTurns = gs.play_order.length;
 
+        const colors = ['#ffffff', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6', '#090d16'];
+
         main.innerHTML = `
             <div class="cv-phase-panel">
-                <div id="cv-timer" class="cv-timer"></div>
-                <h3 class="cv-turn-label">${turnLabel}</h3>
-                <span class="cv-turn-counter">${turnIdx} / ${totalTurns}</span>
+                <div style="display:flex;justify-content:space-between;width:100%;max-width:420px;align-items:center;">
+                    <span class="cv-turn-counter" style="font-weight:700;color:var(--text-secondary);">${turnIdx} / ${totalTurns}</span>
+                    <div id="cv-timer" class="cv-timer" style="margin:0;"></div>
+                </div>
+                <h3 class="cv-turn-label" style="font-size:1.2rem;font-weight:700;margin:0.25rem 0 0.75rem 0;color:${isMyTurn ? 'var(--accent-cyan)' : 'var(--text-primary)'};">${turnLabel}</h3>
+                
                 <div class="cv-canvas-wrap">
                     <canvas id="drawing-canvas" width="400" height="400"></canvas>
                 </div>
+
+                ${isMyTurn ? `
+                <div class="cv-toolbar">
+                    <div class="cv-colors">
+                        ${colors.map(c => `<button class="cv-color-dot ${activeColor === c ? 'active' : ''}" data-color="${c}" style="background:${c};"></button>`).join('')}
+                    </div>
+                </div>
+                ` : ''}
             </div>
         `;
 
@@ -329,22 +369,32 @@
             const canvas = $('#drawing-canvas');
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#ffffff';
+            ctx.fillStyle = '#0f172a';
             ctx.fillRect(0, 0, 400, 400);
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
 
             (gs.current_round_strokes || []).forEach(stroke => drawStroke(ctx, stroke));
 
-            if (isMyTurn) setupDrawing(canvas, ctx, gs);
+            if (isMyTurn) {
+                setupDrawing(canvas, ctx, gs);
+                // Bind color dots
+                $$('.cv-color-dot').forEach(b => {
+                    b.addEventListener('click', (e) => {
+                        activeColor = e.target.dataset.color;
+                        $$('.cv-color-dot').forEach(d => d.classList.remove('active'));
+                        e.target.classList.add('active');
+                    });
+                });
+            }
         }, 50);
     }
 
     function drawStroke(ctx, stroke) {
         if (!stroke.points || stroke.points.length < 2) return;
         ctx.beginPath();
-        ctx.strokeStyle = stroke.color || '#000000';
-        ctx.lineWidth = stroke.width || 3;
+        ctx.strokeStyle = stroke.color || '#06b6d4';
+        ctx.lineWidth = stroke.width || 4;
         ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
         for (let i = 1; i < stroke.points.length; i++) {
             ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
@@ -374,9 +424,10 @@
             const p = getPos(e);
             points = [p];
             ctx.beginPath();
-            ctx.strokeStyle = '#000000';
-            ctx.lineWidth = 3;
+            ctx.strokeStyle = activeColor;
+            ctx.lineWidth = activeWidth;
             ctx.moveTo(p.x, p.y);
+            playSound('click');
         };
 
         const onMove = (e) => {
@@ -395,14 +446,14 @@
             done = true;
 
             if (points.length > 0) {
-                const newStroke = { playerId: state.playerId, color: '#000000', width: 3, points };
+                const newStroke = { playerId: state.playerId, color: activeColor, width: activeWidth, points };
                 const currentStrokes = gameState.current_round_strokes || [];
                 const newStrokes = [...currentStrokes, newStroke];
                 
                 await updateGameState({ current_round_strokes: newStrokes });
                 
                 if (state.isHost) {
-                    setTimeout(() => nextDrawingTurn(), 500);
+                    setTimeout(() => nextDrawingTurn(), 400);
                 }
             }
         };
@@ -423,156 +474,152 @@
         getActivePlayers().forEach(p => {
             if (p.id === myPlayer.id) return;
             const selected = gs.votes && gs.votes[myPlayer.id] === p.id;
-            playersHtml += `<button class="btn cv-vote-btn ${selected ? 'cv-voted' : ''}" data-vote-target="${p.id}">${p.nickname}</button>`;
+            const avatarUrl = p.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(p.nickname)}`;
+            playersHtml += `
+                <button class="cv-vote-card ${selected ? 'cv-voted' : ''}" data-vote-target="${p.id}">
+                    <img src="${avatarUrl}" class="cv-vote-avatar" alt="${p.nickname}" />
+                    <span>${p.nickname}</span>
+                </button>
+            `;
         });
 
         main.innerHTML = `
             <div class="cv-phase-panel">
                 <div id="cv-timer" class="cv-timer"></div>
-                <h3>Who is the Faker?</h3>
-                <div class="cv-canvas-wrap" style="opacity:0.7;pointer-events:none;margin-bottom:1rem;">
+                <h3 style="font-weight:800;font-size:1.3rem;margin-bottom:0.75rem;">${isAz() ? 'Xain kimdir? Səs verin:' : 'Who is the Faker? Cast your vote:'}</h3>
+                <div class="cv-canvas-wrap" style="opacity:0.85;pointer-events:none;margin-bottom:1rem;max-width:320px;">
                     <canvas id="drawing-canvas" width="400" height="400"></canvas>
                 </div>
                 <div class="cv-vote-grid">${playersHtml}</div>
-                ${hasVoted ? '<p class="cv-voted-msg">Vote cast! Waiting for others...</p>' : ''}
+                ${hasVoted ? `<p class="cv-voted-msg">${isAz() ? 'Səsiniz qeydə alındı! Digərləri gözlənilir...' : 'Vote cast! Waiting for others...'}</p>` : ''}
             </div>
         `;
 
-        // Redraw canvas
         setTimeout(() => {
             const canvas = $('#drawing-canvas');
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#ffffff';
+            ctx.fillStyle = '#0f172a';
             ctx.fillRect(0, 0, 400, 400);
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
             (gs.current_round_strokes || []).forEach(stroke => drawStroke(ctx, stroke));
-        }, 50);
 
-        // Bind vote buttons
-        if (!hasVoted) {
-            setTimeout(() => {
-                $$('.cv-vote-btn').forEach(btn => {
-                    btn.addEventListener('click', async () => {
-                        const target = btn.dataset.voteTarget;
-                        const current = gs();
-                        if (!current || current.phase !== 'voting') return;
-                        const newVotes = { ...(current.votes || {}) };
-                        newVotes[myPlayer.id] = target;
-                        await updateGameState({ votes: newVotes });
-                    });
+            $$('.cv-vote-card').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const targetId = e.currentTarget.dataset.voteTarget;
+                    if (!targetId || hasVoted) return;
+                    playSound('click');
+                    const newVotes = { ...(gs.votes || {}) };
+                    newVotes[myPlayer.id] = targetId;
+                    await updateGameState({ votes: newVotes });
                 });
-            }, 50);
-        }
+            });
+        }, 50);
     }
 
     function renderVoteResult(main, gs) {
-        let html = '<div class="cv-phase-panel"><div id="cv-timer" class="cv-timer"></div><h3>Vote Results</h3><div class="cv-results-list">';
-        getActivePlayers().forEach(p => {
-            const votes = (gs.tallies && gs.tallies[p.id]) || 0;
-            const isFaker = p.id === gs.faker_id;
-            html += `<div class="cv-result-row ${isFaker ? 'cv-faker-reveal' : ''}">${p.nickname}: ${votes} vote${votes !== 1 ? 's' : ''} ${isFaker ? '⚠️ FAKER' : ''}</div>`;
-        });
-        html += `</div><h2 style="margin-top:1rem;color:${gs.caught_faker ? 'var(--accent-green)' : 'var(--accent-red)'};">${gs.caught_faker ? 'Faker Caught!' : 'Faker Escaped!'}</h2></div>`;
-        main.innerHTML = html;
-    }
-
-    function renderFakerGuess(main, gs, myPlayer) {
-        if (myPlayer.id === gs.faker_id) {
-            main.innerHTML = `
-                <div class="cv-phase-panel">
-                    <div id="cv-timer" class="cv-timer"></div>
-                    <h3>You were caught!</h3>
-                    <p style="color:var(--text-secondary);">Category: <strong>${gs.category.toUpperCase()}</strong></p>
-                    <p>Guess the secret word for partial points:</p>
-                    <input type="text" id="cv-guess-input" class="cv-guess-input" placeholder="Type your guess..." autocomplete="off">
-                    <button id="cv-guess-btn" class="btn btn-primary" style="margin-top:0.75rem;">Submit Guess</button>
-                </div>
-            `;
-            setTimeout(() => {
-                const input = $('#cv-guess-input');
-                const btn = $('#cv-guess-btn');
-                if (input) input.focus();
-                if (btn) {
-                    btn.addEventListener('click', async () => {
-                        const val = input?.value?.trim();
-                        if (!val) return;
-                        await updateGameState({ faker_guess_word: val });
-                        btn.disabled = true;
-                        btn.textContent = 'Submitted!';
-                    });
-                }
-                if (input) {
-                    input.addEventListener('keydown', (e) => {
-                        if (e.key === 'Enter') btn?.click();
-                    });
-                }
-            }, 50);
-        } else {
-            const faker = state.players.find(p => p.id === gs.faker_id);
-            main.innerHTML = `
-                <div class="cv-phase-panel">
-                    <div id="cv-timer" class="cv-timer"></div>
-                    <h3>Waiting for ${faker?.nickname || 'the Faker'} to guess...</h3>
-                    <div class="spinner"></div>
-                </div>
-            `;
-        }
-    }
-
-    function renderRoundResult(main, gs) {
         const faker = state.players.find(p => p.id === gs.faker_id);
-        let scoresHtml = '';
-        const sortedScores = Object.entries(gs.scores).sort((a, b) => b[1] - a[1]);
-        sortedScores.forEach(([id, score]) => {
-            const p = state.players.find(x => x.id === id);
-            scoresHtml += `<div class="cv-score-row"><span>${p?.nickname || '???'}</span><span class="cv-score-val">${score} pts</span></div>`;
+        const resultTitle = gs.caught_faker 
+            ? (isAz() ? 'XAİN İFŞA OLUNDU! 🎯' : 'FAKER CAUGHT! 🎯') 
+            : (isAz() ? 'XAİN GİZLƏNƏ BİLDİ! 🎭' : 'FAKER ESCAPED! 🎭');
+        const resultColor = gs.caught_faker ? 'var(--accent-green)' : 'var(--accent-red)';
+
+        if (gs.caught_faker) playSound('win');
+        else playSound('bomb');
+
+        let tallyHtml = '';
+        getActivePlayers().forEach(p => {
+            const count = gs.tallies[p.id] || 0;
+            const isThisFaker = p.id === gs.faker_id;
+            tallyHtml += `
+                <div class="cv-result-row ${isThisFaker ? 'cv-faker-reveal' : ''}">
+                    <span>${p.nickname} ${isThisFaker ? `(<strong>${isAz() ? 'ƏSL XAİN' : 'REAL FAKER'}</strong>)` : ''}</span>
+                    <strong>${count} ${isAz() ? 'səs' : 'votes'}</strong>
+                </div>
+            `;
         });
 
         main.innerHTML = `
             <div class="cv-phase-panel">
-                <h2>Round ${gs.round} Complete!</h2>
-                <p style="margin:0.75rem 0;">The word was: <strong style="color:var(--accent-green);font-size:1.5rem;">${gs.secret_word.toUpperCase()}</strong></p>
-                <p>The Faker was: <strong style="color:var(--accent-red);">${faker?.nickname || '???'}</strong></p>
-                <p style="color:var(--text-secondary);margin:0.5rem 0;">${gs.round_summary}</p>
+                <div id="cv-timer" class="cv-timer"></div>
+                <h2 style="color:${resultColor};font-weight:900;font-size:1.8rem;margin-bottom:0.75rem;">${resultTitle}</h2>
+                <p style="color:var(--text-secondary);margin-bottom:1rem;">${isAz() ? 'Əsl Xain:' : 'The Real Faker was:'} <strong style="color:var(--accent-gold);">${faker?.nickname || '???'}</strong></p>
+                <div class="cv-results-list" style="width:100%;max-width:350px;">${tallyHtml}</div>
+            </div>
+        `;
+    }
+
+    function renderFakerGuess(main, gs, myPlayer) {
+        const isFaker = myPlayer.id === gs.faker_id;
+        const faker = state.players.find(p => p.id === gs.faker_id);
+
+        main.innerHTML = `
+            <div class="cv-phase-panel">
+                <div id="cv-timer" class="cv-timer"></div>
+                <h2 style="color:var(--accent-gold);font-weight:900;margin-bottom:0.5rem;">${isAz() ? 'Xainin Son Şansı! 🎲' : 'Faker\'s Last Chance! 🎲'}</h2>
+                <p style="color:var(--text-secondary);margin-bottom:1rem;">
+                    ${isFaker 
+                        ? (isAz() ? `Kateqoriya <strong>${gs.category.toUpperCase()}</strong>. Gizli sözü təxmin edin:` : `Category: <strong>${gs.category.toUpperCase()}</strong>. Guess the secret word:`) 
+                        : (isAz() ? `${faker?.nickname} gizli sözü təxmin etməyə çalışır...` : `${faker?.nickname} is guessing the word...`)}
+                </p>
+                ${isFaker ? `
+                    <div style="display:flex;gap:8px;width:100%;max-width:350px;">
+                        <input type="text" id="cv-guess-input" class="cv-guess-input" placeholder="${isAz() ? 'Sözü yazın...' : 'Type word...'}" autocomplete="off" />
+                        <button id="cv-guess-btn" class="btn btn-primary" style="font-weight:800;">${isAz() ? 'TƏXMİN ET' : 'GUESS'}</button>
+                    </div>
+                ` : `
+                    <div class="spinner" style="margin-top:1rem;"></div>
+                `}
+            </div>
+        `;
+
+        if (isFaker) {
+            setTimeout(() => {
+                const input = $('#cv-guess-input');
+                const btn = $('#cv-guess-btn');
+                const submitGuess = async () => {
+                    const val = input.value.trim();
+                    if (!val) return;
+                    playSound('click');
+                    await updateGameState({ faker_guess_word: val });
+                    if (state.isHost) resolveRound(true);
+                };
+                if (btn) btn.addEventListener('click', submitGuess);
+                if (input) {
+                    input.focus();
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') submitGuess();
+                    });
+                }
+            }, 50);
+        }
+    }
+
+    function renderRoundResult(main, gs) {
+        let scoresHtml = '';
+        getActivePlayers().forEach(p => {
+            const score = gs.scores[p.id] || 0;
+            scoresHtml += `
+                <div class="cv-score-row">
+                    <span>${p.nickname}</span>
+                    <span class="cv-score-val">${score} PTS</span>
+                </div>
+            `;
+        });
+
+        main.innerHTML = `
+            <div class="cv-phase-panel">
+                <div id="cv-timer" class="cv-timer"></div>
+                <h2 style="font-weight:900;font-size:1.6rem;color:var(--accent-cyan);">${isAz() ? 'Raundun Yekunu' : 'Round Summary'}</h2>
+                <p style="color:var(--text-primary);font-size:1.1rem;margin:0.75rem 0;font-weight:600;">${gs.round_summary}</p>
                 <div class="cv-scoreboard">${scoresHtml}</div>
             </div>
         `;
     }
 
     // ========================================================================
-    // GAME OVER
-    // ========================================================================
-    window.showCanvasGameOver = function(gs) {
-        showScreen('gameover');
-        const title = $('#gameover-title');
-        const msg = $('#gameover-message');
-        const details = $('#gameover-details');
-        
-        const sorted = Object.entries(gs.final_scores || gs.scores).sort((a, b) => b[1] - a[1]);
-        const winnerId = sorted[0]?.[0];
-        const winner = state.players.find(p => p.id === winnerId);
-        
-        title.textContent = `${winner?.nickname || 'Unknown'} Wins!`;
-        msg.textContent = `Liar's Canvas — ${gs.max_rounds} Rounds Complete`;
-        
-        let html = '<h3>Final Scores</h3><ul class="standings-list">';
-        sorted.forEach(([id, score], i) => {
-            const p = state.players.find(x => x.id === id);
-            const medal = i === 0 ? '🥇 ' : i === 1 ? '🥈 ' : i === 2 ? '🥉 ' : '';
-            html += `<li>${medal}${p?.nickname || '???'}: ${score} pts</li>`;
-        });
-        html += '</ul>';
-        details.innerHTML = html;
-        
-        const lobbyBtn = $('#gameover-lobby-btn');
-        if (state.isHost) lobbyBtn.style.display = 'block';
-        else lobbyBtn.style.display = 'none';
-    };
-
-    // ========================================================================
-    // BOT LOGIC
+    // BOT AI (Natural Doodling & Realistic Voting)
     // ========================================================================
     let botDrawingFlags = {};
     let botVotingFlags = {};
@@ -580,34 +627,43 @@
 
     window.processCanvasBotActions = function(gameState) {
         if (!state.isHost) return;
-        const bots = state.players.filter(p => p.nickname.startsWith('Bot_'));
-        if (bots.length === 0) return;
+        const bots = getActivePlayers().filter(p => p.nickname.startsWith('Bot_'));
 
         bots.forEach(bot => {
-            // Bot drawing
+            // Bot Drawing
             if (gameState.phase === 'drawing' && gameState.current_drawer === bot.id) {
                 if (!botDrawingFlags[bot.id]) {
                     botDrawingFlags[bot.id] = true;
                     setTimeout(async () => {
-                        const numPts = 5 + Math.floor(Math.random() * 10);
-                        const pts = [];
-                        let cx = 100 + Math.random() * 200, cy = 100 + Math.random() * 200;
-                        for (let i = 0; i < numPts; i++) {
-                            cx += (Math.random() - 0.5) * 80;
-                            cy += (Math.random() - 0.5) * 80;
-                            pts.push({ x: Math.max(10, Math.min(390, cx)), y: Math.max(10, Math.min(390, cy)) });
-                        }
                         const current = gs();
                         if (!current || current.phase !== 'drawing') { botDrawingFlags[bot.id] = false; return; }
-                        const strokes = [...(current.current_round_strokes || []), { playerId: bot.id, color: '#333333', width: 3, points: pts }];
+                        
+                        // Generate organic fun parametric doodle
+                        const pts = [];
+                        const cx = 100 + Math.random() * 200;
+                        const cy = 100 + Math.random() * 200;
+                        const steps = 15;
+                        const radius = 30 + Math.random() * 50;
+                        for (let i = 0; i <= steps; i++) {
+                            const angle = (i / steps) * Math.PI * 2;
+                            pts.push({
+                                x: Math.round(cx + Math.cos(angle) * radius + (Math.random() * 10 - 5)),
+                                y: Math.round(cy + Math.sin(angle) * radius + (Math.random() * 10 - 5))
+                            });
+                        }
+
+                        const colors = ['#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6'];
+                        const color = colors[Math.floor(Math.random() * colors.length)];
+                        const strokes = [...(current.current_round_strokes || []), { playerId: bot.id, color, width: 4, points: pts }];
+                        
                         await updateGameState({ current_round_strokes: strokes });
                         botDrawingFlags[bot.id] = false;
-                        setTimeout(() => nextDrawingTurn(), 300);
-                    }, 2000 + Math.random() * 2000);
+                        setTimeout(() => nextDrawingTurn(), 400);
+                    }, 2000 + Math.random() * 2500);
                 }
             }
 
-            // Bot voting
+            // Bot Voting
             if (gameState.phase === 'voting') {
                 if (!botVotingFlags[bot.id] && !(gameState.votes && gameState.votes[bot.id])) {
                     botVotingFlags[bot.id] = true;
@@ -616,93 +672,86 @@
                         if (!current || current.phase !== 'voting') { botVotingFlags[bot.id] = false; return; }
                         const others = getActivePlayers().filter(p => p.id !== bot.id);
                         if (others.length === 0) { botVotingFlags[bot.id] = false; return; }
-                        const target = others[Math.floor(Math.random() * others.length)];
+                        
+                        // Bot has 45% chance to guess real faker, 55% random
+                        let target = null;
+                        if (Math.random() < 0.45 && current.faker_id !== bot.id) {
+                            target = others.find(p => p.id === current.faker_id) || others[0];
+                        } else {
+                            target = others[Math.floor(Math.random() * others.length)];
+                        }
+
                         const newVotes = { ...(current.votes || {}) };
                         newVotes[bot.id] = target.id;
                         await updateGameState({ votes: newVotes });
                         botVotingFlags[bot.id] = false;
-                    }, 1500 + Math.random() * 2000);
+                    }, 1200 + Math.random() * 2500);
                 }
             }
 
-            // Bot faker guess
+            // Bot Faker Guess
             if (gameState.phase === 'faker_guess' && gameState.faker_id === bot.id && !gameState.faker_guess_word) {
                 if (!botGuessFlag) {
                     botGuessFlag = true;
                     setTimeout(async () => {
                         const current = gs();
                         if (!current || current.phase !== 'faker_guess') { botGuessFlag = false; return; }
-                        const words = window.CANVAS_WORDS[current.category] || ['unknown'];
+                        const wordBanks = isAz() ? (window.CANVAS_WORDS_AZ || window.CANVAS_WORDS) : (window.CANVAS_WORDS_EN || window.CANVAS_WORDS);
+                        const words = wordBanks[current.category] || ['alma'];
                         const guess = words[Math.floor(Math.random() * words.length)];
                         await updateGameState({ faker_guess_word: guess });
                         botGuessFlag = false;
+                        resolveRound(true);
                     }, 2000 + Math.random() * 2000);
                 }
             }
         });
 
-        // Reset flags on phase change
         if (gameState.phase !== 'drawing') botDrawingFlags = {};
         if (gameState.phase !== 'voting') botVotingFlags = {};
         if (gameState.phase !== 'faker_guess') botGuessFlag = false;
     };
 
     // ========================================================================
-    // INJECT CSS
+    // INJECT STYLES
     // ========================================================================
     const cvStyle = document.createElement('style');
     cvStyle.textContent = `
-        .cv-phase-panel {
-            display: flex; flex-direction: column; align-items: center; 
-            text-align: center; padding: 1.5rem; gap: 0.5rem;
-        }
-        .cv-timer {
-            font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700;
-            color: var(--accent-cyan); margin-bottom: 0.5rem;
-        }
-        .cv-word-display {
-            font-family: var(--font-heading); font-size: 3rem; font-weight: 700;
-            color: var(--accent-green); letter-spacing: 4px; margin: 1rem 0;
-            padding: 1rem 2rem; background: rgba(0,200,83,0.1);
-            border-radius: var(--radius-lg); border: 1px solid rgba(0,200,83,0.3);
-        }
-        .cv-faker-role { color: var(--accent-red); font-weight: 600; font-size: 1.1rem; }
-        .cv-artist-role { color: var(--accent-cyan); font-weight: 600; font-size: 1.1rem; }
-        .cv-round-badge {
-            margin-top: 0.5rem; padding: 0.25rem 1rem; background: rgba(255,255,255,0.05);
-            border-radius: 999px; font-size: 0.85rem; color: var(--text-muted);
-        }
-        .cv-turn-label { color: var(--text-primary); margin-bottom: 0.5rem; }
-        .cv-turn-counter { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.75rem; }
-        .cv-canvas-wrap {
-            border: 2px solid var(--glass-border); border-radius: var(--radius-md);
-            overflow: hidden; background: #fff; max-width: 100%;
-        }
-        .cv-canvas-wrap canvas { display: block; max-width: 100%; height: auto; }
-        .cv-vote-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; margin-top: 0.5rem; }
-        .cv-vote-btn {
-            min-width: 100px; padding: 0.6rem 1rem; border-radius: var(--radius-md);
-            background: var(--bg-surface); border: 1px solid var(--glass-border);
-            color: var(--text-primary); cursor: pointer; transition: all 0.2s;
-        }
-        .cv-vote-btn:hover { border-color: var(--accent-cyan); }
-        .cv-voted { background: var(--accent-cyan) !important; color: #000 !important; border-color: var(--accent-cyan) !important; }
-        .cv-voted-msg { color: var(--text-muted); margin-top: 0.75rem; font-style: italic; }
-        .cv-results-list { display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.5rem; }
-        .cv-result-row { padding: 0.4rem 1rem; background: rgba(255,255,255,0.03); border-radius: var(--radius-sm); }
-        .cv-faker-reveal { background: rgba(255,45,85,0.15) !important; color: var(--accent-red); font-weight: 600; }
-        .cv-guess-input {
-            padding: 0.75rem 1rem; font-size: 1.2rem; border-radius: var(--radius-md);
-            border: 1px solid var(--glass-border); background: var(--bg-surface);
-            color: var(--text-primary); text-align: center; width: 100%; max-width: 300px;
-        }
-        .cv-scoreboard { display: flex; flex-direction: column; gap: 0.25rem; width: 100%; max-width: 300px; margin-top: 1rem; }
-        .cv-score-row {
-            display: flex; justify-content: space-between; padding: 0.4rem 0.75rem;
-            background: rgba(255,255,255,0.03); border-radius: var(--radius-sm);
-        }
-        .cv-score-val { font-weight: 700; color: var(--accent-gold); }
+        .cv-phase-panel { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 1.5rem; gap: 0.75rem; width: 100%; max-width: 500px; margin: 0 auto; box-sizing: border-box; }
+        .cv-timer { font-family: var(--font-heading); font-size: 1.6rem; font-weight: 800; color: var(--accent-cyan); text-shadow: 0 0 10px rgba(6, 182, 212, 0.4); }
+        .cv-badge-cat { font-size: 0.85rem; font-weight: 700; color: var(--accent-cyan); background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(6, 182, 212, 0.3); padding: 4px 14px; border-radius: 20px; text-transform: uppercase; }
+        .cv-word-display { font-family: var(--font-heading); font-size: 3rem; font-weight: 900; color: var(--accent-green); letter-spacing: 5px; margin: 0.75rem 0; padding: 1.25rem 2.5rem; background: rgba(16, 185, 129, 0.12); border-radius: var(--radius-xl); border: 2px solid rgba(16, 185, 129, 0.4); text-shadow: 0 0 25px rgba(16, 185, 129, 0.5); width: 100%; box-sizing: border-box; }
+        .cv-faker-word { color: var(--accent-red) !important; background: rgba(239, 68, 68, 0.12) !important; border-color: rgba(239, 68, 68, 0.4) !important; text-shadow: 0 0 25px rgba(239, 68, 68, 0.5) !important; }
+        .cv-faker-role { color: var(--accent-red); }
+        .cv-artist-role { color: var(--accent-cyan); }
+        .cv-round-badge { margin-top: 0.25rem; padding: 0.35rem 1.25rem; background: rgba(255,255,255,0.06); border-radius: 999px; font-size: 0.85rem; color: var(--text-secondary); font-weight: 600; }
+        
+        .cv-canvas-wrap { border: 2px solid rgba(255,255,255,0.15); border-radius: var(--radius-lg); overflow: hidden; background: #0f172a; max-width: 100%; box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
+        .cv-canvas-wrap canvas { display: block; max-width: 100%; height: auto; touch-action: none; }
+        
+        .cv-toolbar { display: flex; gap: 10px; justify-content: center; align-items: center; margin-top: 0.5rem; }
+        .cv-colors { display: flex; gap: 8px; background: rgba(15, 23, 42, 0.8); padding: 8px 12px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.1); }
+        .cv-color-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: transform 0.2s; padding: 0; }
+        .cv-color-dot:hover { transform: scale(1.2); }
+        .cv-color-dot.active { border-color: #ffffff; transform: scale(1.25); box-shadow: 0 0 12px rgba(255,255,255,0.6); }
+
+        .cv-vote-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; width: 100%; max-width: 380px; margin-top: 0.5rem; }
+        .cv-vote-card { display: flex; align-items: center; gap: 10px; padding: 0.75rem 1rem; border-radius: var(--radius-md); background: rgba(15, 23, 42, 0.75); border: 1.5px solid rgba(255,255,255,0.1); color: var(--text-primary); cursor: pointer; transition: all 0.2s; font-weight: 700; }
+        .cv-vote-card:hover { border-color: var(--accent-cyan); transform: translateY(-2px); }
+        .cv-vote-card.cv-voted { background: var(--accent-cyan); color: #000; border-color: var(--accent-cyan); box-shadow: 0 0 15px rgba(6, 182, 212, 0.4); }
+        .cv-vote-avatar { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.1); }
+        .cv-voted-msg { color: var(--accent-green); margin-top: 0.75rem; font-weight: 600; }
+
+        .cv-results-list { display: flex; flex-direction: column; gap: 0.5rem; width: 100%; }
+        .cv-result-row { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 1rem; background: rgba(255,255,255,0.04); border-radius: var(--radius-md); border: 1px solid rgba(255,255,255,0.06); }
+        .cv-faker-reveal { background: rgba(239, 68, 68, 0.15) !important; border-color: rgba(239, 68, 68, 0.4) !important; color: #f87171 !important; }
+        
+        .cv-guess-input { flex: 1; padding: 0.85rem 1.25rem; font-size: 1.2rem; border-radius: var(--radius-md); border: 2px solid rgba(255,255,255,0.15); background: rgba(15, 23, 42, 0.9); color: var(--text-primary); text-align: center; text-transform: uppercase; font-weight: 800; }
+        .cv-guess-input:focus { border-color: var(--accent-gold); box-shadow: 0 0 15px rgba(245, 158, 11, 0.35); outline: none; }
+        
+        .cv-scoreboard { display: flex; flex-direction: column; gap: 0.5rem; width: 100%; max-width: 350px; margin-top: 1rem; }
+        .cv-score-row { display: flex; justify-content: space-between; padding: 0.6rem 1rem; background: rgba(255,255,255,0.04); border-radius: var(--radius-md); border: 1px solid rgba(255,255,255,0.06); font-weight: 600; }
+        .cv-score-val { font-weight: 800; color: var(--accent-gold); }
     `;
     document.head.appendChild(cvStyle);
-
 })();
