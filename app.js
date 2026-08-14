@@ -884,15 +884,8 @@ function handleRoomChange(payload) {
       clearInterval(state.bidTimerInterval);
       if (state.timerTimeout) clearTimeout(state.timerTimeout);
       
-      // If currently on a separate game page, redirect back to index
-      if (!window.location.pathname.endsWith('index.html') && !window.location.pathname.endsWith('index-az.html') && !window.location.pathname.endsWith('/')) {
-        let indexHtml = isAz() ? 'index-az.html' : 'index.html';
-        window.location.href = `${indexHtml}?code=${state.roomCode}`;
-        return;
-      }
-      
-      fetchRoomAndPlayers();
       showScreen('lobby');
+      fetchRoomAndPlayers();
     }
   }
 }
@@ -1014,19 +1007,15 @@ function onGameStateUpdate(gs) {
     hardcoreToggle.checked = !!gs.is_hardcore;
   }
   
-  if (state.room.game_mode && state.room.status === 'playing') {
-    let modeHtml = state.room.game_mode + (isAz() ? '-az.html' : '.html');
-    if (!window.location.pathname.endsWith(modeHtml)) {
-      window.location.href = `${modeHtml}?code=${state.roomCode}`;
-      return;
-    }
+  if (state.room && state.room.game_mode && state.room.status === 'playing') {
+    showScreen(state.room.game_mode);
   }
 
   if (state.isHost) {
     processBotActions(gs);
     
     // Host-driven state transitions for new Sabotage phases
-    if (state.room.game_mode === 'sabotage') {
+    if (state.room && state.room.game_mode === 'sabotage') {
       if (gs.phase === 'detective_phase' && gs.detective_used) {
         if (!state.detectiveTimeout) {
           state.detectiveTimeout = setTimeout(() => {
@@ -1042,7 +1031,7 @@ function onGameStateUpdate(gs) {
             const winner = (target && target.role === 'detective') ? 'saboteurs' : 'guards';
             fastUpdateGameState({ ...gs, phase: 'game_over', winner });
             const winnerIds = state.players.filter(p => (winner === 'guards' && p.role !== 'saboteur' && p.role !== 'assassin') || (winner === 'saboteurs' && (p.role === 'saboteur' || p.role === 'assassin'))).map(p => p.id);
-            window.distributeXP(winnerIds);
+            window.distributeXP(winnerIds, 'sabotage');
             state.assassinTimeout = null;
           }, 3000);
         }
@@ -1050,14 +1039,14 @@ function onGameStateUpdate(gs) {
     }
   }
   
-  if (state.room.game_mode === 'sabotage') {
+  if (state.room && state.room.game_mode === 'sabotage') {
     handleSabotageState(gs);
-  } else if (state.room.game_mode === 'auction') {
+  } else if (state.room && state.room.game_mode === 'auction') {
     handleAuctionState(gs);
-  } else if (state.room.game_mode === 'canvas') {
-    window.handleCanvasState(gs);
-  } else if (state.room.game_mode === 'wordbomb') {
-    window.handleWordBombState(gs);
+  } else if (state.room && state.room.game_mode === 'canvas') {
+    if (window.handleCanvasState) window.handleCanvasState(gs);
+  } else if (state.room && state.room.game_mode === 'wordbomb') {
+    if (window.handleWordBombState) window.handleWordBombState(gs);
   }
 }
 
@@ -2013,6 +2002,8 @@ function showGameOver(gs) {
 
 async function handlePlayAgain() {
   if (!state.isHost) return;
+  playSound('click');
+  showScreen('lobby');
   
   await db.from('players').update({ 
     role: null, 
@@ -2027,6 +2018,8 @@ async function handlePlayAgain() {
     game_mode: null, 
     game_state: null 
   }).eq('code', state.roomCode);
+  
+  fetchRoomAndPlayers();
 }
 
 // ============================================================================
