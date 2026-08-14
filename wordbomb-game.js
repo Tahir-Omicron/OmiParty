@@ -81,7 +81,8 @@ window.startWordBombGame = async function() {
     count--;
     if (count <= 0) {
       clearInterval(interval);
-      const playGs = { ...gs, phase: 'playing', turn_end_time: Date.now() + 8000 };
+      const timeLimit = gs.is_hardcore ? 3500 : 8000;
+      const playGs = { ...gs, phase: 'playing', turn_end_time: Date.now() + timeLimit };
       await fastUpdateGameState(playGs);
       startHostTimer();
     } else {
@@ -104,7 +105,8 @@ function advanceTurn(gs) {
   gs.turn_count = (gs.turn_count || 0) + 1;
   const rotations = Math.floor(gs.turn_count / gs.turn_order.length);
   gs.current_combo = getRandomCombo(rotations);
-  gs.turn_end_time = Date.now() + 8000;
+  const timeLimit = gs.is_hardcore ? 3000 : 8000;
+  gs.turn_end_time = Date.now() + timeLimit;
   gs.submitted_word = null;
   
   if (window.wordbombBotTimeout) {

@@ -366,6 +366,12 @@ function renderLobby() {
   const list = $('#lobby-players');
   list.innerHTML = '';
   
+  // Show host-only controls
+  const hardcoreContainer = document.querySelector('.hardcore-toggle-container');
+  if (hardcoreContainer) {
+    hardcoreContainer.style.display = state.isHost ? 'flex' : 'none';
+  }
+  
   state.players.forEach(player => {
     const card = document.createElement('div');
     card.className = `player-card ${player.is_host ? 'host' : ''}`;
@@ -679,7 +685,13 @@ function processBotActions(gs) {
 }
 
 function onGameStateUpdate(gs) {
-  if (!state.room) return;
+  if (!gs) return;
+  
+  // Sync Hardcore Mode UI for everyone
+  const hardcoreToggle = $('#hardcore-mode-toggle');
+  if (hardcoreToggle) {
+    hardcoreToggle.checked = !!gs.is_hardcore;
+  }
   
   if (state.room.game_mode && state.room.status === 'playing') {
     let modeHtml = state.room.game_mode + '.html';
@@ -779,7 +791,7 @@ async function startSabotageGame() {
       const gsPhase2 = { ...gs, phase: 'detective_phase' };
       fastUpdateGameState(gsPhase2);
     }
-  }, ROLE_REVEAL_MS);
+  }, gs.is_hardcore ? 3000 : ROLE_REVEAL_MS);
 }
 
 function handleSabotageState(gs) {
@@ -1070,7 +1082,7 @@ async function calculateMissionResult() {
         startMissionBriefing(newGs);
       });
     }
-  }, RESULT_DISPLAY_MS);
+  }, gs.is_hardcore ? 2000 : RESULT_DISPLAY_MS);
 }
 
 // ============================================================================
@@ -1462,7 +1474,7 @@ async function processBids() {
         }, 4000);
       });
     }
-  }, RESULT_DISPLAY_MS);
+  }, gs.is_hardcore ? 2000 : RESULT_DISPLAY_MS);
 }
 
 function renderAuctionResults(gs) {
@@ -1598,6 +1610,13 @@ function bindEventListeners() {
   });
   
   $('#add-bot-btn')?.addEventListener('click', handleAddBot);
+  $('#hardcore-mode-toggle')?.addEventListener('change', async (e) => {
+    if (state.isHost && state.roomCode) {
+      const isHardcore = e.target.checked;
+      const gs = state.room.game_state || {};
+      await fastUpdateGameState({ ...gs, is_hardcore: isHardcore });
+    }
+  });
   $('#start-game-btn')?.addEventListener('click', handleStartGame);
   $('#leave-room-btn')?.addEventListener('click', handleLeaveRoom);
   

@@ -60,7 +60,7 @@
             faker_guess_word: null,
             round_summary: '',
             final_scores: null,
-            end_time: Date.now() + 5000
+            end_time: Date.now() + (state.room?.game_state?.is_hardcore ? 2000 : 5000)
         };
 
         await fastUpdateGameState(newGs);
@@ -89,7 +89,7 @@
         await updateGameState({
             phase: 'drawing',
             current_drawer: currentDrawer,
-            end_time: Date.now() + 15000
+            end_time: Date.now() + (state.room?.game_state?.is_hardcore ? 7000 : 15000)
         });
 
         setTimeout(() => {
@@ -116,7 +116,7 @@
         await updateGameState({
             phase: 'voting',
             votes: {},
-            end_time: Date.now() + 20000
+            end_time: Date.now() + (state.room?.game_state?.is_hardcore ? 10000 : 20000)
         });
 
         setTimeout(() => {
@@ -182,7 +182,7 @@
         await updateGameState({
             phase: 'faker_guess',
             faker_guess_word: null,
-            end_time: Date.now() + 15000
+            end_time: Date.now() + (state.room?.game_state?.is_hardcore ? 7000 : 15000)
         });
 
         setTimeout(() => {
