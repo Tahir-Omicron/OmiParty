@@ -174,6 +174,25 @@ async function handleRegister() {
   await finishAuth(data.user);
 }
 
+function handleGuestLogin() {
+  let defaultName = 'Guest_' + Math.floor(Math.random() * 1000);
+  let nickname = prompt('Enter Nickname / Ləqəb daxil edin:', defaultName);
+  if (!nickname) return;
+  
+  state.playerId = crypto.randomUUID();
+  state.nickname = nickname.trim().substring(0, 16);
+  state.profile = { level: 1, xp: 0, avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${state.playerId}` };
+  
+  if ($('#menu-nickname')) {
+    $('#menu-nickname').textContent = state.nickname;
+    $('#profile-level').textContent = '1';
+    $('#profile-avatar').src = state.profile.avatar_url;
+    $('#profile-xp-bar').style.width = '0%';
+  }
+  
+  showScreen('menu');
+}
+
 async function finishAuth(user) {
   state.playerId = user.id;
   
@@ -1589,6 +1608,7 @@ function bindEventListeners() {
   // Auth
   $('#login-btn')?.addEventListener('click', handleLogin);
   $('#register-btn')?.addEventListener('click', handleRegister);
+  $$('#guest-btn').forEach(btn => btn.addEventListener('click', handleGuestLogin));
   
   // Menu
   $('#create-room-btn')?.addEventListener('click', handleCreateRoom);

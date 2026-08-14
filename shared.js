@@ -113,7 +113,7 @@ function playSound(type) {
     oscillator.type = 'triangle';
     oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
     oscillator.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.1);
-    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gainNode.gain.setValueAtTime(0.02, audioCtx.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
     oscillator.start();
     oscillator.stop(audioCtx.currentTime + 0.1);
@@ -147,11 +147,12 @@ function playSound(type) {
 
 // Bind sounds to buttons globally
 document.addEventListener('DOMContentLoaded', () => {
-  document.body.addEventListener('mouseover', (e) => {
-    if (e.target.tagName === 'BUTTON' || e.target.closest('button') || e.target.classList.contains('btn')) {
-      playSound('hover');
-    }
-  });
+  // Hover sound removed because it is annoying
+  // document.body.addEventListener('mouseover', (e) => {
+  //   if (e.target.tagName === 'BUTTON' || e.target.closest('button') || e.target.classList.contains('btn')) {
+  //     playSound('hover');
+  //   }
+  // });
   document.body.addEventListener('mousedown', (e) => {
     if (e.target.tagName === 'BUTTON' || e.target.closest('button') || e.target.classList.contains('btn')) {
       if (e.target.id === 'start-game-btn') {
