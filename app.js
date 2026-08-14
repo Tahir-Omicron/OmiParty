@@ -417,7 +417,19 @@ function renderLobby() {
     
     const avatar = document.createElement('div');
     avatar.className = 'player-avatar';
-    avatar.textContent = player.nickname.charAt(0).toUpperCase();
+    
+    if (player.avatar_url) {
+      const img = document.createElement('img');
+      img.src = player.avatar_url;
+      img.alt = player.nickname;
+      avatar.appendChild(img);
+    } else {
+      // Default to crisp Dicebear avatar
+      const img = document.createElement('img');
+      img.src = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(player.nickname || 'Player')}`;
+      img.alt = player.nickname;
+      avatar.appendChild(img);
+    }
     
     const name = document.createElement('span');
     name.className = 'player-name';
@@ -425,6 +437,20 @@ function renderLobby() {
     
     card.appendChild(avatar);
     card.appendChild(name);
+    
+    // Host can kick other players or bots
+    if (state.isHost && player.id !== state.playerId) {
+      const kickBtn = document.createElement('button');
+      kickBtn.className = 'kick-player-btn';
+      kickBtn.innerHTML = '✕';
+      kickBtn.title = 'Kick Player / Oyunçunu çıxar';
+      kickBtn.onclick = (e) => {
+        e.stopPropagation();
+        handleKickPlayer(player.id, player.nickname);
+      };
+      card.appendChild(kickBtn);
+    }
+    
     list.appendChild(card);
   });
   
@@ -528,6 +554,24 @@ async function handleAddBot() {
   } catch (err) {
     console.error('Error adding bot:', err);
     showToast('Failed to add bot.', 'error');
+  }
+}
+
+async function handleKickPlayer(playerId, nickname) {
+  if (!state.isHost || !state.roomCode) return;
+  try {
+    // Optimistic UI update
+    state.players = state.players.filter(p => p.id !== playerId);
+    renderLobby();
+    
+    const { error } = await db.from('players').delete().eq('id', playerId).eq('room_code', state.roomCode);
+    if (error) throw error;
+    showToast(`${nickname || 'Player'} otaqdan çıxarıldı 🚫`, 'info');
+  } catch (err) {
+    console.error('Error kicking player:', err);
+    showToast('Failed to kick player', 'error');
+    // Refetch to recover accurate state
+    fetchRoomAndPlayers();
   }
 }
 
@@ -669,6 +713,16 @@ async function handlePlayersChange(payload) {
   const { data } = await db.from('players').select('*').eq('room_code', state.roomCode);
   if (data) {
     state.players = data;
+    
+    // If we are currently in a room and our player is not in the player list, we were kicked!
+    if (state.roomCode && state.playerId && !state.isHost) {
+      const me = state.players.find(p => p.id === state.playerId);
+      if (!me) {
+        showToast('Siz otaqdan çıxarıldınız / You were kicked from the room', 'error');
+        handleLeaveRoom();
+        return;
+      }
+    }
     
     const isLobby = $$('.screen.active')[0]?.dataset.screen === 'lobby';
     if (isLobby) {

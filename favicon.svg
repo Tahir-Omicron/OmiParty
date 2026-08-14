@@ -1,0 +1,19 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00e5ff" />
+      <stop offset="50%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#a855f7" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#00e5ff" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="#0f172a" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+  <!-- Gamepad / Dice 'O' Shape -->
+  <circle cx="32" cy="32" r="18" fill="none" stroke="url(#grad1)" stroke-width="6" filter="url(#glow)"/>
+  <!-- Sparkle / Dice dots -->
+  <circle cx="32" cy="23" r="2.5" fill="#00e5ff"/>
+  <circle cx="23" cy="36" r="2.5" fill="#a855f7"/>
+  <circle cx="41" cy="36" r="2.5" fill="#3b82f6"/>
+</svg>
