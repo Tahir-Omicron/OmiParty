@@ -680,7 +680,6 @@ function appendChatMessage(sender, text) {
   
   const textSpan = document.createElement('span');
   textSpan.textContent = text;
-  
   msgDiv.appendChild(senderSpan);
   msgDiv.appendChild(textSpan);
   messagesDiv.appendChild(msgDiv);
@@ -702,6 +701,14 @@ function handleRoomChange(payload) {
       state.usedCardIndices = [];
       clearInterval(state.bidTimerInterval);
       if (state.timerTimeout) clearTimeout(state.timerTimeout);
+      
+      // If currently on a separate game page, redirect back to index
+      if (!window.location.pathname.endsWith('index.html') && !window.location.pathname.endsWith('index-az.html') && !window.location.pathname.endsWith('/')) {
+        let indexHtml = isAz() ? 'index-az.html' : 'index.html';
+        window.location.href = `${indexHtml}?code=${state.roomCode}`;
+        return;
+      }
+      
       fetchRoomAndPlayers();
       showScreen('lobby');
     }
@@ -718,7 +725,7 @@ async function handlePlayersChange(payload) {
     if (state.roomCode && state.playerId && !state.isHost) {
       const me = state.players.find(p => p.id === state.playerId);
       if (!me) {
-        showToast('Siz otaqdan çıxarıldınız / You were kicked from the room', 'error');
+        showToast(isAz() ? 'Siz otaqdan çıxarıldınız' : 'You were kicked from the room', 'error');
         handleLeaveRoom();
         return;
       }
@@ -772,7 +779,7 @@ function processBotActions(gs) {
         if (bot.role === 'detective') {
           setTimeout(async () => {
             const { data } = await db.from('rooms').select('game_state').eq('code', state.roomCode).single();
-            if (data && !data.game_state.detective_used) {
+            if (data && data.game_state && !data.game_state.detective_used) {
               fastUpdateGameState({ ...data.game_state, detective_used: true });
             }
           }, 2000);
@@ -782,11 +789,11 @@ function processBotActions(gs) {
       bots.forEach(bot => {
         if (bot.role === 'assassin') {
           setTimeout(async () => {
-            const guards = state.players.filter(p => p.role !== 'saboteur' && p.role !== 'assassin');
-            const target = guards[Math.floor(Math.random() * guards.length)];
-            if (target) {
-              const { data } = await db.from('rooms').select('game_state').eq('code', state.roomCode).single();
-              if (data && !data.game_state.assassin_target) {
+            const { data } = await db.from('rooms').select('game_state').eq('code', state.roomCode).single();
+            if (data && data.game_state && !data.game_state.assassin_target) {
+              const guards = state.players.filter(p => p.role !== 'saboteur' && p.role !== 'assassin');
+              if (guards.length > 0) {
+                const target = guards[Math.floor(Math.random() * guards.length)];
                 fastUpdateGameState({ ...data.game_state, assassin_target: target.id });
               }
             }
@@ -826,10 +833,7 @@ function onGameStateUpdate(gs) {
   }
   
   if (state.room.game_mode && state.room.status === 'playing') {
-    let modeHtml = state.room.game_mode + '.html';
-    if (window.location.pathname.includes('-az.html')) {
-        modeHtml = state.room.game_mode + '-az.html';
-    }
+    let modeHtml = state.room.game_mode + (isAz() ? '-az.html' : '.html');
     if (!window.location.pathname.endsWith(modeHtml)) {
       window.location.href = `${modeHtml}?code=${state.roomCode}`;
       return;
@@ -938,11 +942,11 @@ function handleSabotageState(gs) {
       if (detMe && detMe.role === 'detective' && !gs.detective_used) {
         const others = state.players.filter(p => p.id !== state.playerId);
         $('#sabotage-main-area').innerHTML = `
-          <div class="phase-panel">
-            <h3 style="text-align:center;">Detective Phase</h3>
-            <p style="text-align:center;">Select one player to reveal their true loyalty.</p>
-            <div class="player-grid" style="display:flex;gap:1rem;justify-content:center;margin-top:1rem;flex-wrap:wrap;">
-              ${others.map(p => `<button class="btn btn-secondary btn-peek" data-id="${p.id}">${p.nickname}</button>`).join('')}
+          <div class="phase-panel" style="text-align:center;">
+            <h3 style="margin-bottom:0.5rem;color:var(--accent-cyan);">${t('detective_phase')}</h3>
+            <p style="color:var(--text-secondary);margin-bottom:1.5rem;">${t('detective_desc_phase')}</p>
+            <div class="player-grid" style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;">
+              ${others.map(p => `<button class="btn btn-secondary btn-peek" data-id="${p.id}" style="padding:10px 18px;">${p.nickname}</button>`).join('')}
             </div>
           </div>
         `;
@@ -953,8 +957,8 @@ function handleSabotageState(gs) {
             const isSab = target.role === 'saboteur' || target.role === 'assassin';
             $('#sabotage-main-area').innerHTML = `
               <div class="phase-panel" style="text-align:center;">
-                <h3>Investigation Complete</h3>
-                <p style="font-size:1.5rem;margin-top:1rem;">${target.nickname} is a <strong style="color:${isSab ? 'var(--accent-red)' : 'var(--accent-green)'};">${isSab ? 'SABOTEUR' : 'GUARD'}</strong>.</p>
+                <h3 style="color:var(--accent-cyan);">${t('detective_phase')}</h3>
+                <p style="font-size:1.3rem;margin-top:1rem;">${t('investigation_complete', target.nickname, isSab)}</p>
               </div>
             `;
             fastUpdateGameState({ ...gs, detective_used: true });
@@ -962,9 +966,9 @@ function handleSabotageState(gs) {
         });
       } else {
         $('#sabotage-main-area').innerHTML = `
-          <div class="waiting-msg">
+          <div class="waiting-msg" style="display:flex;flex-direction:column;align-items:center;gap:12px;">
             <div class="spinner"></div>
-            <p>The Detective is investigating...</p>
+            <p style="color:var(--text-secondary);">${t('detective_investigating')}</p>
           </div>
         `;
       }
@@ -975,11 +979,11 @@ function handleSabotageState(gs) {
       if (assMe && assMe.role === 'assassin' && !gs.assassin_target) {
         const guards = state.players.filter(p => p.role !== 'saboteur' && p.role !== 'assassin');
         $('#sabotage-main-area').innerHTML = `
-          <div class="phase-panel">
-            <h3 style="text-align:center;color:var(--accent-red);">Assassin Phase</h3>
-            <p style="text-align:center;margin-bottom:1rem;">The Guards secured 3 missions. You have one chance to steal the win. Who is the Detective?</p>
-            <div class="player-grid" style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
-              ${guards.map(p => `<button class="btn btn-danger btn-assassinate" data-id="${p.id}">${p.nickname}</button>`).join('')}
+          <div class="phase-panel" style="text-align:center;">
+            <h3 style="color:var(--accent-red);margin-bottom:0.5rem;">${t('assassin_phase')}</h3>
+            <p style="color:var(--text-secondary);margin-bottom:1.5rem;">${t('assassin_desc_phase')}</p>
+            <div class="player-grid" style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;">
+              ${guards.map(p => `<button class="btn btn-danger btn-assassinate" data-id="${p.id}" style="padding:10px 18px;">${p.nickname}</button>`).join('')}
             </div>
           </div>
         `;
@@ -987,9 +991,9 @@ function handleSabotageState(gs) {
           b.addEventListener('click', async (e) => {
             const targetId = e.target.dataset.id;
             $('#sabotage-main-area').innerHTML = `
-              <div class="waiting-msg">
+              <div class="waiting-msg" style="display:flex;flex-direction:column;align-items:center;gap:12px;">
                 <div class="spinner"></div>
-                <p>Assassination order placed. Resolving...</p>
+                <p style="color:var(--text-secondary);">${t('assassin_moving')}</p>
               </div>
             `;
             fastUpdateGameState({ ...gs, assassin_target: targetId });
@@ -999,15 +1003,15 @@ function handleSabotageState(gs) {
         const target = state.players.find(p => p.id === gs.assassin_target);
         $('#sabotage-main-area').innerHTML = `
           <div class="phase-panel" style="text-align:center;">
-            <h3 style="color:var(--accent-red);">Assassination Target Locked</h3>
-            <p style="font-size:1.5rem;margin-top:1rem;">The Assassin targeted <strong>${target ? target.nickname : 'Someone'}</strong>!</p>
+            <h3 style="color:var(--accent-red);">${t('assassin_phase')}</h3>
+            <p style="font-size:1.3rem;margin-top:1rem;">${t('assassin_target_locked', target ? target.nickname : 'Someone')}</p>
           </div>
         `;
       } else {
         $('#sabotage-main-area').innerHTML = `
-          <div class="waiting-msg">
+          <div class="waiting-msg" style="display:flex;flex-direction:column;align-items:center;gap:12px;">
             <div class="spinner"></div>
-            <p>The Assassin is making their move...</p>
+            <p style="color:var(--text-secondary);">${t('assassin_moving')}</p>
           </div>
         `;
       }
@@ -1015,31 +1019,32 @@ function handleSabotageState(gs) {
     case 'mission_briefing':
       showScreen('sabotage');
       renderSabotageScoreboard(gs);
-      $('#sabotage-round-info').textContent = `ROUND ${gs.round} OF 5`;
+      $('#sabotage-round-info').textContent = t('round_of', gs.round);
       const mTeam = state.players.filter(p => gs.mission_team.includes(p.id));
       const isOnTeam = gs.mission_team.includes(state.playerId);
       $('#sabotage-main-area').innerHTML = `
-        <div class="phase-panel">
-          <h3 style="text-align:center;">Mission ${gs.round} — Team Selected</h3>
-          <div class="mission-team">
-            ${mTeam.map(p => `<div class="mission-player ${p.id === state.playerId ? 'you' : ''}">${p.nickname}</div>`).join('')}
+        <div class="phase-panel" style="text-align:center;">
+          <h3 style="margin-bottom:1rem;">${t('mission_team_selected', gs.round)}</h3>
+          <div class="mission-team" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:1rem 0;">
+            ${mTeam.map(p => `<div class="mission-player ${p.id === state.playerId ? 'you' : ''}" style="background:var(--bg-secondary);padding:8px 16px;border-radius:20px;border:1px solid var(--glass-border);font-weight:600;">${p.nickname}</div>`).join('')}
           </div>
-          <p class="mission-instruction">${isOnTeam ? 'You are on this mission. Prepare to vote!' : 'Waiting for the mission team to return...'}</p>
+          <p class="mission-instruction" style="color:var(--text-secondary);margin-top:1rem;">${isOnTeam ? t('on_team_prompt') : t('waiting_team')}</p>
         </div>
       `;
       break;
     case 'voting':
       state.voteCast = false;
       renderSabotageScoreboard(gs);
+      $('#sabotage-round-info').textContent = t('round_of', gs.round);
       if (gs.mission_team.includes(state.playerId)) {
         const me = state.players.find(p => p.id === state.playerId);
         const canSabotage = me?.role === 'saboteur' || me?.role === 'assassin';
         $('#sabotage-main-area').innerHTML = `
-          <div class="phase-panel">
-            <h3 style="text-align:center;">Cast Your Vote</h3>
-            <div class="vote-area">
-              <button id="vote-success-btn" class="btn btn-success btn-vote">✓ Success</button>
-              ${canSabotage ? '<button id="vote-sabotage-btn" class="btn btn-danger btn-vote">✗ Sabotage</button>' : ''}
+          <div class="phase-panel" style="text-align:center;">
+            <h3 style="margin-bottom:1.5rem;">${t('cast_vote')}</h3>
+            <div class="vote-area" style="display:flex;gap:15px;justify-content:center;max-width:400px;margin:0 auto;">
+              <button id="vote-success-btn" class="btn btn-success btn-vote" style="flex:1;min-height:60px;font-size:1.1rem;">${t('vote_success')}</button>
+              ${canSabotage ? `<button id="vote-sabotage-btn" class="btn btn-danger btn-vote" style="flex:1;min-height:60px;font-size:1.1rem;">${t('vote_sabotage')}</button>` : ''}
             </div>
           </div>
         `;
@@ -1049,9 +1054,9 @@ function handleSabotageState(gs) {
         }
       } else {
         $('#sabotage-main-area').innerHTML = `
-          <div class="waiting-msg">
+          <div class="waiting-msg" style="display:flex;flex-direction:column;align-items:center;gap:12px;">
             <div class="spinner"></div>
-            <p>The team is on a mission...</p>
+            <p style="color:var(--text-secondary);">${t('waiting_team')}</p>
           </div>
         `;
       }
@@ -1059,13 +1064,14 @@ function handleSabotageState(gs) {
     case 'result':
       renderSabotageScoreboard(gs);
       const lastResult = gs.history[gs.history.length - 1];
-      const sabs = lastResult.sabotage_count;
-      const resultColor = lastResult.result === 'success' ? 'var(--accent-green)' : 'var(--accent-red)';
+      const sabs = lastResult ? lastResult.sabotage_count : 0;
+      const isSuccess = lastResult && lastResult.result === 'success';
+      const resultColor = isSuccess ? 'var(--accent-green)' : 'var(--accent-red)';
       $('#sabotage-main-area').innerHTML = `
         <div class="phase-panel" style="text-align:center;">
-          <div class="result-card">
-            <h2 style="color:${resultColor};font-size:2rem;">Mission ${lastResult.result === 'success' ? 'SUCCESS' : 'FAILED'}!</h2>
-            <p style="color:var(--text-secondary);margin-top:1rem;">Sabotage votes cast: ${sabs}</p>
+          <div class="result-card" style="background:var(--bg-surface);padding:2rem;border-radius:var(--radius-lg);border:1px solid var(--glass-border);max-width:400px;margin:0 auto;">
+            <h2 style="color:${resultColor};font-size:1.8rem;margin-bottom:0.5rem;">${isSuccess ? t('mission_success') : t('mission_failed')}</h2>
+            <p style="color:var(--text-secondary);">${t('sabotage_count', sabs)}</p>
           </div>
         </div>
       `;
@@ -1081,36 +1087,42 @@ function renderRoleReveal() {
   if (!me) return;
   const isSab = me.role === 'saboteur' || me.role === 'assassin';
   
-  let icon = '🛡️';
-  let title = 'GUARD';
-  let desc = 'Protect the missions at all costs.';
+  let iconSvg = `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>`;
+  let title = t('guard_title');
+  let desc = t('guard_desc');
+  
   if (me.role === 'saboteur') {
-    icon = '🗡️'; title = 'SABOTEUR'; desc = 'Secretly fail missions to win.';
+    iconSvg = `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m14 13-7.5 7.5c-.8.8-2 .8-2.8 0l-.2-.2c-.8-.8-.8-2 0-2.8L11 10"></path><path d="m16 16 6-6"></path><path d="m8 8 6-6"></path><path d="m9 7 8 8"></path><path d="m21 11-8-8"></path></svg>`;
+    title = t('saboteur_title');
+    desc = t('saboteur_desc');
   } else if (me.role === 'assassin') {
-    icon = '☠️'; title = 'ASSASSIN'; desc = 'Fail missions, and assassinate the Detective if the Guards win.';
+    iconSvg = `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="12" r="1"></circle><circle cx="15" cy="12" r="1"></circle><path d="M8 20v2h8v-2"></path><path d="m12.5 17-.5-1-.5 1h1z"></path><path d="M16 20a4 4 0 0 0 4-4V9a8 8 0 0 0-16 0v7a4 4 0 0 0 4 4z"></path></svg>`;
+    title = t('assassin_title');
+    desc = t('assassin_desc');
   } else if (me.role === 'detective') {
-    icon = '🔍'; title = 'DETECTIVE'; desc = 'Protect missions. You will discover one player\'s true loyalty at the start.';
+    iconSvg = `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>`;
+    title = t('detective_title');
+    desc = t('detective_desc');
   }
   
+  $('#sabotage-round-info').textContent = t('round_of', 1);
+  
   $('#sabotage-main-area').innerHTML = `
-    <div class="phase-panel" style="display:flex;justify-content:center;padding:2rem 0;">
-      <div id="sabotage-role-card" class="role-card ${isSab ? 'saboteur' : 'guard'}">
-        <div class="role-card-inner">
-          <div class="role-card-front">?</div>
-          <div class="role-card-back">
-            <span class="role-icon">${icon}</span>
-            <span class="role-name">${title}</span>
-            <span class="role-desc">${desc}</span>
-          </div>
+    <div class="phase-panel" style="display:flex;flex-direction:column;align-items:center;padding:1.5rem 1rem;gap:1.25rem;">
+      <div style="background:rgba(255,255,255,0.05);padding:6px 16px;border-radius:20px;border:1px solid var(--glass-border);font-size:0.85rem;font-weight:600;color:var(--accent-cyan);display:flex;align-items:center;gap:8px;">
+        <span class="spinner" style="width:14px;height:14px;border-width:2px;"></span>
+        ${t('game_starting_in', 3)}
+      </div>
+      
+      <div id="sabotage-role-card" class="role-card ${me.role}">
+        <div class="role-icon" style="color:${isSab ? 'var(--accent-red)' : 'var(--accent-cyan)'};">
+          ${iconSvg}
         </div>
+        <div class="role-name" style="color:${isSab ? 'var(--accent-red)' : 'var(--accent-cyan)'};">${title}</div>
+        <div class="role-desc">${desc}</div>
       </div>
     </div>
   `;
-  
-  setTimeout(() => {
-    const rc = $('#sabotage-role-card');
-    if (rc) rc.classList.add('revealed');
-  }, 1000);
 }
 
 function renderSabotageScoreboard(gs) {
@@ -1650,22 +1662,22 @@ function showGameOver(gs) {
   
   if (state.room.game_mode === 'sabotage') {
     if (gs.winner === 'guards') {
-      title.textContent = 'Guards Win!';
-      msg.textContent = 'The missions were successfully protected.';
+      title.textContent = isAz() ? 'Mühafizəçilər Qalib Gəldi! 🛡️' : 'Guards Win!';
+      msg.textContent = isAz() ? 'Missiyalar uğurla qorundu.' : 'The missions were successfully protected.';
     } else {
-      title.textContent = 'Saboteurs Win!';
-      msg.textContent = 'Chaos reigns supreme.';
+      title.textContent = isAz() ? 'Xainlər Qalib Gəldi! 🗡️' : 'Saboteurs Win!';
+      msg.textContent = isAz() ? 'Xaos qalib gəldi.' : 'Chaos reigns supreme.';
     }
     
     const sabs = state.players.filter(p => p.role === 'saboteur' || p.role === 'assassin').map(p => p.nickname).join(', ');
-    details.innerHTML = `<p>The Saboteurs were: <strong>${sabs}</strong></p>`;
+    details.innerHTML = `<p style="margin-top:1rem;color:var(--text-secondary);">${isAz() ? 'Xainlər bunlar idi:' : 'The Saboteurs were:'} <strong style="color:var(--accent-red);">${sabs}</strong></p>`;
     
   } else if (state.room.game_mode === 'auction') {
     const winner = state.players.find(p => p.id === gs.winner);
-    title.textContent = winner ? `${winner.nickname} Wins!` : 'Everyone Died!';
-    msg.textContent = 'The auction has concluded.';
+    title.textContent = winner ? `${winner.nickname} ${isAz() ? 'Qalib Gəldi!' : 'Wins!'}` : (isAz() ? 'Hamı Məğlub Oldu!' : 'Everyone Died!');
+    msg.textContent = isAz() ? 'Auksion başa çatdı.' : 'The auction has concluded.';
     
-    let standings = '<h3>Final Standings</h3><ul class="standings-list">';
+    let standings = `<h3>${isAz() ? 'Yekun Nəticələr' : 'Final Standings'}</h3><ul class="standings-list">`;
     const sorted = [...state.players].sort((a,b) => b.hp - a.hp);
     sorted.forEach(p => {
       standings += `<li>${p.nickname}: ${p.hp} HP</li>`;
@@ -1677,22 +1689,25 @@ function showGameOver(gs) {
       window.showCanvasGameOver(gs);
       return;
     }
-    title.textContent = 'Game Over!';
-    msg.textContent = 'The canvas has spoken.';
+    title.textContent = isAz() ? 'Oyun Başa Çatdı!' : 'Game Over!';
+    msg.textContent = isAz() ? 'Rəsm tamamlandı.' : 'The canvas has spoken.';
   } else if (state.room.game_mode === 'wordbomb') {
     if (window.showWordBombGameOver) {
       window.showWordBombGameOver(gs);
       return;
     }
-    title.textContent = 'Game Over!';
-    msg.textContent = 'The bombs have been defused.';
+    title.textContent = isAz() ? 'Oyun Başa Çatdı!' : 'Game Over!';
+    msg.textContent = isAz() ? 'Bombalar zərərsizləşdirildi.' : 'The bombs have been defused.';
   }
   
   const lobbyBtn = $('#gameover-lobby-btn');
-  if (state.isHost) {
-    lobbyBtn.style.display = 'block';
-  } else {
-    lobbyBtn.style.display = 'none';
+  if (lobbyBtn) {
+    lobbyBtn.textContent = t('back_to_lobby');
+    if (state.isHost) {
+      lobbyBtn.style.display = 'inline-block';
+    } else {
+      lobbyBtn.style.display = 'none';
+    }
   }
 }
 
