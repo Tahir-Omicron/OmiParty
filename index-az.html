@@ -46,7 +46,8 @@
                     <input type="email" id="login-email" placeholder="E-poçt" autocomplete="off">
                     <input type="password" id="login-password" placeholder="Şifrə" autocomplete="off">
                     <button id="login-btn" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Daxil ol</button>
-                    <button id="guest-btn" class="btn btn-secondary" style="width: 100%; margin-top: 10px;">Qonaq kimi oyna 🎲</button>
+                    <div class="divider" style="margin: 15px 0;">və ya</div>
+                    <button id="guest-btn" class="btn btn-secondary" style="width: 100%;">Qonaq kimi oyna 🎲</button>
                     <p style="margin-top: 15px; font-size: 14px; cursor: pointer; color: var(--accent-cyan);" onclick="toggleAuthMode('register')">Hesabınız yoxdur? Qeydiyyat</p>
                 </div>
                 
@@ -121,12 +122,12 @@
                     </button>
                 </div>
                 
-                <div class="hardcore-toggle-container host-only" style="margin: 1.5rem 0; display: flex; align-items: center; justify-content: center; gap: 0.5rem; display: none;">
+                <div class="hardcore-toggle-container host-only" style="margin: 1.5rem auto; display: flex; align-items: center; justify-content: center; gap: 1rem; display: none; background: rgba(251, 113, 133, 0.1); padding: 10px 25px; border-radius: 50px; border: 1px solid rgba(251, 113, 133, 0.3); width: fit-content; box-shadow: 0 4px 15px rgba(251, 113, 133, 0.1);">
                     <label class="switch">
                         <input type="checkbox" id="hardcore-mode-toggle">
                         <span class="slider round"></span>
                     </label>
-                    <span style="font-weight: 600; color: var(--accent-red); font-size: 1.1rem; text-shadow: 0 0 10px rgba(251, 113, 133, 0.5);">🔥 Qatı Rejim</span>
+                    <span style="font-weight: 700; color: var(--accent-red); font-size: 1.1rem; letter-spacing: 1px; text-transform: uppercase;">🔥 Qatı Rejim</span>
                 </div>
 
                 <div class="host-action-buttons">
