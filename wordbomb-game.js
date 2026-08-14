@@ -47,6 +47,7 @@ function getRandomCombo(rotations) {
 }
 
 // ========================================================================
+// ========================================================================
 // GAME START
 // ========================================================================
 window.startWordBombGame = async function() {
@@ -61,6 +62,7 @@ window.startWordBombGame = async function() {
   const gs = {
     phase: 'countdown',
     countdown: 3,
+    start_time: Date.now() + 3000,
     turn_order,
     current_turn: 0,
     current_combo: initialCombo,
@@ -76,19 +78,20 @@ window.startWordBombGame = async function() {
     game_mode: 'wordbomb'
   });
   
-  let count = 3;
-  const interval = setInterval(async () => {
-    count--;
-    if (count <= 0) {
-      clearInterval(interval);
-      const timeLimit = gs.is_hardcore ? 3500 : 8000;
-      const playGs = { ...gs, phase: 'playing', turn_end_time: Date.now() + timeLimit };
+  // Host automatically transitions to playing phase after countdown
+  setTimeout(async () => {
+    const currentGs = state.room?.game_state || gs;
+    if (currentGs.phase === 'countdown') {
+      const timeLimit = currentGs.is_hardcore ? 3500 : 8000;
+      const playGs = { 
+        ...currentGs, 
+        phase: 'playing', 
+        turn_end_time: Date.now() + timeLimit 
+      };
       await fastUpdateGameState(playGs);
       startHostTimer();
-    } else {
-      await fastUpdateGameState({ ...gs, countdown: count });
     }
-  }, 1000);
+  }, 3200);
 };
 
 // ========================================================================
@@ -197,12 +200,36 @@ window.handleWordBombState = function(gs) {
   if (!container) return;
 
   if (gs.phase === 'countdown') {
-    container.innerHTML = `
-      <div class="wb-countdown-container">
-        <h2 style="color:var(--text-secondary);margin-bottom:1rem;">GET READY!</h2>
-        <div class="wb-countdown">${gs.countdown}</div>
-      </div>
-    `;
+    if (!container.querySelector('.wb-live-box')) {
+      container.innerHTML = `
+        <div class="wb-countdown-container wb-live-box">
+          <h2 style="color:var(--text-secondary);margin-bottom:1rem;">${isAz() ? 'HAZIR OLUN!' : 'GET READY!'}</h2>
+          <div class="wb-countdown" id="wb-live-countdown">3</div>
+        </div>
+      `;
+      let count = 3;
+      playSound('tick');
+      const cdEl = document.getElementById('wb-live-countdown');
+      const cdInt = setInterval(() => {
+        count--;
+        if (count > 0) {
+          if (cdEl) cdEl.textContent = count;
+          playSound('tick');
+        } else {
+          if (cdEl) cdEl.textContent = isAz() ? 'BAŞLA!' : 'GO!';
+          playSound('start');
+          clearInterval(cdInt);
+          // If host update hasn't arrived in 500ms after countdown, switch to playing locally
+          setTimeout(() => {
+            const cur = state.room?.game_state;
+            if (cur && cur.phase === 'countdown') {
+              cur.phase = 'playing';
+              renderPlaying(container, cur);
+            }
+          }, 500);
+        }
+      }, 1000);
+    }
     return;
   }
   

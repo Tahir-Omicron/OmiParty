@@ -739,16 +739,31 @@ function subscribeToRoom(roomCode) {
 
 // Ultra-fast optimistic UI & broadcast update to bypass Postgres latency
 window.fastUpdateGameState = async function(gs, extraUpdates = {}) {
-  if (!state.room) return;
+  if (!state.room) {
+    state.room = { code: state.roomCode, game_state: gs };
+  }
   state.room.game_state = gs;
+  if (extraUpdates.status) state.room.status = extraUpdates.status;
+  if (extraUpdates.game_mode) state.room.game_mode = extraUpdates.game_mode;
+  
   onGameStateUpdate(gs); // Optimistic local update
   
-  const channel = state.channels.find(c => c.topic === `realtime:room-${state.roomCode}`);
+  const channel = state.channels.find(c => c.topic === `realtime:room-${state.roomCode}` || c.topic === `room-${state.roomCode}`);
   if (channel) {
-    channel.send({ type: 'broadcast', event: 'state_update', payload: gs });
+    try {
+      channel.send({ type: 'broadcast', event: 'state_update', payload: gs });
+    } catch (e) {
+      console.warn("Channel broadcast error:", e);
+    }
   }
   
-  await db.from('rooms').update({ game_state: gs, ...extraUpdates }).eq('code', state.roomCode);
+  if (state.roomCode) {
+    try {
+      await db.from('rooms').update({ game_state: gs, ...extraUpdates }).eq('code', state.roomCode);
+    } catch (e) {
+      console.error('Room update error:', e);
+    }
+  }
 };
 
 // Aliased for internal use
