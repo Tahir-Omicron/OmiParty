@@ -230,6 +230,14 @@ async function finishAuth(user) {
   }
 }
 
+async function handleLogout() {
+  await db.auth.signOut();
+  state.playerId = null;
+  state.nickname = null;
+  state.profile = null;
+  showScreen('auth');
+}
+
 window.updateUserAvatar = async function(src) {
     if(!state.profile) return;
     await db.from('profiles').update({ avatar_url: src }).eq('id', state.playerId);
@@ -1613,6 +1621,7 @@ function bindEventListeners() {
   // Menu
   $('#create-room-btn')?.addEventListener('click', handleCreateRoom);
   $('#join-submit-btn')?.addEventListener('click', handleJoinRoom);
+  $('#logout-btn')?.addEventListener('click', handleLogout);
   $('#join-code-input')?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') handleJoinRoom();
   });
