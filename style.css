@@ -480,50 +480,127 @@ input[type="email"]::placeholder {
     margin-bottom: 0;
 }
 
-.mode-cards {
+.game-modes-grid, .mode-cards {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
+    gap: 12px;
 }
 
 .mode-card {
-    flex: 1;
-    min-width: 140px;
+    position: relative;
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
     background: var(--bg-surface);
     border: 1px solid var(--glass-border);
-    padding: 1.5rem 1rem;
+    padding: 1.25rem 1rem;
     border-radius: var(--radius-lg);
     cursor: pointer;
-    transition: all 0.2s var(--ease-smooth);
-    text-align: center;
+    transition: all 0.25s var(--ease-smooth);
+    text-align: left;
     color: var(--text-primary);
+    overflow: hidden;
+    min-height: 125px;
+}
+
+.mode-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: transparent;
+    transition: all 0.25s ease;
 }
 
 .mode-card:hover {
+    transform: translateY(-3px);
     border-color: var(--glass-border-hover);
-    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
-.mode-card.selected {
-    border-color: var(--accent-cyan);
-    background: rgba(0, 229, 255, 0.05);
+.mode-card[data-mode="sabotage"]:hover,
+.mode-card[data-mode="sabotage"].selected {
+    border-color: rgba(56, 189, 248, 0.6);
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.2), inset 0 0 15px rgba(56, 189, 248, 0.05);
 }
+.mode-card[data-mode="sabotage"]::before { background: var(--accent-cyan); opacity: 0; }
+.mode-card[data-mode="sabotage"]:hover::before, .mode-card[data-mode="sabotage"].selected::before { opacity: 1; }
 
-.mode-icon {
-    font-size: 2rem;
-    margin-bottom: 0.5rem;
+.mode-card[data-mode="auction"]:hover,
+.mode-card[data-mode="auction"].selected {
+    border-color: rgba(245, 158, 11, 0.6);
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.2), inset 0 0 15px rgba(245, 158, 11, 0.05);
 }
-.mode-name {
+.mode-card[data-mode="auction"]::before { background: var(--accent-gold); opacity: 0; }
+.mode-card[data-mode="auction"]:hover::before, .mode-card[data-mode="auction"].selected::before { opacity: 1; }
+
+.mode-card[data-mode="canvas"]:hover,
+.mode-card[data-mode="canvas"].selected {
+    border-color: rgba(168, 85, 247, 0.6);
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.2), inset 0 0 15px rgba(168, 85, 247, 0.05);
+}
+.mode-card[data-mode="canvas"]::before { background: var(--accent-purple); opacity: 0; }
+.mode-card[data-mode="canvas"]:hover::before, .mode-card[data-mode="canvas"].selected::before { opacity: 1; }
+
+.mode-card[data-mode="wordbomb"]:hover,
+.mode-card[data-mode="wordbomb"].selected {
+    border-color: rgba(244, 63, 94, 0.6);
+    box-shadow: 0 0 20px rgba(244, 63, 94, 0.2), inset 0 0 15px rgba(244, 63, 94, 0.05);
+}
+.mode-card[data-mode="wordbomb"]::before { background: var(--accent-red); opacity: 0; }
+.mode-card[data-mode="wordbomb"]:hover::before, .mode-card[data-mode="wordbomb"].selected::before { opacity: 1; }
+
+.mode-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+.mode-card-title {
     font-weight: 700;
+    font-size: 1.05rem;
     font-family: var(--font-heading);
-    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
-.mode-desc {
+.mode-card-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-secondary);
+    border: 1px solid var(--glass-border);
+}
+.mode-card-desc {
     color: var(--text-secondary);
     font-size: 0.8rem;
     line-height: 1.4;
+    margin-top: 4px;
+}
+.mode-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* Friends Drawer & Modal */
+.friends-panel {
+    background: var(--bg-surface);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+}
+.friend-tab-btn.active {
+    background: rgba(56, 189, 248, 0.15) !important;
+    color: var(--accent-cyan) !important;
+    border-color: rgba(56, 189, 248, 0.4) !important;
 }
 
 /* Game Containers */

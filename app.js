@@ -465,7 +465,13 @@ async function fetchRoomAndPlayers() {
     
     const { data: playersData } = await db.from('players').select('*').eq('room_code', state.roomCode);
     if (playersData) {
-      state.players = playersData;
+      state.players = playersData.map(p => {
+        if (p.id === state.playerId) {
+          const myAvatar = state.profile?.avatar_url || localStorage.getItem('otaq_avatar_url');
+          if (myAvatar) p.avatar_url = myAvatar;
+        }
+        return p;
+      });
       renderLobby();
     }
   } catch (e) {
@@ -501,18 +507,14 @@ function renderLobby() {
     const avatar = document.createElement('div');
     avatar.className = 'player-avatar';
     
-    if (player.avatar_url) {
-      const img = document.createElement('img');
-      img.src = player.avatar_url;
-      img.alt = player.nickname;
-      avatar.appendChild(img);
-    } else {
-      // Default to crisp Dicebear avatar
-      const img = document.createElement('img');
-      img.src = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(player.nickname || 'Player')}`;
-      img.alt = player.nickname;
-      avatar.appendChild(img);
-    }
+    const resolvedAvatar = (player.id === state.playerId 
+      ? (state.profile?.avatar_url || localStorage.getItem('otaq_avatar_url')) 
+      : player.avatar_url) || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(player.nickname || 'Player')}`;
+      
+    const img = document.createElement('img');
+    img.src = resolvedAvatar;
+    img.alt = player.nickname;
+    avatar.appendChild(img);
     
     const name = document.createElement('span');
     name.className = 'player-name';
@@ -562,19 +564,44 @@ function renderLobby() {
     playerCountEl.textContent = countText;
   }
   
+  // Highlight active mode card
+  $$('.mode-card').forEach(c => {
+    if (state.selectedMode && c.dataset.mode === state.selectedMode) {
+      c.classList.add('selected');
+    } else {
+      c.classList.remove('selected');
+    }
+  });
+  
   const startBtn = $('#start-game-btn');
   if (startBtn) {
     startBtn.disabled = !(state.selectedMode && count >= required);
+    if (!state.selectedMode) {
+      startBtn.textContent = isAz() ? 'Rejim Seçin' : 'Select Game Mode';
+    } else if (count < required) {
+      startBtn.textContent = isAz() ? `Daha ${required - count} oyunçu lazımdır` : `Need ${required - count} more player${required - count > 1 ? 's' : ''}`;
+    } else {
+      startBtn.textContent = isAz() ? 'Oyuna Başla' : 'Start Game';
+    }
   }
 }
 
-function handleGameModeSelect(mode) {
-  $$('.mode-card').forEach(c => c.classList.remove('selected'));
-  const card = $(`[data-mode="${mode}"]`);
-  if (card) card.classList.add('selected');
-  
+window.handleGameModeSelect = function(mode) {
+  if (!mode) return;
   state.selectedMode = mode;
-  renderLobby(); // re-evaluates button disabled state
+  $$('.mode-card').forEach(c => {
+    if (c.dataset.mode === mode) {
+      c.classList.add('selected');
+    } else {
+      c.classList.remove('selected');
+    }
+  });
+  playSound('click');
+  renderLobby();
+};
+
+function handleGameModeSelect(mode) {
+  window.handleGameModeSelect(mode);
 }
 
 async function handleStartGame() {
@@ -1404,15 +1431,34 @@ function handleAuctionState(gs) {
             </div>
             <div class="bid-controls">
               <input type="range" id="auction-bid-slider" class="bid-slider" min="0" max="${me.hp}" value="0">
-              <div class="bid-display">Your bid: <span id="bid-value" class="bid-value">0</span> HP</div>
-              <button id="auction-bid-btn" class="btn btn-gold">Lock In Bid</button>
+              <div class="bid-display">${isAz() ? 'Təklifiniz:' : 'Your bid:'} <strong id="bid-value" class="bid-value" style="font-size:1.4rem; color:var(--accent-gold);">0</strong> HP / ${me.hp} HP</div>
+              <div style="display:flex; gap:6px; justify-content:center; margin:12px 0; flex-wrap:wrap;">
+                <button class="btn btn-ghost btn-sm quick-bid-btn" data-val="0">0 HP</button>
+                <button class="btn btn-ghost btn-sm quick-bid-btn" data-pct="0.25">25%</button>
+                <button class="btn btn-ghost btn-sm quick-bid-btn" data-pct="0.5">50%</button>
+                <button class="btn btn-ghost btn-sm quick-bid-btn" data-pct="0.75">75%</button>
+                <button class="btn btn-ghost btn-sm quick-bid-btn" data-val="${me.hp}" style="color:var(--accent-red); font-weight:700;">All-in! 🔥</button>
+              </div>
+              <button id="auction-bid-btn" class="btn btn-gold" style="width:100%; font-weight:700; font-size:1.1rem; box-shadow: 0 4px 15px rgba(245,158,11,0.25);">${isAz() ? 'Təklifi Təsdiqlə' : 'Lock In Bid'}</button>
             </div>
           </div>
         `;
-        $('#auction-bid-slider').addEventListener('input', (e) => {
+        const slider = $('#auction-bid-slider');
+        slider.addEventListener('input', (e) => {
           $('#bid-value').textContent = `${e.target.value}`;
         });
-        $('#auction-bid-btn').addEventListener('click', handleBidSubmit);
+        $$('.quick-bid-btn').forEach(b => {
+          b.onclick = () => {
+            let val = b.dataset.val !== undefined ? parseInt(b.dataset.val) : Math.round(me.hp * parseFloat(b.dataset.pct));
+            slider.value = val;
+            $('#bid-value').textContent = `${val}`;
+            playSound('click');
+          };
+        });
+        $('#auction-bid-btn').addEventListener('click', () => {
+          playSound('click');
+          handleBidSubmit();
+        });
         startBidTimer(gs.bid_deadline);
       }
       break;
@@ -1871,8 +1917,11 @@ function bindEventListeners() {
     }
   });
   
-  $$('.mode-card').forEach(card => {
-    card.addEventListener('click', () => handleGameModeSelect(card.dataset.mode));
+  document.addEventListener('click', (e) => {
+    const card = e.target.closest('.mode-card');
+    if (card && card.dataset.mode) {
+      window.handleGameModeSelect(card.dataset.mode);
+    }
   });
   
   $('#add-bot-btn')?.addEventListener('click', handleAddBot);

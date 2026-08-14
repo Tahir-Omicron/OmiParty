@@ -26,7 +26,7 @@
         players.forEach(p => scores[p.id] = 0);
 
         // Set status first so Realtime picks up game_state changes
-        await fastUpdateGameState(gs, {
+        await fastUpdateGameState({}, {
             status: 'playing',
             game_mode: 'canvas'
         });

@@ -340,6 +340,7 @@ function startVisualTimer() {
 }
 
 function showExplosion() {
+  playSound('bomb');
   const el = document.createElement('div');
   el.className = 'wb-explosion-overlay';
   el.textContent = '💥';
@@ -367,24 +368,28 @@ async function submitWord() {
   const combo = gs.current_combo.combo.toLowerCase();
   
   if (!word.includes(combo)) {
-    showToast(`Must contain "${combo.toUpperCase()}"`, 'error');
+    playSound('wrong');
+    showToast(isAz() ? `"${combo.toUpperCase()}" hərflərini ehtiva etməlidir!` : `Must contain "${combo.toUpperCase()}"`, 'error');
     input.value = '';
     input.focus();
     return;
   }
   if (!window.WORD_DICTIONARY.has(word)) {
-    showToast('Not in dictionary!', 'error');
+    playSound('wrong');
+    showToast(isAz() ? 'Lüğətdə tapılmadı!' : 'Not in dictionary!', 'error');
     input.value = '';
     input.focus();
     return;
   }
   if (gs.used_words.includes(word)) {
-    showToast('Already used!', 'error');
+    playSound('wrong');
+    showToast(isAz() ? 'Artıq istifadə olunub!' : 'Already used!', 'error');
     input.value = '';
     input.focus();
     return;
   }
   
+  playSound('correct');
   input.value = '';
   
   // Submit word for host to process
