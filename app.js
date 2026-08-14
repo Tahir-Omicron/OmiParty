@@ -168,6 +168,20 @@ async function init() {
     await resumeGame(code);
     return;
   }
+
+  // Active session auto-recovery (if refreshed or tab re-opened)
+  const activeSession = typeof getActiveSession === 'function' ? getActiveSession() : null;
+  if (activeSession && activeSession.roomCode && state.playerId) {
+    try {
+      const { data: roomData } = await db.from('rooms').select('*').eq('code', activeSession.roomCode).single();
+      if (roomData && (roomData.status === 'lobby' || roomData.status === 'playing')) {
+        await enterLobby(activeSession.roomCode);
+        return;
+      }
+    } catch (e) {
+      console.warn("Active session recovery skipped:", e);
+    }
+  }
   
   // If not resuming a game and not logged in, show auth
   if (!state.playerId) {
@@ -381,6 +395,7 @@ async function handleCreateRoom() {
     }
 
     state.isHost = true;
+    if (typeof saveActiveSession === 'function') saveActiveSession(code, state.playerId);
     await enterLobby(code);
     
   } catch (err) {
@@ -411,6 +426,13 @@ async function handleJoinRoom() {
       showToast(isAz() ? 'Otaq tapılmadı və ya oyun artıq başlayıb.' : 'Room not found or game already started.', 'error');
       return;
     }
+
+    // Capacity limit: max 8 players
+    const { data: existingPlayers } = await db.from('players').select('id').eq('room_code', code);
+    if (existingPlayers && existingPlayers.length >= 8) {
+      showToast(isAz() ? 'Otaq doludur! (Maksimum 8 oyunçu)' : 'Room is full! (Max 8 players)', 'warning');
+      return;
+    }
     
     state.playerId = state.playerId || getPlayerId();
     state.nickname = state.nickname || localStorage.getItem('otaq_nickname') || ('Player_' + Math.floor(Math.random() * 1000));
@@ -432,6 +454,7 @@ async function handleJoinRoom() {
     }
     
     state.isHost = false;
+    if (typeof saveActiveSession === 'function') saveActiveSession(code, state.playerId);
     await enterLobby(code);
     
   } catch (err) {
@@ -658,9 +681,13 @@ async function handleStartGame() {
 
 async function handleAddBot() {
   if (!state.roomCode || !state.isHost) return;
+  if (state.players.length >= 8) {
+    showToast(isAz() ? 'Maksimum 8 oyunçu ola bilər!' : 'Maximum 8 players allowed!', 'warning');
+    return;
+  }
   
   const botId = crypto.randomUUID();
-  const botNames = ['Bot_Alpha', 'Bot_Bravo', 'Bot_Charlie', 'Bot_Delta', 'Bot_Echo'];
+  const botNames = ['Bot_Alpha', 'Bot_Bravo', 'Bot_Charlie', 'Bot_Delta', 'Bot_Echo', 'Bot_Apex', 'Bot_Titan', 'Bot_Nova'];
   // Pick a random name not currently in the room (or just random if all taken)
   const availableNames = botNames.filter(n => !state.players.some(p => p.nickname === n));
   const botName = availableNames.length > 0 
@@ -732,6 +759,7 @@ async function handleLeaveRoom() {
   state.isHost = false;
   state.selectedMode = null;
   localStorage.removeItem('otaq_current_room');
+  if (typeof clearActiveSession === 'function') clearActiveSession();
   showScreen('menu');
 }
 // 9. REALTIME SUBSCRIPTIONS
@@ -762,9 +790,11 @@ function subscribeToRoom(roomCode) {
   state.channels.push(state.channel);
 }
 
-// Global Reaction Emote Emitter
 window.sendReactionEmote = function(emoji) {
   if (!state.roomCode) return;
+  if (window.globalReactionLimiter && !window.globalReactionLimiter.canAct()) {
+    return; // Silently debounce rapid spam
+  }
   playSound('click');
   showFloatingEmote(emoji, state.nickname || 'You');
   
@@ -915,6 +945,19 @@ async function handlePlayersChange(payload) {
   const { data } = await db.from('players').select('*').eq('room_code', state.roomCode);
   if (data) {
     state.players = data;
+
+    // Automatic Host Migration if room host left/disconnected
+    const hasHost = state.players.some(p => p.is_host);
+    if (!hasHost && state.players.length > 0) {
+      const newHost = state.players[0];
+      newHost.is_host = true;
+      if (newHost.id === state.playerId) {
+        state.isHost = true;
+        showToast(isAz() ? 'Siz yeni otaq lideri oldunuz! 👑' : 'You are now the room host! 👑', 'success');
+        db.from('players').update({ is_host: true }).eq('id', newHost.id).eq('room_code', state.roomCode);
+        db.from('rooms').update({ host_id: newHost.id }).eq('code', state.roomCode);
+      }
+    }
     
     // If we are currently in a room and our player is not in the player list, we were kicked!
     if (state.roomCode && state.playerId && !state.isHost) {
@@ -947,7 +990,7 @@ async function handlePlayersChange(payload) {
 }
 
 // ============================================================================
-// 10. GAME STATE ROUTER
+// 10. GAME STATE ROUTER & SMART BOT AI 2.0
 // ============================================================================
 function processBotActions(gs) {
   if (!state.isHost || !state.room) return;
@@ -958,13 +1001,23 @@ function processBotActions(gs) {
     if (gs.phase === 'voting') {
       bots.forEach(bot => {
         if (gs.mission_team.includes(bot.id) && !bot.vote) {
-          const delay = 1000 + Math.random() * 2000; // 1-3s delay
+          const delay = 1000 + Math.random() * 1800; // 1-2.8s natural hesitation
           setTimeout(async () => {
-            // Check if already voted to avoid duplicate DB calls
             const currentBot = state.players.find(p => p.id === bot.id);
             if (currentBot && currentBot.vote) return;
             
-            const vote = (currentBot.role === 'saboteur' || currentBot.role === 'assassin') ? 'sabotage' : 'success';
+            let vote = 'success';
+            if (currentBot.role === 'saboteur' || currentBot.role === 'assassin') {
+              // Smart bluffing: In Round 1 with only 2 team members, 30% chance to vote 'success' to gain trust
+              const isRound1 = (gs.current_mission === 1 || gs.mission_history?.length === 0);
+              if (isRound1 && Math.random() < 0.30) {
+                vote = 'success'; // Bluff!
+              } else {
+                vote = 'sabotage';
+              }
+            } else {
+              vote = 'success';
+            }
             await db.from('players').update({ vote }).eq('id', bot.id);
           }, delay);
         }
@@ -977,7 +1030,7 @@ function processBotActions(gs) {
             if (data && data.game_state && !data.game_state.detective_used) {
               fastUpdateGameState({ ...data.game_state, detective_used: true });
             }
-          }, 2000);
+          }, 1800);
         }
       });
     } else if (gs.phase === 'assassin_phase' && !gs.assassin_target) {
@@ -992,7 +1045,7 @@ function processBotActions(gs) {
                 fastUpdateGameState({ ...data.game_state, assassin_target: target.id });
               }
             }
-          }, 3000);
+          }, 2400);
         }
       });
     }
@@ -1000,12 +1053,33 @@ function processBotActions(gs) {
     if (gs.phase === 'bidding') {
       bots.forEach(bot => {
         if (!bot.bid && bot.bid !== 0) {
-          const delay = 1500 + Math.random() * 3000;
+          const delay = 1200 + Math.random() * 2200;
           setTimeout(async () => {
             const currentBot = state.players.find(p => p.id === bot.id);
             if (currentBot && (currentBot.bid || currentBot.bid === 0)) return;
-            const maxBid = Math.floor(currentBot.hp * 0.5);
-            const bid = Math.floor(Math.random() * (maxBid + 1));
+            
+            const currentItem = AUCTION_ITEMS[gs.current_item_index] || {};
+            const isDanger = currentItem.type === 'danger' || (currentItem.effect && currentItem.effect.includes('-'));
+            const isMedkit = currentItem.type === 'heal' || (currentItem.effect && currentItem.effect.includes('+'));
+            
+            let bid = 0;
+            if (currentBot.hp <= 20) {
+              // Survival mode: low HP bots bid strictly 0 on danger, 1-5 on medkit
+              bid = isDanger ? 0 : Math.min(currentBot.hp - 1, Math.floor(Math.random() * 6) + 1);
+            } else if (isDanger) {
+              // Danger card: 70% bid 0, 30% bid small bait (1-4)
+              bid = Math.random() < 0.70 ? 0 : Math.floor(Math.random() * 5);
+            } else if (isMedkit) {
+              // Valuable heal: bid 15% to 35% of current HP
+              const maxBid = Math.floor(currentBot.hp * 0.35);
+              bid = Math.max(5, Math.floor(Math.random() * maxBid) + 5);
+            } else {
+              // Standard item: bid 10% to 25% of current HP
+              const maxBid = Math.floor(currentBot.hp * 0.25);
+              bid = Math.floor(Math.random() * (maxBid + 1));
+            }
+            
+            bid = Math.max(0, Math.min(currentBot.hp, bid));
             await db.from('players').update({ bid }).eq('id', bot.id);
           }, delay);
         }

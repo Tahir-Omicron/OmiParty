@@ -560,7 +560,7 @@ async function submitWord() {
 }
 
 // ========================================================================
-// BOT AI (With human-like mistakes, panics, and vocabulary)
+// BOT AI 2.0 (With archetypes, simulated typing hesitation, and panic triggers)
 // ========================================================================
 window.processWordBombBotActions = function(gs) {
   if (gs.phase !== 'playing') return;
@@ -574,17 +574,36 @@ window.processWordBombBotActions = function(gs) {
     const timeLeft = gs.turn_end_time - Date.now();
     if (timeLeft <= 0) return;
 
-    // BOT MISTAKE LOGIC:
-    // 35% chance bot panics/fails to find word and lets the timer expire!
-    const willFail = Math.random() < 0.35;
+    // Determine bot archetype by name
+    const name = bot.nickname;
+    let delay = 2200;
+    let failChance = 0.15;
     
+    if (name.includes('Alpha') || name.includes('Apex')) {
+      // Speed Demon: Fast response (1.2s - 2.4s), rare fails (8%)
+      delay = 1200 + Math.random() * 1200;
+      failChance = 0.08;
+    } else if (name.includes('Charlie') || name.includes('Titan')) {
+      // Hesitant Gambler: Slower response (2.5s - 4.5s), 25% fail chance
+      delay = 2500 + Math.random() * 2000;
+      failChance = 0.25;
+    } else {
+      // Standard / Scholar: Balanced response (1.8s - 3.4s), 14% fail chance
+      delay = 1800 + Math.random() * 1600;
+      failChance = 0.14;
+    }
+
+    const willFail = Math.random() < failChance;
     if (willFail) {
-      // Bot fails: does not submit any word and lets timer naturally expire
+      // Bot fails naturally and lets timer explode!
       return;
     }
 
-    // Thinking delay: 2.0s to 4.8s
-    const delay = 1800 + Math.random() * 3000;
+    // Show simulated typing status
+    const statusEl = document.querySelector('.wb-status');
+    if (statusEl) {
+      statusEl.textContent = `${bot.nickname} ${isAz() ? 'yazır...' : 'is typing...'}`;
+    }
     
     window.wordbombBotTimeout = setTimeout(async () => {
       const currentGs = state.room?.game_state;
@@ -603,7 +622,7 @@ window.processWordBombBotActions = function(gs) {
           const nw = window.normalizeWord ? window.normalizeWord(w) : w;
           if ((w.includes(combo) || nw.includes(normCombo)) && !currentGs.used_words.includes(w)) {
             candidateWords.push(w);
-            if (candidateWords.length > 20) break;
+            if (candidateWords.length > 25) break;
           }
         }
       }

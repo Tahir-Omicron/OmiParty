@@ -638,28 +638,61 @@
                         const current = gs();
                         if (!current || current.phase !== 'drawing') { botDrawingFlags[bot.id] = false; return; }
                         
-                        // Generate organic fun parametric doodle
+                        // Generate diverse procedural doodle based on random style index
                         const pts = [];
-                        const cx = 100 + Math.random() * 200;
-                        const cy = 100 + Math.random() * 200;
-                        const steps = 15;
-                        const radius = 30 + Math.random() * 50;
-                        for (let i = 0; i <= steps; i++) {
-                            const angle = (i / steps) * Math.PI * 2;
-                            pts.push({
-                                x: Math.round(cx + Math.cos(angle) * radius + (Math.random() * 10 - 5)),
-                                y: Math.round(cy + Math.sin(angle) * radius + (Math.random() * 10 - 5))
-                            });
+                        const patternType = Math.floor(Math.random() * 4);
+                        const cx = 120 + Math.random() * 160;
+                        const cy = 120 + Math.random() * 160;
+
+                        if (patternType === 0) {
+                            // Organic Circle / Ellipse
+                            const steps = 16;
+                            const rx = 30 + Math.random() * 45;
+                            const ry = 25 + Math.random() * 40;
+                            for (let i = 0; i <= steps; i++) {
+                                const angle = (i / steps) * Math.PI * 2;
+                                pts.push({
+                                    x: Math.round(cx + Math.cos(angle) * rx + (Math.random() * 6 - 3)),
+                                    y: Math.round(cy + Math.sin(angle) * ry + (Math.random() * 6 - 3))
+                                });
+                            }
+                        } else if (patternType === 1) {
+                            // Zigzag / Star Wave
+                            const steps = 8;
+                            for (let i = 0; i <= steps; i++) {
+                                const x = cx - 60 + i * 15;
+                                const y = cy + (i % 2 === 0 ? -25 : 25) + (Math.random() * 8 - 4);
+                                pts.push({ x: Math.round(x), y: Math.round(y) });
+                            }
+                        } else if (patternType === 2) {
+                            // Triangle / Roof geometry
+                            pts.push({ x: Math.round(cx), y: Math.round(cy - 40) });
+                            pts.push({ x: Math.round(cx + 45), y: Math.round(cy + 30) });
+                            pts.push({ x: Math.round(cx - 45), y: Math.round(cy + 30) });
+                            pts.push({ x: Math.round(cx), y: Math.round(cy - 40) });
+                        } else {
+                            // Spiral / Swirl
+                            const turns = 2.5;
+                            const steps = 20;
+                            for (let i = 0; i <= steps; i++) {
+                                const t = i / steps;
+                                const angle = t * Math.PI * 2 * turns;
+                                const r = t * 50;
+                                pts.push({
+                                    x: Math.round(cx + Math.cos(angle) * r),
+                                    y: Math.round(cy + Math.sin(angle) * r)
+                                });
+                            }
                         }
 
-                        const colors = ['#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6'];
+                        const colors = ['#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6', '#3b82f6'];
                         const color = colors[Math.floor(Math.random() * colors.length)];
                         const strokes = [...(current.current_round_strokes || []), { playerId: bot.id, color, width: 4, points: pts }];
                         
                         await updateGameState({ current_round_strokes: strokes });
                         botDrawingFlags[bot.id] = false;
                         setTimeout(() => nextDrawingTurn(), 400);
-                    }, 2000 + Math.random() * 2500);
+                    }, 1800 + Math.random() * 2200);
                 }
             }
 

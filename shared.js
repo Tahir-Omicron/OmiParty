@@ -41,6 +41,85 @@ function isAz() {
   return getLang() === 'az';
 }
 
+// ----------------------------------------------------------------------------
+// Rate Limiter Helper (Prevents chat/reaction spam & rapid fire actions)
+// ----------------------------------------------------------------------------
+class RateLimiter {
+  constructor(cooldownMs = 1200) {
+    this.cooldownMs = cooldownMs;
+    this.lastAction = 0;
+  }
+  canAct() {
+    const now = Date.now();
+    if (now - this.lastAction < this.cooldownMs) {
+      return false;
+    }
+    this.lastAction = now;
+    return true;
+  }
+  getRemainingTime() {
+    const elapsed = Date.now() - this.lastAction;
+    return Math.max(0, this.cooldownMs - elapsed);
+  }
+}
+window.RateLimiter = RateLimiter;
+window.globalActionLimiter = new RateLimiter(1000);
+window.globalReactionLimiter = new RateLimiter(800);
+
+// Input & Room Validation Helpers
+function validateNickname(raw) {
+  if (!raw || typeof raw !== 'string') return { valid: false, message: isAz() ? 'Ləqəb boş ola bilməz' : 'Nickname cannot be empty' };
+  const trimmed = raw.trim();
+  if (trimmed.length < 2 || trimmed.length > 16) {
+    return { valid: false, message: isAz() ? 'Ləqəb 2-16 simvol arasında olmalıdır' : 'Nickname must be 2-16 characters' };
+  }
+  return { valid: true, nickname: trimmed };
+}
+
+function validateRoomCode(raw) {
+  if (!raw || typeof raw !== 'string') return { valid: false, message: isAz() ? 'Otaq kodu boş ola bilməz' : 'Room code cannot be empty' };
+  const trimmed = raw.trim().toUpperCase();
+  if (!/^[A-Z0-9]{4,6}$/.test(trimmed)) {
+    return { valid: false, message: isAz() ? 'Otaq kodu 4-6 hərf/rəqəm olmalıdır' : 'Room code must be 4-6 alphanumeric characters' };
+  }
+  return { valid: true, code: trimmed };
+}
+
+// Active Session Persistence & Recovery
+function saveActiveSession(roomCode, playerId) {
+  try {
+    if (roomCode && playerId) {
+      localStorage.setItem('otaq_active_session', JSON.stringify({
+        roomCode,
+        playerId,
+        timestamp: Date.now()
+      }));
+    }
+  } catch (e) {}
+}
+
+function clearActiveSession() {
+  try {
+    localStorage.removeItem('otaq_active_session');
+  } catch (e) {}
+}
+
+function getActiveSession() {
+  try {
+    const raw = localStorage.getItem('otaq_active_session');
+    if (!raw) return null;
+    const session = JSON.parse(raw);
+    // Expire after 3 hours
+    if (Date.now() - session.timestamp > 3 * 60 * 60 * 1000) {
+      clearActiveSession();
+      return null;
+    }
+    return session;
+  } catch (e) {
+    return null;
+  }
+}
+
 const I18N = {
   az: {
     saboteur_title: 'XAİN',
@@ -350,6 +429,22 @@ function playSound(type) {
         o.start(now + idx * 0.1);
         o.stop(now + 0.6 + idx * 0.1);
       });
+    } else if (type === 'deal') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(400, now);
+      osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+      gain.gain.setValueAtTime(0.06, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+      osc.start(now);
+      osc.stop(now + 0.08);
+    } else if (type === 'coin') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(987.77, now); // B5
+      osc.frequency.setValueAtTime(1318.51, now + 0.08); // E6
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+      osc.start(now);
+      osc.stop(now + 0.3);
     }
   } catch (e) {
     // Audio contexts may require initial user gesture
