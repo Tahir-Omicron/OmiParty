@@ -503,11 +503,136 @@ function playSound(type) {
 }
 
 // ----------------------------------------------------------------------------
-// Multi-Track 8-Bit Chiptune Arcade Synthesizer Engine
+// Multi-Track Retro Lo-Fi & Chill Chiptune Jukebox Synthesizer
 // ----------------------------------------------------------------------------
 let bgmInterval = null;
 let isBgmPlaying = false;
+let currentTrackIndex = 0;
 let noiseBuffer = null;
+
+// Frequencies (Hz)
+const N = {
+  C2: 65.41, D2: 73.42, E2: 82.41, F2: 87.31, G2: 98.00, A2: 110.00, B2: 123.47,
+  C3: 130.81, D3: 146.83, E3: 164.81, F3: 174.61, G3: 196.00, A3: 220.00, B3: 246.94,
+  C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392.00, A4: 440.00, B4: 493.88,
+  C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99, A5: 880.00, B5: 987.77,
+  C6: 1046.50, D6: 1174.66, E6: 1318.51, _: 0
+};
+
+const BGM_TRACKS = [
+  {
+    id: 'lofi_starlight',
+    nameAz: 'Lo-Fi Ulduzlar (Chill)',
+    nameEn: 'Lo-Fi Starlight (Chill)',
+    icon: '🌸',
+    stepTime: 0.175, // ~85 BPM relaxed
+    leadType: 'triangle',
+    leadGain: 0.05,
+    lead: [
+      N.E5, N.G5, N.B5, N.C6,  N.B5, N.G5, N.E5, N._,
+      N.C5, N.E5, N.G5, N.A5,  N.G5, N.E5, N.C5, N._,
+      N.A4, N.C5, N.E5, N.F5,  N.E5, N.C5, N.A4, N._,
+      N.B4, N.D5, N.F5, N.G5,  N.A5, N.G5, N.D5, N._
+    ],
+    bass: [
+      N.C3, N._, N.G3, N._,    N.C3, N._, N.E3, N._,
+      N.A2, N._, N.E3, N._,    N.A2, N._, N.C3, N._,
+      N.F2, N._, N.C3, N._,    N.F2, N._, N.A2, N._,
+      N.G2, N._, N.D3, N._,    N.G2, N._, N.B2, N._
+    ],
+    arps: [
+      N.E4, N.G4, N.B4, N.E5,  N.G4, N.B4, N.E5, N.G5,
+      N.C4, N.E4, N.A4, N.C5,  N.E4, N.A4, N.C5, N.E5,
+      N.C4, N.F4, N.A4, N.C5,  N.F4, N.A4, N.C5, N.F5,
+      N.D4, N.G4, N.B4, N.D5,  N.G4, N.B4, N.D5, N.G5
+    ],
+    drumStyle: 'lofi'
+  },
+  {
+    id: 'midnight_cafe',
+    nameAz: 'Gecə Qəhvəsi (Cozy Jazz)',
+    nameEn: 'Midnight Cafe (Cozy Jazz)',
+    icon: '☕',
+    stepTime: 0.16, // ~92 BPM
+    leadType: 'triangle',
+    leadGain: 0.048,
+    lead: [
+      N.A5, N.C6, N.E6, N._,   N.D6, N.C6, N.A5, N.G5,
+      N.G5, N.B5, N.D6, N._,   N.C6, N.B5, N.G5, N.E5,
+      N.F5, N.A5, N.C6, N._,   N.B5, N.A5, N.F5, N.D5,
+      N.E5, N.G5, N.B5, N._,   N.D5, N.E5, N.G5, N._
+    ],
+    bass: [
+      N.F2, N._, N.C3, N._,    N.F2, N._, N.A2, N._,
+      N.E2, N._, N.B2, N._,    N.E2, N._, N.G2, N._,
+      N.D2, N._, N.A2, N._,    N.D2, N._, N.F2, N._,
+      N.C2, N._, N.G2, N._,    N.C2, N._, N.E2, N._
+    ],
+    arps: [
+      N.A3, N.C4, N.E4, N.A4,  N.C4, N.E4, N.A4, N.C5,
+      N.G3, N.B3, N.D4, N.G4,  N.B3, N.D4, N.G4, N.B4,
+      N.F3, N.A3, N.C4, N.F4,  N.A3, N.C4, N.F4, N.A4,
+      N.E3, N.G3, N.B3, N.E4,  N.G3, N.B3, N.E4, N.G4
+    ],
+    drumStyle: 'lofi'
+  },
+  {
+    id: 'cyber_dreams',
+    nameAz: 'Kiber Xəyallar (Ambient)',
+    nameEn: 'Cyber Dreams (Ambient)',
+    icon: '🌌',
+    stepTime: 0.19, // ~78 BPM deep chill
+    leadType: 'sine',
+    leadGain: 0.055,
+    lead: [
+      N.E5, N._, N.G5, N._,    N.B5, N._, N.A5, N.G5,
+      N.D5, N._, N.E5, N._,    N.G5, N._, N.E5, N.D5,
+      N.C5, N._, N.E5, N._,    N.A5, N._, N.G5, N.E5,
+      N.D5, N._, N.G5, N._,    N.B5, N._, N.D6, N._
+    ],
+    bass: [
+      N.E2, N._, N.B2, N._,    N.E2, N._, N.G2, N._,
+      N.C2, N._, N.G2, N._,    N.C2, N._, N.E2, N._,
+      N.A2, N._, N.E3, N._,    N.A2, N._, N.C3, N._,
+      N.D2, N._, N.A2, N._,    N.D2, N._, N.F2, N._
+    ],
+    arps: [
+      N.E4, N.B4, N.E5, N.G5,  N.B4, N.E5, N.G5, N.B5,
+      N.C4, N.G4, N.C5, N.E5,  N.G4, N.C5, N.E5, N.G5,
+      N.A3, N.E4, N.A4, N.C5,  N.E4, N.A4, N.C5, N.E5,
+      N.D4, N.A4, N.D5, N.F5,  N.A4, N.D5, N.F5, N.A5
+    ],
+    drumStyle: 'ambient'
+  },
+  {
+    id: 'retro_hero',
+    nameAz: 'Retro Arkada (Joyful)',
+    nameEn: 'Retro Hero (Joyful)',
+    icon: '🎮',
+    stepTime: 0.125, // ~120 BPM
+    leadType: 'square',
+    leadGain: 0.04,
+    lead: [
+      N.E5, N._,  N.E5, N.G5,  N.A5, N._,  N.G5, N.E5,
+      N.D5, N.E5, N.G5, N.A5,  N.B5, N.A5, N.G5, N.E5,
+      N.A5, N._,  N.A5, N.C6,  N.D6, N._,  N.C6, N.A5,
+      N.G5, N.A5, N.C6, N.D6,  N.E6, N.D6, N.C6, N.G5
+    ],
+    bass: [
+      N.C3, N._,  N.C3, N.G3,  N.C3, N._,  N.E3, N.G3,
+      N.A2, N._,  N.A2, N.E3,  N.A2, N._,  N.C3, N.E3,
+      N.F2, N._,  N.F2, N.C3,  N.F2, N._,  N.A2, N.C3,
+      N.G2, N._,  N.G2, N.D3,  N.G2, N._,  N.B2, N.D3
+    ],
+    arps: [
+      N.C4, N.E4, N.G4, N.C5,  N.E4, N.G4, N.C5, N.E5,
+      N.A3, N.C4, N.E4, N.A4,  N.C4, N.E4, N.A4, N.C5,
+      N.F3, N.A3, N.C4, N.F4,  N.A3, N.C4, N.F4, N.A4,
+      N.G3, N.B3, N.D4, N.G4,  N.B3, N.D4, N.G4, N.B4
+    ],
+    drumStyle: 'arcade'
+  }
+];
 
 function getNoiseBuffer(ctx) {
   if (noiseBuffer) return noiseBuffer;
@@ -526,64 +651,47 @@ function toggleBGM() {
     ctx.resume();
   }
 
-  if (isBgmPlaying) {
-    stopBGM();
-    showToast(isAz() ? '8-Bit Musiqi Dayandırıldı' : 'Chiptune BGM Paused', 'info');
-  } else {
+  if (!isBgmPlaying) {
     localStorage.setItem('otaq_muted', 'false');
     const soundBtn = document.getElementById('sound-toggle');
     if (soundBtn) soundBtn.innerHTML = getSoundIcon(false);
     startBGM();
-    showToast(isAz() ? '8-Bit Arkada Musiqisi Aktivdir ♫' : 'Chiptune Arcade BGM Active ♫', 'success');
+  } else {
+    // Cycle to next relaxing track when clicked while playing!
+    nextBGMTrack();
   }
-  const btn = document.getElementById('bgm-toggle');
-  if (btn) btn.classList.toggle('active', isBgmPlaying);
 }
 window.toggleBGM = toggleBGM;
 
+function nextBGMTrack() {
+  currentTrackIndex = (currentTrackIndex + 1) % BGM_TRACKS.length;
+  stopBGM(false);
+  startBGM();
+}
+window.nextBGMTrack = nextBGMTrack;
+
 function startBGM() {
-  if (bgmInterval || isAudioMuted()) return;
+  if (isAudioMuted()) return;
   isBgmPlaying = true;
   
   const ctx = getAudioContext();
   if (!ctx) return;
   if (ctx.state === 'suspended') ctx.resume();
 
-  // Frequencies (Hz)
-  const N = {
-    C2: 65.41, D2: 73.42, E2: 82.41, F2: 87.31, G2: 98.00, A2: 110.00, B2: 123.47,
-    C3: 130.81, D3: 146.83, E3: 164.81, F3: 174.61, G3: 196.00, A3: 220.00, B3: 246.94,
-    C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392.00, A4: 440.00, B4: 493.88,
-    C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99, A5: 880.00, B5: 987.77,
-    C6: 1046.50, D6: 1174.66, E6: 1318.51, _: 0
-  };
+  const track = BGM_TRACKS[currentTrackIndex];
+  const btn = document.getElementById('bgm-toggle');
+  if (btn) {
+    btn.classList.add('active');
+    btn.title = `${track.icon} ${isAz() ? track.nameAz : track.nameEn} (Növbəti üçün kliklə)`;
+  }
 
-  // 32-Step Energetic Retro Hook Melody (Lead Square Wave)
-  const leadMelody = [
-    N.E5, N._,  N.E5, N.G5,  N.A5, N._,  N.G5, N.E5,
-    N.D5, N.E5, N.G5, N.A5,  N.B5, N.A5, N.G5, N.E5,
-    N.A5, N._,  N.A5, N.C6,  N.D6, N._,  N.C6, N.A5,
-    N.G5, N.A5, N.C6, N.D6,  N.E6, N.D6, N.C6, N.G5
-  ];
-
-  // 32-Step Bouncy Retro Bassline (Triangle Wave)
-  const bassline = [
-    N.C3, N._,  N.C3, N.G3,  N.C3, N._,  N.E3, N.G3,
-    N.A2, N._,  N.A2, N.E3,  N.A2, N._,  N.C3, N.E3,
-    N.F2, N._,  N.F2, N.C3,  N.F2, N._,  N.A2, N.C3,
-    N.G2, N._,  N.G2, N.D3,  N.G2, N._,  N.B2, N.D3
-  ];
-
-  // 32-Step Fast Chiptune Arpeggios (Square wave pulses)
-  const arpeggios = [
-    N.C4, N.E4, N.G4, N.C5,  N.E4, N.G4, N.C5, N.E5,
-    N.A3, N.C4, N.E4, N.A4,  N.C4, N.E4, N.A4, N.C5,
-    N.F3, N.A3, N.C4, N.F4,  N.A3, N.C4, N.F4, N.A4,
-    N.G3, N.B3, N.D4, N.G4,  N.B3, N.D4, N.G4, N.B4
-  ];
+  const toastMsg = isAz() 
+    ? `[ 🎵 MAHNİ ${currentTrackIndex + 1}/${BGM_TRACKS.length}: ${track.nameAz} ]` 
+    : `[ 🎵 TRACK ${currentTrackIndex + 1}/${BGM_TRACKS.length}: ${track.nameEn} ]`;
+  showToast(toastMsg, 'success');
 
   let step = 0;
-  const STEP_TIME = 0.125;
+  const stepTime = track.stepTime || 0.16;
 
   bgmInterval = setInterval(() => {
     if (!isBgmPlaying || isAudioMuted()) return;
@@ -591,115 +699,175 @@ function startBGM() {
       const now = ctx.currentTime;
       const s = step % 32;
 
-      // 1. LEAD MELODY (Square Wave)
-      const leadFreq = leadMelody[s];
+      // 1. LEAD MELODY (Soft Lo-Fi Triangle / Square Wave)
+      const leadFreq = track.lead[s];
       if (leadFreq > 0) {
         const leadOsc = ctx.createOscillator();
         const leadGain = ctx.createGain();
-        leadOsc.type = 'square';
+        const leadFilter = ctx.createBiquadFilter();
+        leadFilter.type = 'lowpass';
+        leadFilter.frequency.value = track.leadType === 'square' ? 2200 : 3500;
+        
+        leadOsc.type = track.leadType || 'triangle';
         leadOsc.frequency.setValueAtTime(leadFreq, now);
-        leadOsc.frequency.linearRampToValueAtTime(leadFreq * 1.01, now + STEP_TIME * 0.7);
-        leadGain.gain.setValueAtTime(0.04, now);
-        leadGain.gain.exponentialRampToValueAtTime(0.001, now + STEP_TIME * 0.95);
-        leadOsc.connect(leadGain);
+        leadGain.gain.setValueAtTime(track.leadGain || 0.045, now);
+        leadGain.gain.exponentialRampToValueAtTime(0.0008, now + stepTime * 0.95);
+        
+        leadOsc.connect(leadFilter);
+        leadFilter.connect(leadGain);
         leadGain.connect(ctx.destination);
         leadOsc.start(now);
-        leadOsc.stop(now + STEP_TIME);
+        leadOsc.stop(now + stepTime);
       }
 
-      // 2. BASSLINE (Triangle Wave)
-      const bassFreq = bassline[s];
+      // 2. WARM BASSLINE (Smooth Triangle Wave)
+      const bassFreq = track.bass[s];
       if (bassFreq > 0) {
         const bassOsc = ctx.createOscillator();
         const bassGain = ctx.createGain();
         bassOsc.type = 'triangle';
         bassOsc.frequency.setValueAtTime(bassFreq, now);
-        bassGain.gain.setValueAtTime(0.07, now);
-        bassGain.gain.exponentialRampToValueAtTime(0.001, now + STEP_TIME * 0.9);
+        bassGain.gain.setValueAtTime(0.065, now);
+        bassGain.gain.exponentialRampToValueAtTime(0.001, now + stepTime * 0.9);
         bassOsc.connect(bassGain);
         bassGain.connect(ctx.destination);
         bassOsc.start(now);
-        bassOsc.stop(now + STEP_TIME);
+        bassOsc.stop(now + stepTime);
       }
 
-      // 3. ARPEGGIOS (Chiptune Sparkle)
-      const arpFreq = arpeggios[s];
+      // 3. CHIPTUNE ARPEGGIO CHORD TEXTURE
+      const arpFreq = track.arps[s];
       if (arpFreq > 0) {
         const arpOsc = ctx.createOscillator();
         const arpGain = ctx.createGain();
+        const arpFilter = ctx.createBiquadFilter();
+        arpFilter.type = 'lowpass';
+        arpFilter.frequency.value = 2400;
+        
         arpOsc.type = 'square';
         arpOsc.frequency.setValueAtTime(arpFreq, now);
-        arpGain.gain.setValueAtTime(0.015, now);
-        arpGain.gain.exponentialRampToValueAtTime(0.0005, now + STEP_TIME * 0.5);
-        arpOsc.connect(arpGain);
+        arpGain.gain.setValueAtTime(0.012, now);
+        arpGain.gain.exponentialRampToValueAtTime(0.0003, now + stepTime * 0.5);
+        
+        arpOsc.connect(arpFilter);
+        arpFilter.connect(arpGain);
         arpGain.connect(ctx.destination);
         arpOsc.start(now);
-        arpOsc.stop(now + STEP_TIME * 0.5);
+        arpOsc.stop(now + stepTime * 0.5);
       }
 
-      // 4. RETRO DRUMS
-      // Kick
-      if (s % 8 === 0) {
-        const kickOsc = ctx.createOscillator();
-        const kickGain = ctx.createGain();
-        kickOsc.type = 'triangle';
-        kickOsc.frequency.setValueAtTime(110, now);
-        kickOsc.frequency.exponentialRampToValueAtTime(25, now + 0.08);
-        kickGain.gain.setValueAtTime(0.09, now);
-        kickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-        kickOsc.connect(kickGain);
-        kickGain.connect(ctx.destination);
-        kickOsc.start(now);
-        kickOsc.stop(now + 0.08);
-      }
+      // 4. LO-FI / RETRO PERCUSSION & CRACKLE
+      if (track.drumStyle === 'lofi') {
+        // Soft mellow kick on 0, 8, 16, 24
+        if (s % 8 === 0) {
+          const kickOsc = ctx.createOscillator();
+          const kickGain = ctx.createGain();
+          kickOsc.type = 'sine';
+          kickOsc.frequency.setValueAtTime(90, now);
+          kickOsc.frequency.exponentialRampToValueAtTime(30, now + 0.09);
+          kickGain.gain.setValueAtTime(0.06, now);
+          kickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+          kickOsc.connect(kickGain);
+          kickGain.connect(ctx.destination);
+          kickOsc.start(now);
+          kickOsc.stop(now + 0.09);
+        }
 
-      // Snare
-      if (s % 8 === 4) {
-        const noise = ctx.createBufferSource();
-        noise.buffer = getNoiseBuffer(ctx);
-        const noiseGain = ctx.createGain();
-        const filter = ctx.createBiquadFilter();
-        filter.type = 'highpass';
-        filter.frequency.value = 1000;
-        noiseGain.gain.setValueAtTime(0.04, now);
-        noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
-        noise.connect(filter);
-        filter.connect(noiseGain);
-        noiseGain.connect(ctx.destination);
-        noise.start(now);
-        noise.stop(now + 0.07);
-      }
+        // Soft filtered vinyl snare on beat 4, 12, 20, 28
+        if (s % 8 === 4) {
+          const noise = ctx.createBufferSource();
+          noise.buffer = getNoiseBuffer(ctx);
+          const noiseGain = ctx.createGain();
+          const filter = ctx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.value = 1200;
+          filter.Q.value = 1.5;
+          noiseGain.gain.setValueAtTime(0.025, now);
+          noiseGain.gain.exponentialRampToValueAtTime(0.0005, now + 0.06);
+          noise.connect(filter);
+          filter.connect(noiseGain);
+          noiseGain.connect(ctx.destination);
+          noise.start(now);
+          noise.stop(now + 0.06);
+        }
 
-      // Hi-Hat
-      if (s % 2 === 1) {
-        const hat = ctx.createBufferSource();
-        hat.buffer = getNoiseBuffer(ctx);
-        const hatGain = ctx.createGain();
-        const hatFilter = ctx.createBiquadFilter();
-        hatFilter.type = 'highpass';
-        hatFilter.frequency.value = 6000;
-        hatGain.gain.setValueAtTime(0.015, now);
-        hatGain.gain.exponentialRampToValueAtTime(0.0005, now + 0.03);
-        hat.connect(hatFilter);
-        hatFilter.connect(hatGain);
-        hatGain.connect(ctx.destination);
-        hat.start(now);
-        hat.stop(now + 0.03);
+        // Subtle lo-fi hi-hat tick on every 2 steps
+        if (s % 2 === 1) {
+          const hat = ctx.createBufferSource();
+          hat.buffer = getNoiseBuffer(ctx);
+          const hatGain = ctx.createGain();
+          const hatFilter = ctx.createBiquadFilter();
+          hatFilter.type = 'highpass';
+          hatFilter.frequency.value = 7000;
+          hatGain.gain.setValueAtTime(0.008, now);
+          hatGain.gain.exponentialRampToValueAtTime(0.0003, now + 0.02);
+          hat.connect(hatFilter);
+          hatFilter.connect(hatGain);
+          hatGain.connect(ctx.destination);
+          hat.start(now);
+          hat.stop(now + 0.02);
+        }
+      } else if (track.drumStyle === 'ambient') {
+        // Deep warm ambient heartbeat pulse
+        if (s % 16 === 0) {
+          const subOsc = ctx.createOscillator();
+          const subGain = ctx.createGain();
+          subOsc.type = 'sine';
+          subOsc.frequency.setValueAtTime(55, now);
+          subGain.gain.setValueAtTime(0.05, now);
+          subGain.gain.exponentialRampToValueAtTime(0.0005, now + 0.25);
+          subOsc.connect(subGain);
+          subGain.connect(ctx.destination);
+          subOsc.start(now);
+          subOsc.stop(now + 0.25);
+        }
+      } else if (track.drumStyle === 'arcade') {
+        // Punchy arcade kick
+        if (s % 8 === 0) {
+          const kickOsc = ctx.createOscillator();
+          const kickGain = ctx.createGain();
+          kickOsc.type = 'triangle';
+          kickOsc.frequency.setValueAtTime(120, now);
+          kickOsc.frequency.exponentialRampToValueAtTime(25, now + 0.08);
+          kickGain.gain.setValueAtTime(0.08, now);
+          kickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+          kickOsc.connect(kickGain);
+          kickGain.connect(ctx.destination);
+          kickOsc.start(now);
+          kickOsc.stop(now + 0.08);
+        }
+        if (s % 8 === 4) {
+          const noise = ctx.createBufferSource();
+          noise.buffer = getNoiseBuffer(ctx);
+          const noiseGain = ctx.createGain();
+          const filter = ctx.createBiquadFilter();
+          filter.type = 'highpass';
+          filter.frequency.value = 1000;
+          noiseGain.gain.setValueAtTime(0.04, now);
+          noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+          noise.connect(filter);
+          filter.connect(noiseGain);
+          noiseGain.connect(ctx.destination);
+          noise.start(now);
+          noise.stop(now + 0.07);
+        }
       }
 
       step++;
     } catch (e) {}
-  }, 125);
+  }, Math.round(stepTime * 1000));
 }
 
-function stopBGM() {
+function stopBGM(clearUI = true) {
   isBgmPlaying = false;
   if (bgmInterval) {
     clearInterval(bgmInterval);
     bgmInterval = null;
   }
-  const btn = document.getElementById('bgm-toggle');
-  if (btn) btn.classList.remove('active');
+  if (clearUI) {
+    const btn = document.getElementById('bgm-toggle');
+    if (btn) btn.classList.remove('active');
+  }
 }
 
 // ----------------------------------------------------------------------------
