@@ -32,46 +32,78 @@
 
 /* ================= RETRO DISPLAY / SHADER THEMES ================= */
 
-/* 1. GAME BOY 1989 (DMG-01 Matrix Olive Green) */
-[data-theme="gameboy"] {
-    --bg-primary: #8bac0f;
-    --bg-secondary: #9bbc0f;
-    --bg-surface: #9bbc0f;
-    --bg-surface-hover: #8bac0f;
-    --glass-border: #306230;
-    --glass-border-hover: #0f380f;
-    --text-primary: #0f380f;
-    --text-secondary: #306230;
-    --text-muted: #306230;
-    --accent-cyan: #0f380f;
-    --accent-blue: #306230;
-    --accent-red: #0f380f;
-    --accent-green: #306230;
-    --accent-gold: #306230;
-    --accent-purple: #0f380f;
-}
-[data-theme="gameboy"] .pixel-box,
-[data-theme="gameboy"] .pixel-input {
-    background: #9bbc0f !important;
-    color: #0f380f !important;
-    border-color: #0f380f !important;
-}
-[data-theme="gameboy"] .pixel-grid-bg {
-    background: #8bac0f !important;
-    filter: sepia(1) hue-rotate(50deg) saturate(2);
+/* 1. CYBER CRT (Default Dark Arcade) */
+[data-theme="cyber"] {
+    --bg-primary: #060911;
+    --bg-secondary: #0d121f;
+    --bg-surface: #0e1424;
+    --bg-surface-hover: #162038;
+    --glass-border: rgba(0, 255, 204, 0.2);
+    --glass-border-hover: rgba(0, 255, 204, 0.4);
+    --text-primary: #ffffff;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent-cyan: #00ffcc;
+    --accent-blue: #0ea5e9;
+    --accent-red: #ff3366;
+    --accent-green: #10b981;
+    --accent-gold: #f59e0b;
+    --accent-purple: #a855f7;
 }
 
-/* 2. SYNTHWAVE (Outrun Neon Magenta/Violet/Cyan) */
+/* 2. GAME BOY & RETRO MATRIX (Dark Phosphor Emerald / Mint) */
+[data-theme="gameboy"] {
+    --bg-primary: #051209;
+    --bg-secondary: #0a1f11;
+    --bg-surface: #0c2615;
+    --bg-surface-hover: #143820;
+    --glass-border: rgba(0, 255, 102, 0.25);
+    --glass-border-hover: rgba(0, 255, 102, 0.45);
+    --text-primary: #e6fffa;
+    --text-secondary: #6ee7b7;
+    --text-muted: #34d399;
+    --accent-cyan: #00ff88;
+    --accent-blue: #10b981;
+    --accent-red: #f43f5e;
+    --accent-green: #00ff88;
+    --accent-gold: #a3e635;
+    --accent-purple: #10b981;
+}
+[data-theme="gameboy"] .pixel-box {
+    background: #0c2615 !important;
+    border-color: #000 !important;
+    box-shadow: 
+        inset -3px -3px 0 0 #05140b,
+        inset 3px 3px 0 0 #184225,
+        0 0 0 3px #000,
+        6px 6px 0 0 rgba(0, 0, 0, 0.85) !important;
+}
+[data-theme="gameboy"] .pixel-input {
+    background: #06170c !important;
+    color: #00ff88 !important;
+    box-shadow: inset 2px 2px 0 0 #000, 0 0 0 2px #184225 !important;
+}
+[data-theme="gameboy"] .pixel-grid-bg {
+    background-image: 
+        radial-gradient(ellipse at 50% 20%, rgba(0, 255, 136, 0.14) 0%, transparent 65%),
+        radial-gradient(ellipse at 50% 80%, rgba(16, 185, 129, 0.14) 0%, transparent 60%),
+        linear-gradient(rgba(0, 255, 136, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 136, 0.08) 1px, transparent 1px) !important;
+    background-color: #051209 !important;
+    filter: none !important;
+}
+
+/* 3. SYNTHWAVE (Midnight Outrun Neon Magenta & Cyan) */
 [data-theme="synthwave"] {
-    --bg-primary: #120420;
-    --bg-secondary: #220738;
-    --bg-surface: #1b062e;
-    --bg-surface-hover: #300c4f;
+    --bg-primary: #0d0517;
+    --bg-secondary: #1a0a2e;
+    --bg-surface: #19092c;
+    --bg-surface-hover: #291047;
     --glass-border: rgba(255, 0, 128, 0.3);
     --glass-border-hover: rgba(0, 240, 255, 0.5);
-    --text-primary: #ffe6ff;
-    --text-secondary: #d8b4e2;
-    --text-muted: #9d6fa8;
+    --text-primary: #fff0fa;
+    --text-secondary: #e9d5ff;
+    --text-muted: #c084fc;
     --accent-cyan: #00f0ff;
     --accent-blue: #7928ca;
     --accent-red: #ff007f;
@@ -79,39 +111,65 @@
     --accent-gold: #ffbe0b;
     --accent-purple: #ff007f;
 }
+[data-theme="synthwave"] .pixel-box {
+    background: #19092c !important;
+    box-shadow: 
+        inset -3px -3px 0 0 #0b0314,
+        inset 3px 3px 0 0 #331557,
+        0 0 0 3px #000,
+        6px 6px 0 0 rgba(0, 0, 0, 0.85) !important;
+}
+[data-theme="synthwave"] .pixel-input {
+    background: #0f041b !important;
+    color: #00f0ff !important;
+    box-shadow: inset 2px 2px 0 0 #000, 0 0 0 2px #331557 !important;
+}
 [data-theme="synthwave"] .pixel-grid-bg {
-    background: 
-        radial-gradient(circle at 50% 20%, rgba(255, 0, 128, 0.25) 0%, transparent 60%),
-        radial-gradient(circle at 80% 80%, rgba(0, 240, 255, 0.2) 0%, transparent 60%),
-        linear-gradient(rgba(255, 0, 128, 0.12) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 240, 255, 0.12) 1px, transparent 1px),
-        #120420 !important;
+    background-image: 
+        radial-gradient(ellipse at 50% 20%, rgba(255, 0, 128, 0.2) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 80%, rgba(0, 240, 255, 0.18) 0%, transparent 60%),
+        linear-gradient(rgba(255, 0, 128, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 240, 255, 0.1) 1px, transparent 1px) !important;
+    background-color: #0d0517 !important;
 }
 
-/* 3. AMBER CRT (1982 Monochrome Phosphor Terminal) */
+/* 4. AMBER CRT (1982 Monochrome Warm Gold Phosphor) */
 [data-theme="amber"] {
-    --bg-primary: #110700;
-    --bg-secondary: #210e00;
-    --bg-surface: #1a0b00;
-    --bg-surface-hover: #2e1800;
-    --glass-border: rgba(255, 176, 0, 0.25);
+    --bg-primary: #100800;
+    --bg-secondary: #201000;
+    --bg-surface: #1e1002;
+    --bg-surface-hover: #331c05;
+    --glass-border: rgba(255, 176, 0, 0.3);
     --glass-border-hover: rgba(255, 176, 0, 0.5);
-    --text-primary: #ffc44d;
-    --text-secondary: #ffb000;
-    --text-muted: #995c00;
+    --text-primary: #fff8eb;
+    --text-secondary: #fcd34d;
+    --text-muted: #d97706;
     --accent-cyan: #ffb000;
-    --accent-blue: #e69500;
+    --accent-blue: #f59e0b;
     --accent-red: #ff5500;
-    --accent-green: #ffcc00;
-    --accent-gold: #ffd700;
-    --accent-purple: #ff9900;
+    --accent-green: #ffd000;
+    --accent-gold: #ffb000;
+    --accent-purple: #f59e0b;
+}
+[data-theme="amber"] .pixel-box {
+    background: #1e1002 !important;
+    box-shadow: 
+        inset -3px -3px 0 0 #0a0500,
+        inset 3px 3px 0 0 #3b2005,
+        0 0 0 3px #000,
+        6px 6px 0 0 rgba(0, 0, 0, 0.85) !important;
+}
+[data-theme="amber"] .pixel-input {
+    background: #120900 !important;
+    color: #ffb000 !important;
+    box-shadow: inset 2px 2px 0 0 #000, 0 0 0 2px #3b2005 !important;
 }
 [data-theme="amber"] .pixel-grid-bg {
-    background: 
-        radial-gradient(circle at 50% 30%, rgba(255, 176, 0, 0.18) 0%, transparent 60%),
+    background-image: 
+        radial-gradient(ellipse at 50% 30%, rgba(255, 176, 0, 0.18) 0%, transparent 60%),
         linear-gradient(rgba(255, 176, 0, 0.1) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 176, 0, 0.1) 1px, transparent 1px),
-        #110700 !important;
+        linear-gradient(90deg, rgba(255, 176, 0, 0.1) 1px, transparent 1px) !important;
+    background-color: #100800 !important;
 }
 
 /* Global Reset & Base Styles */

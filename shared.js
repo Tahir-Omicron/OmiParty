@@ -276,7 +276,7 @@ function shuffleArray(arr) {
 // ----------------------------------------------------------------------------
 const RETRO_DISPLAY_THEMES = [
   { id: 'cyber', nameAz: 'KİBER CRT', nameEn: 'CYBER CRT', label: 'CRT' },
-  { id: 'gameboy', nameAz: 'GAME BOY 89', nameEn: 'GAME BOY 89', label: 'DMG' },
+  { id: 'gameboy', nameAz: 'KİBER MATRİS', nameEn: 'RETRO MATRIX', label: 'MTX' },
   { id: 'synthwave', nameAz: 'NEON SİNZ', nameEn: 'SYNTHWAVE', label: 'NEO' },
   { id: 'amber', nameAz: 'AMBER 1982', nameEn: 'AMBER 1982', label: 'AMB' }
 ];
