@@ -1765,8 +1765,8 @@ input:checked + .slider:before {
     box-shadow: 2px 2px 0 0 #000;
 }
 .pixel-nav-title {
-    font-family: 'Press Start 2P', 'Pixelify Sans', monospace;
-    font-size: 0.88rem;
+    font-family: 'Pixelify Sans', 'Silkscreen', monospace;
+    font-size: 1.05rem;
     font-weight: 700;
     letter-spacing: -0.5px;
     color: #fff;
@@ -1996,8 +1996,8 @@ input:checked + .slider:before {
 }
 
 .pixel-title {
-    font-family: 'Press Start 2P', 'Pixelify Sans', monospace;
-    font-size: 1.05rem;
+    font-family: 'Pixelify Sans', 'Silkscreen', monospace;
+    font-size: 1.22rem;
     font-weight: 700;
     margin-bottom: 0.15rem;
     letter-spacing: -0.5px;

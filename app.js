@@ -202,8 +202,20 @@ window.setMascotMsg = function(text) {
 
 window.triggerMascotClick = function() {
   playSound('coin');
-  const azQuotes = ['BEEP BOOP! XAOS BAŞLAYIR!', 'MƏN SƏNƏ GÜVƏNİRƏM!', '8-BIT GÜCÜ!', 'KONAMI KODUNU BİLİRSƏN?', 'KARTLARI FIRLAT!'];
-  const enQuotes = ['BEEP BOOP! CHAOS BEGINS!', 'I BELIEVE IN YOU!', '8-BIT POWER!', 'DO YOU KNOW KONAMI CODE?', 'FLIP THE CARD!'];
+  const azQuotes = [
+    'BEEP BOOP! XAOS BAŞLADI!', 
+    'SƏNƏ GÜVƏNİRƏM, QƏHRƏMAN!', 
+    '8-BIT PİKSEL GÜCÜ!', 
+    'KONAMI KODUNU TAP!', 
+    'KARTLARI FIRLAT!'
+  ];
+  const enQuotes = [
+    'BEEP BOOP! CHAOS BEGINS!', 
+    'I BELIEVE IN YOU, HERO!', 
+    '8-BIT PIXEL POWER!', 
+    'FIND THE KONAMI CODE!', 
+    'FLIP THE CARDS!'
+  ];
   const quotes = isAz() ? azQuotes : enQuotes;
   const rand = quotes[Math.floor(Math.random() * quotes.length)];
   window.setMascotMsg(rand);
@@ -230,7 +242,7 @@ window.cyclePixelAvatar = function(dir) {
   if (img) img.src = `https://api.dicebear.com/7.x/bottts/svg?seed=${current.seed}`;
   if (title) title.textContent = isAz() ? current.nameAz : current.nameEn;
   
-  window.setMascotMsg(isAz() ? `${current.nameAz} SEÇİLDİ!` : `${current.nameEn} CHOSEN!`);
+  window.setMascotMsg(isAz() ? `${current.nameAz}!` : `${current.nameEn}!`);
 };
 
 window.flipToAuth = function(mode, event) {
