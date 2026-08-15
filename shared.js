@@ -271,29 +271,44 @@ function shuffleArray(arr) {
   return result;
 }
 
+// ----------------------------------------------------------------------------
+// Retro Display / Visual Filter Shader Engine
+// ----------------------------------------------------------------------------
+const RETRO_DISPLAY_THEMES = [
+  { id: 'cyber', nameAz: 'KİBER CRT', nameEn: 'CYBER CRT', label: 'CRT' },
+  { id: 'gameboy', nameAz: 'GAME BOY 89', nameEn: 'GAME BOY 89', label: 'DMG' },
+  { id: 'synthwave', nameAz: 'NEON SİNZ', nameEn: 'SYNTHWAVE', label: 'NEO' },
+  { id: 'amber', nameAz: 'AMBER 1982', nameEn: 'AMBER 1982', label: 'AMB' }
+];
+
 function getThemeIcon(theme) {
-  if (theme === 'dark') {
-    return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
-  } else {
-    return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
-  }
+  const currentObj = RETRO_DISPLAY_THEMES.find(t => t.id === theme) || RETRO_DISPLAY_THEMES[0];
+  return `
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" style="margin-right: 4px; shape-rendering: crispEdges;">
+      <path d="M1 2h14v10H1V2zm2 2v6h10V4H3zm-1 9h12v1H2v-1zm2 1h8v1H4v-1z"/>
+    </svg>
+    <span>${currentObj.label}</span>
+  `;
 }
 
 function getSoundIcon(isMuted) {
   if (isMuted) {
-    return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"></line><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>`;
+    return `<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 5h3l4-3v12l-4-3H2V5zm10 0h1v6h-1V5zm2-2h1v10h-1V3z"/><path d="M2 2l12 12" stroke="var(--accent-red)" stroke-width="2"/></svg>`;
   } else {
-    return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`;
+    return `<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 5h3l4-3v12l-4-3H2V5zm10 0h1v6h-1V5zm2-2h1v10h-1V3z"/></svg>`;
   }
 }
 
-// Day/Night Mode Initialization
+// Display Shader Initialization
 function initTheme() {
-  const theme = localStorage.getItem('otaq_theme') || 'dark';
+  let theme = localStorage.getItem('otaq_theme') || 'cyber';
+  if (theme === 'dark' || theme === 'light') theme = 'cyber';
   document.documentElement.setAttribute('data-theme', theme);
   const toggleBtn = document.getElementById('theme-toggle');
   if (toggleBtn) {
     toggleBtn.innerHTML = getThemeIcon(theme);
+    const currObj = RETRO_DISPLAY_THEMES.find(t => t.id === theme) || RETRO_DISPLAY_THEMES[0];
+    toggleBtn.title = isAz() ? `Ekran Rejimi: ${currObj.nameAz}` : `Shader: ${currObj.nameEn}`;
   }
   
   const soundBtn = document.getElementById('sound-toggle');
@@ -303,16 +318,30 @@ function initTheme() {
 }
 
 function toggleTheme() {
-  playSound('click');
-  const current = document.documentElement.getAttribute('data-theme') || 'dark';
-  const newTheme = current === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', newTheme);
-  localStorage.setItem('otaq_theme', newTheme);
+  playSound('powerup');
+  let current = document.documentElement.getAttribute('data-theme') || 'cyber';
+  if (current === 'dark' || current === 'light') current = 'cyber';
+  
+  let nextIndex = 0;
+  const currIndex = RETRO_DISPLAY_THEMES.findIndex(t => t.id === current);
+  if (currIndex !== -1) {
+    nextIndex = (currIndex + 1) % RETRO_DISPLAY_THEMES.length;
+  }
+  
+  const newThemeObj = RETRO_DISPLAY_THEMES[nextIndex];
+  document.documentElement.setAttribute('data-theme', newThemeObj.id);
+  localStorage.setItem('otaq_theme', newThemeObj.id);
   
   const toggleBtn = document.getElementById('theme-toggle');
   if (toggleBtn) {
-    toggleBtn.innerHTML = getThemeIcon(newTheme);
+    toggleBtn.innerHTML = getThemeIcon(newThemeObj.id);
+    toggleBtn.title = isAz() ? `Ekran Rejimi: ${newThemeObj.nameAz}` : `Shader: ${newThemeObj.nameEn}`;
   }
+  
+  const toastMsg = isAz() 
+    ? `[ EKRAN: ${newThemeObj.nameAz} ]` 
+    : `[ SHADER: ${newThemeObj.nameEn} ]`;
+  showToast(toastMsg, 'info');
 }
 
 // ----------------------------------------------------------------------------

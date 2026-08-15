@@ -1,54 +1,117 @@
 :root {
-    --bg-primary: #0b0f17; /* Deep matte slate */
-    --bg-secondary: #131b2e;
-    --bg-surface: #111827;
-    --bg-surface-hover: #1e293b;
-    --glass-border: rgba(255, 255, 255, 0.08);
-    --glass-border-hover: rgba(255, 255, 255, 0.16);
+    --bg-primary: #060911;
+    --bg-secondary: #0d121f;
+    --bg-surface: #0a0e1a;
+    --bg-surface-hover: #141c2e;
+    --glass-border: rgba(0, 255, 204, 0.15);
+    --glass-border-hover: rgba(0, 255, 204, 0.35);
     --text-primary: #f8fafc;
     --text-secondary: #94a3b8;
     --text-muted: #64748b;
-    --accent-cyan: #38bdf8; /* Clean sky blue */
-    --accent-blue: #2563eb;
-    --accent-red: #f43f5e; /* Clean rose red */
-    --accent-green: #10b981; /* Emerald green */
-    --accent-gold: #f59e0b; /* Amber */
+    --accent-cyan: #00ffcc;
+    --accent-blue: #0ea5e9;
+    --accent-red: #ff3366;
+    --accent-green: #10b981;
+    --accent-gold: #f59e0b;
     --accent-purple: #a855f7;
     
-    --radius-sm: 6px;
-    --radius-md: 10px;
-    --radius-lg: 14px;
-    --radius-xl: 20px;
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
     
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.6);
+    --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.8);
     
-    --font-body: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-heading: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-body: 'Pixelify Sans', 'Inter', system-ui, sans-serif;
+    --font-heading: 'Press Start 2P', monospace;
     
     --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-[data-theme="light"] {
-    --bg-primary: #f8fafc;
-    --bg-secondary: #f1f5f9;
-    --bg-surface: #ffffff;
-    --bg-surface-hover: #f8fafc;
-    --glass-border: #e2e8f0;
-    --glass-border-hover: #cbd5e1;
-    --text-primary: #0f172a;
-    --text-secondary: #475569;
-    --text-muted: #94a3b8;
-    --accent-cyan: #0284c7;
-    --accent-blue: #1d4ed8;
-    --accent-red: #e11d48;
-    --accent-green: #059669;
-    --accent-gold: #d97706;
-    --accent-purple: #7e22ce;
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
-    --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
-    --shadow-lg: 0 10px 25px -5px rgba(0,0,0,0.1);
+/* ================= RETRO DISPLAY / SHADER THEMES ================= */
+
+/* 1. GAME BOY 1989 (DMG-01 Matrix Olive Green) */
+[data-theme="gameboy"] {
+    --bg-primary: #8bac0f;
+    --bg-secondary: #9bbc0f;
+    --bg-surface: #9bbc0f;
+    --bg-surface-hover: #8bac0f;
+    --glass-border: #306230;
+    --glass-border-hover: #0f380f;
+    --text-primary: #0f380f;
+    --text-secondary: #306230;
+    --text-muted: #306230;
+    --accent-cyan: #0f380f;
+    --accent-blue: #306230;
+    --accent-red: #0f380f;
+    --accent-green: #306230;
+    --accent-gold: #306230;
+    --accent-purple: #0f380f;
+}
+[data-theme="gameboy"] .pixel-box,
+[data-theme="gameboy"] .pixel-input {
+    background: #9bbc0f !important;
+    color: #0f380f !important;
+    border-color: #0f380f !important;
+}
+[data-theme="gameboy"] .pixel-grid-bg {
+    background: #8bac0f !important;
+    filter: sepia(1) hue-rotate(50deg) saturate(2);
+}
+
+/* 2. SYNTHWAVE (Outrun Neon Magenta/Violet/Cyan) */
+[data-theme="synthwave"] {
+    --bg-primary: #120420;
+    --bg-secondary: #220738;
+    --bg-surface: #1b062e;
+    --bg-surface-hover: #300c4f;
+    --glass-border: rgba(255, 0, 128, 0.3);
+    --glass-border-hover: rgba(0, 240, 255, 0.5);
+    --text-primary: #ffe6ff;
+    --text-secondary: #d8b4e2;
+    --text-muted: #9d6fa8;
+    --accent-cyan: #00f0ff;
+    --accent-blue: #7928ca;
+    --accent-red: #ff007f;
+    --accent-green: #00ff88;
+    --accent-gold: #ffbe0b;
+    --accent-purple: #ff007f;
+}
+[data-theme="synthwave"] .pixel-grid-bg {
+    background: 
+        radial-gradient(circle at 50% 20%, rgba(255, 0, 128, 0.25) 0%, transparent 60%),
+        radial-gradient(circle at 80% 80%, rgba(0, 240, 255, 0.2) 0%, transparent 60%),
+        linear-gradient(rgba(255, 0, 128, 0.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 240, 255, 0.12) 1px, transparent 1px),
+        #120420 !important;
+}
+
+/* 3. AMBER CRT (1982 Monochrome Phosphor Terminal) */
+[data-theme="amber"] {
+    --bg-primary: #110700;
+    --bg-secondary: #210e00;
+    --bg-surface: #1a0b00;
+    --bg-surface-hover: #2e1800;
+    --glass-border: rgba(255, 176, 0, 0.25);
+    --glass-border-hover: rgba(255, 176, 0, 0.5);
+    --text-primary: #ffc44d;
+    --text-secondary: #ffb000;
+    --text-muted: #995c00;
+    --accent-cyan: #ffb000;
+    --accent-blue: #e69500;
+    --accent-red: #ff5500;
+    --accent-green: #ffcc00;
+    --accent-gold: #ffd700;
+    --accent-purple: #ff9900;
+}
+[data-theme="amber"] .pixel-grid-bg {
+    background: 
+        radial-gradient(circle at 50% 30%, rgba(255, 176, 0, 0.18) 0%, transparent 60%),
+        linear-gradient(rgba(255, 176, 0, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 176, 0, 0.1) 1px, transparent 1px),
+        #110700 !important;
 }
 
 /* Global Reset & Base Styles */
@@ -1578,24 +1641,36 @@ input:checked + .slider:before {
     height: 100vh;
     pointer-events: none;
     z-index: 999;
-    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
-    background-size: 100% 4px, 6px 100%;
+    background: 
+        linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%),
+        radial-gradient(ellipse at center, transparent 70%, rgba(0, 0, 0, 0.55) 100%);
+    background-size: 100% 4px, 100% 100%;
     opacity: 0.65;
 }
 
-/* Pixel Grid Background */
+/* Animated Cyber Horizon Pixel Grid Background */
 .pixel-grid-bg {
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
+    height: 100dvh;
     pointer-events: none;
     z-index: 0;
     background-image: 
-        linear-gradient(rgba(6, 182, 212, 0.08) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(6, 182, 212, 0.08) 1px, transparent 1px);
-    background-size: 24px 24px;
+        radial-gradient(ellipse at 50% 20%, rgba(0, 255, 204, 0.15) 0%, transparent 65%),
+        radial-gradient(ellipse at 50% 80%, rgba(168, 85, 247, 0.15) 0%, transparent 60%),
+        linear-gradient(rgba(0, 255, 204, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 204, 0.08) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 28px 28px, 28px 28px;
+    background-position: 0 0, 0 0, 0 0, 0 0;
+    animation: gridScroll 20s linear infinite;
+}
+
+@keyframes gridScroll {
+    0% { background-position: 0 0, 0 0, 0 0, 0 0; }
+    100% { background-position: 0 0, 0 0, 0 56px, 56px 0; }
 }
 
 /* Pixel Top Navigation */
@@ -1665,13 +1740,15 @@ input:checked + .slider:before {
     text-decoration: none;
     cursor: pointer;
     transition: transform 0.05s;
+    user-select: none;
+    box-sizing: border-box;
 }
 .pixel-mini-btn:hover {
-    background: #334155;
+    filter: brightness(1.2);
 }
 .pixel-mini-btn:active {
-    transform: translateY(2px);
-    box-shadow: inset 2px 2px 0 0 #0f172a, 0 0 0 0 #000;
+    transform: translateY(1px);
+    box-shadow: inset 2px 2px 0 0 #0f172a, 0 1px 0 0 #000;
 }
 
 /* 3D Perspective Card Wrapper */
@@ -1749,12 +1826,13 @@ input:checked + .slider:before {
     50% { transform: translateY(-2px); }
 }
 
-/* 3D Flip Card */
+/* 3D Flip Card with Pop & Laser Gleam */
 .pixel-flip-card {
     position: relative;
     width: 100%;
     transform-style: preserve-3d;
-    transition: transform 0.65s cubic-bezier(0.34, 1.4, 0.64, 1);
+    transition: transform 0.65s cubic-bezier(0.34, 1.45, 0.64, 1);
+    transform-origin: center center;
 }
 
 .pixel-flip-card.is-flipped {
@@ -1784,6 +1862,35 @@ input:checked + .slider:before {
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
     box-sizing: border-box;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Holographic Laser Gleam across card on flip */
+.pixel-card-face::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent 35%,
+        rgba(0, 255, 204, 0.08) 45%,
+        rgba(255, 255, 255, 0.22) 50%,
+        rgba(168, 85, 247, 0.12) 55%,
+        transparent 65%
+    );
+    transform: translateX(-120%) rotate(25deg);
+    transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+    z-index: 20;
+}
+
+.pixel-flip-card.is-flipped .pixel-card-back::before,
+.pixel-flip-card:not(.is-flipped) .pixel-card-front::before {
+    transform: translateX(120%) rotate(25deg);
 }
 
 .pixel-card-front {
