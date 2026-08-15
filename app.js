@@ -129,7 +129,12 @@ async function resumeGame(code) {
 async function init() {
   bindEventListeners();
 
-  // Pre-fill remembered email
+  // Start with clean initial state
+  state.playerId = null;
+  state.nickname = null;
+  state.profile = null;
+
+  // Pre-fill remembered email if available
   const lastEmail = localStorage.getItem('otaq_last_email');
   if (lastEmail) {
     if ($('#login-email') && !$('#login-email').value) $('#login-email').value = lastEmail;
@@ -144,7 +149,7 @@ async function init() {
     });
   }
   
-  // If explicitly navigating with a room code in URL query (?code=ABC12)
+  // If explicitly joining with a room code query (?code=ABC12)
   const urlParams = new URLSearchParams(window.location.search);
   const code = urlParams.get('code');
   if (code) {
@@ -152,17 +157,8 @@ async function init() {
     return;
   }
 
-  // Always fetch Supabase session
-  const { data: { session } } = await db.auth.getSession();
-  if (session && session.user) {
-    await finishAuth(session.user);
-  } else {
-    // Unauthenticated: Strictly show the 3D Auth (Login / Register) Screen!
-    state.playerId = null;
-    state.nickname = null;
-    state.profile = null;
-    showScreen('auth');
-  }
+  // Always start on Screen 1: Auth (Login / Register / Guest)
+  showScreen('auth');
 }
 
 document.addEventListener('DOMContentLoaded', init);
