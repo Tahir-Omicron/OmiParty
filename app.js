@@ -233,17 +233,47 @@ window.cyclePixelAvatar = function(dir) {
   window.setMascotMsg(isAz() ? `${current.nameAz} SEÇİLDİ!` : `${current.nameEn} CHOSEN!`);
 };
 
-window.flipToAuth = function(mode) {
+window.flipToAuth = function(mode, event) {
+  if (event) event.stopPropagation();
   playSound('deal');
   const card = document.getElementById('auth-flip-card');
-  if (!card) return;
-  
+  const frontGlider = document.getElementById('front-slider-glider');
+  const backGlider = document.getElementById('back-slider-glider');
+  const frontLogin = document.getElementById('front-tab-login');
+  const frontReg = document.getElementById('front-tab-register');
+  const backLogin = document.getElementById('back-tab-login');
+  const backReg = document.getElementById('back-tab-register');
+
   if (mode === 'register') {
-    card.classList.add('is-flipped');
-    window.setMascotMsg(isAz() ? 'YENİ QƏHRƏMAN YARAT!' : 'CREATE NEW HERO!');
+    if (card) card.classList.add('is-flipped');
+    if (frontGlider) frontGlider.classList.add('is-register');
+    if (backGlider) backGlider.classList.add('is-register');
+    if (frontLogin) frontLogin.classList.remove('active');
+    if (frontReg) frontReg.classList.add('active');
+    if (backLogin) backLogin.classList.remove('active');
+    if (backReg) backReg.classList.add('active');
+    window.setMascotMsg(isAz() ? 'YENİ QƏHRƏMAN!' : 'CREATE HERO!');
   } else {
-    card.classList.remove('is-flipped');
-    window.setMascotMsg(isAz() ? 'XEYİRLİ GƏLDİN!' : 'WELCOME BACK!');
+    if (card) card.classList.remove('is-flipped');
+    if (frontGlider) frontGlider.classList.remove('is-register');
+    if (backGlider) backGlider.classList.remove('is-register');
+    if (frontLogin) frontLogin.classList.add('active');
+    if (frontReg) frontReg.classList.remove('active');
+    if (backLogin) backLogin.classList.add('active');
+    if (backReg) backReg.classList.remove('active');
+    window.setMascotMsg(isAz() ? 'XOŞ GƏLDİN!' : 'WELCOME BACK!');
+  }
+};
+
+window.toggleAuthSlider = function(event, side) {
+  const target = event.target.closest('.pixel-tab-btn');
+  if (target) return;
+  const rect = event.currentTarget.getBoundingClientRect();
+  const clickX = event.clientX - rect.left;
+  if (clickX > rect.width / 2) {
+    flipToAuth('register');
+  } else {
+    flipToAuth('login');
   }
 };
 
