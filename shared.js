@@ -1335,125 +1335,125 @@ function renderProfileModal(activeTab = 'overview') {
   const frameStyle = getEquippedFrameStyle(profile);
 
   const tabs = [
-    { id: 'overview', name: isAz() ? 'Baxış' : 'Overview', icon: '👤' },
-    { id: 'leaderboard', name: isAz() ? 'Liderlər' : 'Ranks', icon: '🏆' },
-    { id: 'shop', name: isAz() ? 'Mağaza' : 'Shop', icon: '🛍️' },
-    { id: 'achievements', name: isAz() ? 'Medallar' : 'Badges', icon: '⭐' },
-    { id: 'history', name: isAz() ? 'Tarixçə' : 'History', icon: '📜' },
-    { id: 'settings', name: isAz() ? 'Tənzimləmə' : 'Settings', icon: '⚙️' }
+    { id: 'overview', name: isAz() ? 'BAXIŞ' : 'OVERVIEW' },
+    { id: 'leaderboard', name: isAz() ? 'LİDERLƏR' : 'RANKS' },
+    { id: 'shop', name: isAz() ? 'MAĞAZA' : 'SHOP' },
+    { id: 'achievements', name: isAz() ? 'MEDALLAR' : 'BADGES' },
+    { id: 'history', name: isAz() ? 'TARİXÇƏ' : 'HISTORY' },
+    { id: 'settings', name: isAz() ? 'AYARLAR' : 'SETTINGS' }
   ];
 
   let tabContent = '';
 
   if (activeTab === 'overview') {
     tabContent = `
-      <div style="text-align:center; margin-bottom:1.5rem;">
-        <div style="position:relative; width:88px; height:88px; margin:0 auto 10px auto;">
-          <img src="${profile.avatar_url}" style="width:100%; height:100%; border-radius:50%; border:3px solid var(--accent-cyan); background:rgba(255,255,255,0.05); ${frameStyle}" />
-          <span style="position:absolute; bottom:0; right:0; background:var(--accent-gold); color:#000; font-weight:900; font-size:0.75rem; padding:2px 6px; border-radius:10px;">LVL ${level}</span>
+      <div style="text-align:center; margin-bottom:1rem;">
+        <div style="position:relative; width:80px; height:80px; margin:0 auto 8px auto; border:2px solid var(--accent-cyan); background:#141a29; ${frameStyle}">
+          <img src="${profile.avatar_url}" style="width:100%; height:100%; object-fit:cover;" />
+          <span style="position:absolute; bottom:-4px; right:-4px; background:var(--accent-purple); color:#fff; font-weight:900; font-size:0.65rem; padding:1px 5px; border:1px solid #000;">LVL ${level}</span>
         </div>
-        <h2 style="margin:0; font-size:1.4rem; font-weight:800;">${profile.nickname}</h2>
-        <div style="font-size:0.85rem; color:var(--accent-cyan); font-weight:700; margin-top:2px;">${rankTitle}</div>
-        <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">${profile.friend_code}</div>
+        <h2 style="margin:0; font-size:1.25rem; font-weight:800; font-family:'Pixelify Sans',monospace; color:#fff;">${profile.nickname}</h2>
+        <div style="font-size:0.75rem; color:var(--accent-cyan); font-weight:700; margin-top:2px;">[${rankTitle}]</div>
+        <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">KOD: ${profile.friend_code}</div>
       </div>
 
       <!-- XP Bar -->
-      <div style="background:rgba(255,255,255,0.03); padding:12px; border-radius:var(--radius-md); border:1px solid var(--glass-border); margin-bottom:1.25rem;">
-        <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:700; margin-bottom:6px;">
-          <span>Səviyyə İrəliləyişi</span>
+      <div style="background:#090d17; padding:10px; border:2px solid #000; margin-bottom:1rem;">
+        <div style="display:flex; justify-content:space-between; font-size:0.72rem; font-weight:700; margin-bottom:4px;">
+          <span>SƏVİYYƏ İRƏLİLƏYİŞİ</span>
           <span style="color:var(--accent-cyan);">${profile.xp} / ${nextLvlXP} XP (${pct}%)</span>
         </div>
-        <div class="xp-progress-bar" style="height:8px;">
-          <div class="xp-progress-fill" style="width:${pct}%;"></div>
+        <div class="pixel-xp-bar" style="height:8px;">
+          <div class="pixel-xp-fill" style="width:${pct}%;"></div>
         </div>
       </div>
 
       <!-- Stats Grid -->
-      <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; margin-bottom:1.25rem;">
-        <div style="background:rgba(255,255,255,0.03); padding:12px; border-radius:var(--radius-md); border:1px solid var(--glass-border); text-align:center;">
-          <div style="font-size:1.5rem; font-weight:900; color:var(--text-primary);">${profile.stats.games_played}</div>
-          <div style="font-size:0.75rem; color:var(--text-secondary);">Oynanılan Oyun</div>
+      <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px; margin-bottom:1rem;">
+        <div style="background:#090d17; padding:10px; border:2px solid #000; text-align:center;">
+          <div style="font-size:1.3rem; font-weight:900; color:#fff;">${profile.stats.games_played}</div>
+          <div style="font-size:0.68rem; color:var(--text-muted);">OYNANILAN OYUN</div>
         </div>
-        <div style="background:rgba(255,255,255,0.03); padding:12px; border-radius:var(--radius-md); border:1px solid var(--glass-border); text-align:center;">
-          <div style="font-size:1.5rem; font-weight:900; color:var(--accent-green);">${profile.stats.games_won}</div>
-          <div style="font-size:0.75rem; color:var(--text-secondary);">Qələbələr (${winRate}%)</div>
+        <div style="background:#090d17; padding:10px; border:2px solid #000; text-align:center;">
+          <div style="font-size:1.3rem; font-weight:900; color:var(--accent-green);">${profile.stats.games_won}</div>
+          <div style="font-size:0.68rem; color:var(--text-muted);">QƏLƏBƏLƏR (${winRate}%)</div>
         </div>
-        <div style="background:rgba(255,255,255,0.03); padding:12px; border-radius:var(--radius-md); border:1px solid var(--glass-border); text-align:center;">
-          <div style="font-size:1.5rem; font-weight:900; color:var(--accent-gold);">${profile.coins || 100} 🪙</div>
-          <div style="font-size:0.75rem; color:var(--text-secondary);">Partiya Sikkəsi</div>
+        <div style="background:#090d17; padding:10px; border:2px solid #000; text-align:center;">
+          <div style="font-size:1.3rem; font-weight:900; color:var(--accent-gold);">${profile.coins || 100}</div>
+          <div style="font-size:0.68rem; color:var(--text-muted);">PARTİYA SİKKƏSİ</div>
         </div>
-        <div style="background:rgba(255,255,255,0.03); padding:12px; border-radius:var(--radius-md); border:1px solid var(--glass-border); text-align:center;">
-          <div style="font-size:1.5rem; font-weight:900; color:var(--accent-red);">${profile.stats.win_streak} 🔥</div>
-          <div style="font-size:0.75rem; color:var(--text-secondary);">Cari Qələbə Seriyası</div>
+        <div style="background:#090d17; padding:10px; border:2px solid #000; text-align:center;">
+          <div style="font-size:1.3rem; font-weight:900; color:var(--accent-red);">${profile.stats.win_streak}</div>
+          <div style="font-size:0.68rem; color:var(--text-muted);">QƏLƏBƏ SERİYASI</div>
         </div>
       </div>
     `;
   } else if (activeTab === 'leaderboard') {
     const topPlayers = [
-      { rank: 1, name: 'LordXaos 👑', level: 42, xp: 3450, streak: 18, medal: '🥇' },
-      { rank: 2, name: 'ShadowMaster 🗡️', level: 36, xp: 2890, streak: 12, medal: '🥈' },
-      { rank: 3, name: 'CyberQueen 💎', level: 29, xp: 2210, streak: 9, medal: '🥉' },
-      { rank: 4, name: 'BombaUstası_99 💣', level: 22, xp: 1750, streak: 5, medal: '4' },
-      { rank: 5, name: 'DedektivPro 🔍', level: 18, xp: 1320, streak: 4, medal: '5' }
+      { rank: 1, name: 'LordXaos', level: 42, xp: 3450, streak: 18, tag: '[#1]' },
+      { rank: 2, name: 'ShadowMaster', level: 36, xp: 2890, streak: 12, tag: '[#2]' },
+      { rank: 3, name: 'CyberQueen', level: 29, xp: 2210, streak: 9, tag: '[#3]' },
+      { rank: 4, name: 'BombaUstasi_99', level: 22, xp: 1750, streak: 5, tag: '[#4]' },
+      { rank: 5, name: 'DedektivPro', level: 18, xp: 1320, streak: 4, tag: '[#5]' }
     ];
 
     tabContent = `
-      <div style="display:flex; flex-direction:column; gap:8px;">
-        <div style="text-align:center; margin-bottom:10px;">
-          <h4 style="margin:0; font-size:1.1rem; color:var(--accent-gold);">🏆 Qlobal Partiya Çempionları</h4>
-          <span style="font-size:0.75rem; color:var(--text-secondary);">Hər oyunda XP qazanaraq liderlik pilləsinə yüksəlin!</span>
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <div style="text-align:center; margin-bottom:8px;">
+          <h4 style="margin:0; font-size:0.95rem; color:var(--accent-gold);">QIZIL LİDERLƏR ŞƏBƏKƏSİ</h4>
+          <span style="font-size:0.68rem; color:var(--text-muted);">Oyunlarda XP qazanaraq liderlər sırasına qalxın</span>
         </div>
 
         ${topPlayers.map(p => `
-          <div style="display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.03); border:1px solid ${p.rank <= 3 ? 'rgba(245,158,11,0.3)' : 'var(--glass-border)'}; padding:10px 14px; border-radius:var(--radius-md);">
-            <div style="display:flex; align-items:center; gap:12px;">
-              <span style="font-size:1.3rem; font-weight:900; width:24px; text-align:center;">${p.medal}</span>
+          <div style="display:flex; align-items:center; justify-content:space-between; background:#090d17; border:2px solid #000; padding:8px 10px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:0.75rem; font-weight:900; color:${p.rank === 1 ? 'var(--accent-gold)' : p.rank === 2 ? 'var(--accent-cyan)' : 'var(--text-muted)'};">${p.tag}</span>
               <div>
-                <strong style="font-size:0.95rem; display:block;">${p.name}</strong>
-                <span style="font-size:0.75rem; color:var(--accent-cyan); font-weight:700;">LVL ${p.level} • ${p.xp} XP</span>
+                <strong style="font-size:0.85rem; display:block; color:#fff;">${p.name}</strong>
+                <span style="font-size:0.68rem; color:var(--accent-cyan); font-weight:700;">LVL ${p.level} • ${p.xp} XP</span>
               </div>
             </div>
-            <span style="font-size:0.85rem; font-weight:800; color:var(--accent-red);">${p.streak} 🔥 Seriya</span>
+            <span style="font-size:0.75rem; font-weight:800; color:var(--accent-red);">${p.streak} SERİYA</span>
           </div>
         `).join('')}
 
         <!-- My Rank Bar -->
-        <div style="margin-top:10px; padding:12px; background:rgba(56,189,248,0.1); border:1px solid var(--accent-cyan); border-radius:var(--radius-md); display:flex; align-items:center; justify-content:space-between;">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <span style="font-weight:900; color:var(--accent-cyan);">SİZ</span>
-            <strong>${profile.nickname}</strong>
+        <div style="margin-top:8px; padding:8px 10px; background:#101c2e; border:2px solid var(--accent-cyan); display:flex; align-items:center; justify-content:space-between;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-weight:900; color:var(--accent-cyan); font-size:0.75rem;">[SİZ]</span>
+            <strong style="font-size:0.85rem; color:#fff;">${profile.nickname}</strong>
           </div>
-          <span style="font-size:0.85rem; font-weight:800; color:var(--accent-gold);">LVL ${level} • ${profile.xp} XP</span>
+          <span style="font-size:0.75rem; font-weight:800; color:var(--accent-gold);">LVL ${level} • ${profile.xp} XP</span>
         </div>
       </div>
     `;
   } else if (activeTab === 'shop') {
     const inventory = profile.inventory || [];
     tabContent = `
-      <div style="display:flex; flex-direction:column; gap:10px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); padding:10px 14px; border-radius:var(--radius-md); margin-bottom:8px;">
-          <span style="font-weight:700; font-size:0.9rem;">Balansınız:</span>
-          <strong style="font-size:1.2rem; color:var(--accent-gold);">${profile.coins || 100} 🪙 Sikkə</strong>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#090d17; border:2px solid #000; padding:8px 12px; margin-bottom:4px;">
+          <span style="font-weight:700; font-size:0.8rem; color:var(--text-muted);">BALANSINIZ:</span>
+          <strong style="font-size:0.95rem; color:var(--accent-gold);">${profile.coins || 100} SİKKƏ</strong>
         </div>
 
-        <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px;">
+        <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px;">
           ${SHOP_ITEMS.map(item => {
             const isOwned = inventory.includes(item.id);
             const isEquipped = (item.type === 'frame' && profile.equipped_frame === item.id) || (item.type === 'title' && profile.equipped_title === (isAz() ? item.name_az : item.name_en));
             return `
-              <div style="background:rgba(255,255,255,0.03); border:1px solid ${isEquipped ? 'var(--accent-cyan)' : 'var(--glass-border)'}; border-radius:var(--radius-md); padding:12px; text-align:center; display:flex; flex-direction:column; justify-content:space-between;">
+              <div style="background:#090d17; border:2px solid ${isEquipped ? 'var(--accent-cyan)' : '#000'}; padding:8px; text-align:center; display:flex; flex-direction:column; justify-content:space-between;">
                 <div>
-                  <div style="font-size:2rem; margin-bottom:4px;">${item.icon}</div>
-                  <strong style="font-size:0.85rem; display:block; margin-bottom:4px;">${isAz() ? item.name_az : item.name_en}</strong>
+                  <strong style="font-size:0.78rem; display:block; margin-bottom:4px; color:#fff;">${isAz() ? item.name_az : item.name_en}</strong>
+                  <span style="font-size:0.65rem; color:var(--text-muted);">${item.type === 'frame' ? '[ÇƏRÇİVƏ]' : '[TİTUL]'}</span>
                 </div>
                 <div style="margin-top:8px;">
                   ${isOwned ? `
-                    <button class="btn ${isEquipped ? 'btn-secondary' : 'btn-primary'} btn-sm" onclick="equipShopItem('${item.id}')" style="width:100%; font-size:0.75rem; font-weight:800;">
-                      ${isEquipped ? (isAz() ? '✓ Aktivdir' : '✓ Equipped') : (isAz() ? 'Geyin' : 'Equip')}
+                    <button class="pixel-btn ${isEquipped ? 'pixel-btn-secondary' : 'pixel-btn-primary'}" onclick="equipShopItem('${item.id}')" style="width:100%; font-size:0.7rem; padding:4px 6px;">
+                      ${isEquipped ? (isAz() ? 'AKTİVDİR' : 'EQUIPPED') : (isAz() ? 'SEÇ' : 'EQUIP')}
                     </button>
                   ` : `
-                    <button class="btn btn-primary btn-sm" onclick="buyShopItem('${item.id}')" style="width:100%; font-size:0.75rem; font-weight:800; background:linear-gradient(135deg, #f59e0b, #d97706); border:none;">
-                      ${item.price} 🪙 Al
+                    <button class="pixel-btn pixel-btn-gold" onclick="buyShopItem('${item.id}')" style="width:100%; font-size:0.7rem; padding:4px 6px;">
+                      ${item.price} SİKKƏ
                     </button>
                   `}
                 </div>
@@ -1465,20 +1465,19 @@ function renderProfileModal(activeTab = 'overview') {
     `;
   } else if (activeTab === 'achievements') {
     tabContent = `
-      <div style="display:flex; flex-direction:column; gap:10px;">
+      <div style="display:flex; flex-direction:column; gap:6px;">
         ${ACHIEVEMENTS.map(ach => {
           const unlocked = profile.unlocked_achievements.includes(ach.id);
           return `
-            <div style="display:flex; align-items:center; gap:12px; padding:10px 14px; background:${unlocked ? 'rgba(16, 185, 129, 0.08)' : 'rgba(255,255,255,0.02)'}; border-radius:var(--radius-md); border:1px solid ${unlocked ? 'rgba(16, 185, 129, 0.3)' : 'var(--glass-border)'};">
-              <div style="font-size:2rem; filter:${unlocked ? 'none' : 'grayscale(100%) opacity(0.4)'};">${ach.icon}</div>
+            <div style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:#090d17; border:2px solid #000;">
               <div style="flex:1;">
                 <div style="display:flex; align-items:center; justify-content:space-between;">
-                  <strong style="font-size:0.95rem; color:${unlocked ? 'var(--accent-green)' : 'var(--text-primary)'};">${isAz() ? ach.title_az : ach.title_en}</strong>
-                  <span style="font-size:0.75rem; font-weight:700; color:var(--accent-cyan);">+${ach.xp} XP</span>
+                  <strong style="font-size:0.8rem; color:${unlocked ? 'var(--accent-green)' : '#fff'};">${isAz() ? ach.title_az : ach.title_en}</strong>
+                  <span style="font-size:0.68rem; font-weight:700; color:var(--accent-cyan);">+${ach.xp} XP</span>
                 </div>
-                <p style="margin:2px 0 0 0; font-size:0.8rem; color:var(--text-secondary);">${isAz() ? ach.desc_az : ach.desc_en}</p>
+                <p style="margin:2px 0 0 0; font-size:0.68rem; color:var(--text-muted);">${isAz() ? ach.desc_az : ach.desc_en}</p>
               </div>
-              <div>${unlocked ? '✅' : '🔒'}</div>
+              <span style="font-size:0.7rem; font-weight:900; color:${unlocked ? 'var(--accent-green)' : 'var(--text-muted)'};">${unlocked ? '[AÇIQ]' : '[KİLİDLİ]'}</span>
             </div>
           `;
         }).join('')}
@@ -1487,18 +1486,18 @@ function renderProfileModal(activeTab = 'overview') {
   } else if (activeTab === 'history') {
     const history = profile.match_history || [];
     tabContent = `
-      <div style="display:flex; flex-direction:column; gap:8px;">
-        ${history.length === 0 ? `<p style="text-align:center; color:var(--text-secondary); margin:2rem 0;">Hələ heç bir oyun oynanılmayıb.</p>` : history.map(m => `
-          <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); border-radius:var(--radius-md);">
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        ${history.length === 0 ? `<p style="text-align:center; color:var(--text-muted); font-size:0.75rem; margin:1.5rem 0;">Hələ heç bir oyun qeydə alınmayıb.</p>` : history.map(m => `
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; background:#090d17; border:2px solid #000;">
             <div>
-              <strong style="font-size:0.9rem; text-transform:capitalize;">${m.mode}</strong>
-              <div style="font-size:0.75rem; color:var(--text-secondary);">${m.date}</div>
+              <strong style="font-size:0.8rem; text-transform:uppercase; color:#fff;">[${m.mode}]</strong>
+              <div style="font-size:0.65rem; color:var(--text-muted);">${m.date}</div>
             </div>
             <div style="text-align:right;">
-              <span style="font-weight:800; font-size:0.85rem; padding:3px 10px; border-radius:12px; background:${m.won ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}; color:${m.won ? 'var(--accent-green)' : 'var(--accent-red)'};">
-                ${m.won ? (isAz() ? 'QƏLƏBƏ 🏆' : 'VICTORY 🏆') : (isAz() ? 'MƏĞLUBİYYƏT 💀' : 'DEFEAT 💀')}
+              <span style="font-weight:900; font-size:0.72rem; color:${m.won ? 'var(--accent-green)' : 'var(--accent-red)'};">
+                ${m.won ? (isAz() ? '[QƏLƏBƏ]' : '[VICTORY]') : (isAz() ? '[MƏĞLUBİYYƏT]' : '[DEFEAT]')}
               </span>
-              <div style="font-size:0.75rem; color:var(--accent-gold); margin-top:4px;">+${m.xp_earned} XP</div>
+              <div style="font-size:0.65rem; color:var(--accent-gold); margin-top:2px;">+${m.xp_earned} XP</div>
             </div>
           </div>
         `).join('')}
@@ -1506,19 +1505,18 @@ function renderProfileModal(activeTab = 'overview') {
     `;
   } else if (activeTab === 'settings') {
     tabContent = `
-      <div style="display:flex; flex-direction:column; gap:14px;">
+      <div style="display:flex; flex-direction:column; gap:10px;">
         <div>
-          <label style="display:block; font-size:0.85rem; font-weight:700; margin-bottom:6px;">Ləqəbi Dəyiş</label>
-          <input type="text" id="profile-edit-nickname" class="input-field" value="${profile.nickname}" maxlength="16" style="margin:0;" />
+          <label style="display:block; font-size:0.75rem; font-weight:900; margin-bottom:4px; color:var(--text-muted);">LƏQƏBİ DƏYİŞ:</label>
+          <input type="text" id="profile-edit-nickname" class="pixel-input" value="${profile.nickname}" maxlength="16" />
         </div>
         <div>
-          <button class="btn btn-secondary" onclick="showAvatarModal()" style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px;">
-            <img src="${profile.avatar_url}" style="width:24px; height:24px; border-radius:50%;" />
-            Avatarı Fərdiləşdir
+          <button type="button" class="pixel-btn pixel-btn-secondary" onclick="showAvatarModal()" style="width:100%;">
+            AVATARI DƏYİŞ
           </button>
         </div>
-        <button class="btn btn-primary" onclick="handleSaveProfileSettings()" style="width:100%; font-weight:800; margin-top:8px;">
-          Yadda Saxla
+        <button type="button" class="pixel-btn pixel-btn-primary" onclick="handleSaveProfileSettings()" style="width:100%; margin-top:4px;">
+          YADDA SAXLA
         </button>
       </div>
     `;
@@ -1526,10 +1524,10 @@ function renderProfileModal(activeTab = 'overview') {
 
   body.innerHTML = `
     <!-- Header Tabs -->
-    <div style="display:flex; gap:4px; background:rgba(0,0,0,0.3); padding:4px; border-radius:var(--radius-lg); margin-bottom:1.25rem; overflow-x:auto;">
+    <div style="display:flex; gap:4px; background:#090d17; border:2px solid #000; padding:4px; margin-bottom:1rem; overflow-x:auto;">
       ${tabs.map(t => `
-        <button class="btn btn-ghost btn-sm" onclick="renderProfileModal('${t.id}')" style="flex:1; min-width:65px; padding:7px 4px; font-size:0.75rem; font-weight:700; border-radius:var(--radius-md); background:${activeTab === t.id ? 'var(--accent-cyan)' : 'transparent'}; color:${activeTab === t.id ? '#000' : 'var(--text-secondary)'}; white-space:nowrap;">
-          ${t.icon} ${t.name}
+        <button type="button" class="pixel-tab-btn ${activeTab === t.id ? 'active' : ''}" onclick="renderProfileModal('${t.id}')" style="flex:1; min-width:60px; padding:6px 2px; font-size:0.65rem; font-weight:900; text-align:center; white-space:nowrap;">
+          ${t.name}
         </button>
       `).join('')}
     </div>
@@ -1550,7 +1548,7 @@ function handleSaveProfileSettings() {
   const profile = getUserProfile();
   profile.nickname = newNick;
   saveUserProfile(profile);
-  showToast('Profil yeniləndi! 🎉', 'success');
+  showToast('Profil yeniləndi!', 'success');
   closeProfileModal();
 }
 

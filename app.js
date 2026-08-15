@@ -371,6 +371,9 @@ async function handleRegister() {
     
     showToast(isAz() ? 'Qeydiyyat uğurla tamamlandı! Xoş gəldin!' : 'Registration successful! Welcome!', 'success');
     await finishAuth(data.user);
+    if (typeof openProfileModal === 'function') {
+      setTimeout(() => openProfileModal('overview'), 300);
+    }
   }
 }
 
