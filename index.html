@@ -9,7 +9,7 @@
     <!-- Google Pixel & Retro Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;600;700&family=Silkscreen:wght@400;700&family=Press+Start+2P&family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;600;700;800&family=Silkscreen:wght@400;700&family=Press+Start+2P&family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
     
     <!-- Stylesheet -->
     <link rel="stylesheet" href="style.css">
@@ -23,21 +23,15 @@
     <script src="app.js" defer></script>
 </head>
 <body class="pixel-body">
-    <!-- Retro CRT Scanlines & Grid Overlay -->
+    <!-- Retro CRT Scanlines & Background Grid -->
     <div class="crt-scanlines"></div>
     <div class="pixel-grid-bg"></div>
-
-    <!-- Floating Pixel Stars -->
-    <div class="pixel-star p-star-1"></div>
-    <div class="pixel-star p-star-2"></div>
-    <div class="pixel-star p-star-3"></div>
-    <div class="pixel-star p-star-4"></div>
 
     <!-- Top Action Bar (Pixelated) -->
     <header class="pixel-nav">
         <div class="pixel-brand">
             <div class="pixel-logo-icon">
-                <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor">
+                <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
                     <path d="M2 2h4v2H2zM10 2h4v2h-4zM4 4h8v2H4zM2 6h12v4H2zM4 10h8v2H4zM6 12h4v2H6z"/>
                 </svg>
             </div>
@@ -46,17 +40,17 @@
         <div class="pixel-nav-actions">
             <!-- Chiptune BGM Button -->
             <button id="bgm-toggle" class="pixel-mini-btn p-bgm-btn" onclick="toggleBGM()" title="8-Bit Music">
-                <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" style="margin-right:4px;"><path d="M6 1h6v2H6V1zm4 2h2v7H9V8h1V3zM3 8h4v2H3V8zm0 2h1v3H3v-3zm3 0h1v3H6v-3zm-2 3h2v1H4v-1zm5-3h4v2H9v-2zm0 2h1v3H9v-3zm3 0h1v3h-1v-3zm-2 3h2v1h-2v-1z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="margin-right:5px;"><path d="M6 1h6v2H6V1zm4 2h2v7H9V8h1V3zM3 8h4v2H3V8zm0 2h1v3H3v-3zm3 0h1v3H6v-3zm-2 3h2v1H4v-1zm5-3h4v2H9v-2zm0 2h1v3H9v-3zm3 0h1v3h-1v-3zm-2 3h2v1h-2v-1z"/></svg>
                 <span>BGM</span>
             </button>
             <button id="sound-toggle" class="pixel-mini-btn" onclick="toggleSound()" title="Sound">
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                     <path d="M2 5h3l4-3v12l-4-3H2V5zm10 0h1v6h-1V5zm2-2h1v10h-1V3z"/>
                 </svg>
             </button>
             <a href="index-az.html" class="pixel-mini-btn p-lang">AZ</a>
             <button id="theme-toggle" class="pixel-mini-btn" onclick="toggleTheme()" title="Theme">
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                     <path d="M7 1h2v2H7V1zm0 12h2v2H7v-2zM1 7h2v2H1V7zm12 0h2v2h-2V7zM3 3h2v2H3V3zm8 0h2v2h-2V3zM3 11h2v2H3v-2zm8 0h2v2h-2v-2z"/>
                 </svg>
             </button>
@@ -69,11 +63,11 @@
     <!-- 3D Perspective Flip Card Wrapper -->
     <main class="pixel-perspective-wrapper">
         
-        <!-- Interactive 8-Bit Pixel Mascot Companion (Natural Flow, Never Clipped) -->
+        <!-- Interactive 8-Bit Pixel Mascot Companion -->
         <div class="pixel-companion-wrap">
             <div class="pixel-speech-bubble" id="pixel-companion-msg">HELLO HERO!</div>
             <div class="pixel-mascot-pet" onclick="triggerMascotClick()" title="Click me!">
-                <svg width="34" height="34" viewBox="0 0 16 16" fill="currentColor">
+                <svg width="44" height="44" viewBox="0 0 16 16" fill="currentColor">
                     <path d="M4 1h8v2H4V1zM2 3h12v2H2V3zM1 5h14v6H1V5zM3 11h10v2H3v-2zM5 13h6v2H5v-2z" fill="var(--accent-cyan)"/>
                     <path d="M4 7h3v2H4V7zm5 0h3v2H9V7z" fill="#000"/>
                     <path d="M7 11h2v1H7v-1z" fill="var(--accent-red)"/>
@@ -87,7 +81,7 @@
             <div class="pixel-card-face pixel-card-front pixel-box">
                 <div class="pixel-card-header">
                     <div class="pixel-badge-avatar">
-                        <svg width="26" height="26" viewBox="0 0 16 16" fill="currentColor" color="var(--accent-cyan)">
+                        <svg width="34" height="34" viewBox="0 0 16 16" fill="currentColor" color="var(--accent-cyan)">
                             <path d="M5 1h6v2H5V1zm-2 2h2v2H3V3zm8 0h2v2h-2V3zM1 5h14v6H1V5zm2 6h2v2H3v-2zm8 0h2v2h-2v-2zm-6 2h6v2H5v-2z"/>
                             <path d="M4 7h2v2H4V7zm6 0h2v2h-2V7z" fill="#0b0f17"/>
                         </svg>
@@ -111,7 +105,7 @@
                 <!-- Login Form -->
                 <form id="login-form" class="pixel-form" onsubmit="event.preventDefault(); handleLogin();">
                     <div class="pixel-input-group">
-                        <label for="login-email" class="pixel-label">EMAIL:</label>
+                        <label for="login-email" class="pixel-label">EMAIL ADDRESS:</label>
                         <div class="pixel-input-wrap">
                             <input type="email" id="login-email" class="pixel-input" placeholder="player@otaq.gg" required autocomplete="email" onfocus="setMascotMsg('ENTER EMAIL...')">
                         </div>
@@ -125,7 +119,7 @@
                         <div class="pixel-input-wrap">
                             <input type="password" id="login-password" class="pixel-input" placeholder="••••••••" required autocomplete="current-password" onfocus="setMascotMsg('SECRET KEY!')">
                             <button type="button" class="pixel-eye-btn" onclick="togglePasswordVisibility('login-password')" title="Password">
-                                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                                <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor">
                                     <path d="M2 7h12v2H2V7zm2-2h8v2H4V5zm0 6h8v2H4v-2z"/>
                                 </svg>
                             </button>
@@ -138,12 +132,12 @@
 
                     <div class="pixel-divider">
                         <span class="p-line"></span>
-                        <span class="p-text">OR</span>
+                        <span class="p-text">OR CONTINUE WITH</span>
                         <span class="p-line"></span>
                     </div>
 
                     <button type="button" class="pixel-btn pixel-btn-secondary" onclick="handleGuestLogin()">
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                             <path d="M1 1h14v14H1V1zm2 2v10h10V3H3zm2 2h2v2H5V5zm4 0h2v2H9V5zm-4 4h2v2H5V9zm4 0h2v2H9V9z"/>
                         </svg>
                         <span>GUEST PLAY [1-CLICK]</span>
@@ -153,7 +147,7 @@
                 <!-- Footer Creator Badge -->
                 <div class="pixel-footer">
                     <a href="https://instagram.com/tahirquliyev01" target="_blank" rel="noopener noreferrer" class="pixel-author-pill">
-                        <svg width="10" height="10" viewBox="0 0 8 8" fill="var(--accent-gold)"><path d="M3 0h2v2H3V0zM1 2h2v2H1V2zM5 2h2v2H5V2zM3 4h2v2H3V4z"/></svg>
+                        <svg width="12" height="12" viewBox="0 0 8 8" fill="var(--accent-gold)"><path d="M3 0h2v2H3V0zM1 2h2v2H1V2zM5 2h2v2H5V2zM3 4h2v2H3V4z"/></svg>
                         <span>DEV: <strong>@tahirquliyev01</strong></span>
                     </a>
                 </div>
@@ -163,7 +157,7 @@
             <div class="pixel-card-face pixel-card-back pixel-box">
                 <div class="pixel-card-header">
                     <div class="pixel-badge-avatar p-badge-purple">
-                        <svg width="26" height="26" viewBox="0 0 16 16" fill="currentColor" color="var(--accent-purple)">
+                        <svg width="34" height="34" viewBox="0 0 16 16" fill="currentColor" color="var(--accent-purple)">
                             <path d="M7 1h2v3h3v2H9v3H7V6H4V4h3V1zM2 11h12v3H2v-3z"/>
                         </svg>
                     </div>
@@ -197,7 +191,7 @@
                     </div>
 
                     <div class="pixel-input-group">
-                        <label for="reg-email" class="pixel-label">EMAIL:</label>
+                        <label for="reg-email" class="pixel-label">EMAIL ADDRESS:</label>
                         <div class="pixel-input-wrap">
                             <input type="email" id="reg-email" class="pixel-input" placeholder="player@otaq.gg" required autocomplete="email" onfocus="setMascotMsg('NEW EMAIL!')">
                         </div>
@@ -220,7 +214,7 @@
                         <div class="pixel-input-wrap">
                             <input type="password" id="reg-password" class="pixel-input" placeholder="••••••••" required minlength="6" autocomplete="new-password">
                             <button type="button" class="pixel-eye-btn" onclick="togglePasswordVisibility('reg-password')" title="Password">
-                                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                                <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor">
                                     <path d="M2 7h12v2H2V7zm2-2h8v2H4V5zm0 6h8v2H4v-2z"/>
                                 </svg>
                             </button>
@@ -235,7 +229,7 @@
                 <!-- Footer Creator Badge -->
                 <div class="pixel-footer">
                     <a href="https://instagram.com/tahirquliyev01" target="_blank" rel="noopener noreferrer" class="pixel-author-pill">
-                        <svg width="10" height="10" viewBox="0 0 8 8" fill="var(--accent-gold)"><path d="M3 0h2v2H3V0zM1 2h2v2H1V2zM5 2h2v2H5V2zM3 4h2v2H3V4z"/></svg>
+                        <svg width="12" height="12" viewBox="0 0 8 8" fill="var(--accent-gold)"><path d="M3 0h2v2H3V0zM1 2h2v2H1V2zM5 2h2v2H5V2zM3 4h2v2H3V4z"/></svg>
                         <span>DEV: <strong>@tahirquliyev01</strong></span>
                     </a>
                 </div>
