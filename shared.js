@@ -480,10 +480,18 @@ let bgmInterval = null;
 let isBgmPlaying = false;
 
 function toggleBGM() {
+  const ctx = getAudioContext();
+  if (ctx && ctx.state === 'suspended') {
+    ctx.resume();
+  }
+
   if (isBgmPlaying) {
     stopBGM();
     showToast(isAz() ? '8-Bit Musiqi Dayandırıldı' : 'Chiptune BGM Paused', 'info');
   } else {
+    localStorage.setItem('otaq_muted', 'false');
+    const soundBtn = document.getElementById('sound-toggle');
+    if (soundBtn) soundBtn.innerHTML = getSoundIcon(false);
     startBGM();
     showToast(isAz() ? '8-Bit Musiqi Aktivdir ♫' : 'Chiptune BGM Active ♫', 'success');
   }
@@ -493,7 +501,7 @@ function toggleBGM() {
 window.toggleBGM = toggleBGM;
 
 function startBGM() {
-  if (bgmInterval || !isSoundEnabled) return;
+  if (bgmInterval || isAudioMuted()) return;
   isBgmPlaying = true;
   
   const ctx = getAudioContext();
@@ -509,7 +517,7 @@ function startBGM() {
   
   let noteIndex = 0;
   bgmInterval = setInterval(() => {
-    if (!isBgmPlaying || !isSoundEnabled) return;
+    if (!isBgmPlaying || isAudioMuted()) return;
     try {
       const now = ctx.currentTime;
       const osc = ctx.createOscillator();
@@ -538,6 +546,8 @@ function stopBGM() {
     clearInterval(bgmInterval);
     bgmInterval = null;
   }
+  const btn = document.getElementById('bgm-toggle');
+  if (btn) btn.classList.remove('active');
 }
 
 // ----------------------------------------------------------------------------

@@ -281,8 +281,8 @@ window.switchAuthTab = function(mode) {
   window.flipToAuth(mode);
 };
 
-const PIXEL_EYE_OPEN_SVG = `<svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M5 4h6v1H5V4zM2 6h3v1H2V6zm9 0h3v1h-3V6zM0 8h2v1H0V8zm14 0h2v1h-2V8zM2 10h3v1H2v-1zm9 0h3v1h-3v-1zm-6 2h6v1H5v-1z"/><rect x="6" y="6" width="4" height="4" fill="var(--accent-cyan)"/><rect x="7" y="7" width="2" height="2" fill="#000"/></svg>`;
-const PIXEL_EYE_CLOSED_SVG = `<svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M5 4h6v1H5V4zM2 6h3v1H2V6zm9 0h3v1h-3V6zM0 8h2v1H0V8zm14 0h2v1h-2V8zM2 10h3v1H2v-1zm9 0h3v1h-3v-1zm-6 2h6v1H5v-1z"/><path d="M2 3h2v2H2V3zm3 3h2v2H5V6zm3 3h2v2H8V9zm3 3h2v2h-2v-2z" fill="var(--accent-red)"/></svg>`;
+const PIXEL_EYE_OPEN_SVG = `<svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M5 4h6v1H5V4zM3 5h2v1H3V5zm8 0h2v1h-2V5zM2 6h1v1H2V6zm11 0h1v1h-1V6zM1 7h1v2H1V7zm13 0h1v2h-1V7zM2 9h1v1H2V9zm11 0h1v1h-1V9zM3 10h2v1H3v-1zm8 0h2v1h-2v-1zm-6 1h6v1H5v-1z"/><rect x="6" y="6" width="4" height="4" fill="var(--accent-cyan)"/><rect x="7" y="7" width="2" height="2" fill="#0b0e14"/></svg>`;
+const PIXEL_EYE_CLOSED_SVG = `<svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M5 4h6v1H5V4zM3 5h2v1H3V5zm8 0h2v1h-2V5zM2 6h1v1H2V6zm11 0h1v1h-1V6zM1 7h1v2H1V7zm13 0h1v2h-1V7zM2 9h1v1H2V9zm11 0h1v1h-1V9zM3 10h2v1H3v-1zm8 0h2v1h-2v-1zm-6 1h6v1H5v-1z"/><path d="M3 3h2v2H3V3zm3 3h2v2H6V6zm2 2h2v2H8V8zm3 3h2v2h-2v-2z" fill="var(--accent-red)"/></svg>`;
 
 window.togglePasswordVisibility = function(inputId, btn) {
   const input = document.getElementById(inputId);
