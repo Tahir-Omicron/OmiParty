@@ -128,6 +128,21 @@ async function resumeGame(code) {
 
 async function init() {
   bindEventListeners();
+
+  // Pre-fill remembered email
+  const lastEmail = localStorage.getItem('otaq_last_email');
+  if (lastEmail) {
+    if ($('#login-email') && !$('#login-email').value) $('#login-email').value = lastEmail;
+  }
+
+  // Subscribe to Auth state changes
+  if (db && db.auth && typeof db.auth.onAuthStateChange === 'function') {
+    db.auth.onAuthStateChange(async (event, session) => {
+      if (session && session.user && (event === 'SIGNED_IN' || event === 'USER_UPDATED')) {
+        await finishAuth(session.user);
+      }
+    });
+  }
   
   // Always fetch session first so state.playerId is populated
   const { data: { session } } = await db.auth.getSession();
@@ -145,6 +160,7 @@ async function init() {
       state.profile = { 
         level: 1, 
         xp: 0, 
+        coins: 100,
         avatar_url: savedAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${savedPlayerId}` 
       };
       
@@ -331,11 +347,19 @@ window.generateRandomRegNickname = function() {
 async function handleLogin() {
   const email = $('#login-email').value.trim();
   const password = $('#login-password').value;
-  if (!email || !password) return showToast('Please enter email and password.', 'error');
+  if (!email || !password) {
+    return showToast(isAz() ? 'E-poçt və şifrəni daxil edin!' : 'Please enter email and password.', 'error');
+  }
+  
+  localStorage.setItem('otaq_last_email', email);
+  showToast(isAz() ? 'Daxil olunur...' : 'Logging in...', 'info');
   
   const { data, error } = await db.auth.signInWithPassword({ email, password });
-  if (error) return showToast(error.message, 'error');
+  if (error) {
+    return showToast(error.message, 'error');
+  }
   
+  showToast(isAz() ? 'Giriş uğurludur! Xoş gəldin!' : 'Login successful! Welcome!', 'success');
   await finishAuth(data.user);
 }
 
@@ -343,11 +367,21 @@ async function handleRegister() {
   const email = $('#reg-email').value.trim();
   const password = $('#reg-password').value;
   const nickname = $('#reg-nickname').value.trim();
-  if (!email || !password || !nickname) return showToast('Please fill all fields.', 'error');
+  if (!email || !password || !nickname) {
+    return showToast(isAz() ? 'Bütün xanaları doldurun!' : 'Please fill all fields.', 'error');
+  }
   
   const selectedPreset = PIXEL_AVATAR_PRESETS[currentPixelAvatarIdx] || PIXEL_AVATAR_PRESETS[0];
   const avatar_url = `https://api.dicebear.com/7.x/bottts/svg?seed=${selectedPreset.seed}`;
+  
+  // Persist locally immediately
+  localStorage.setItem('otaq_auth_email', email);
+  localStorage.setItem('otaq_last_email', email);
+  localStorage.setItem('otaq_nickname', nickname);
   localStorage.setItem('otaq_avatar_url', avatar_url);
+  state.nickname = nickname;
+
+  showToast(isAz() ? 'Hesab yaradılır...' : 'Creating account...', 'info');
 
   const { data, error } = await db.auth.signUp({
     email, password, options: { 
@@ -355,9 +389,29 @@ async function handleRegister() {
       emailRedirectTo: 'https://omi-party.vercel.app/'
     }
   });
-  if (error) return showToast(error.message, 'error');
   
-  await finishAuth(data.user);
+  if (error) {
+    return showToast(error.message, 'error');
+  }
+  
+  if (data && data.user) {
+    // Proactively upsert into profiles table to guarantee database persistence
+    try {
+      await db.from('profiles').upsert({
+        id: data.user.id,
+        nickname: nickname,
+        avatar_url: avatar_url,
+        level: 1,
+        xp: 0,
+        coins: 100
+      });
+    } catch (err) {
+      console.warn("Profiles upsert:", err);
+    }
+    
+    showToast(isAz() ? 'Qeydiyyat uğurla tamamlandı! Xoş gəldin!' : 'Registration successful! Welcome!', 'success');
+    await finishAuth(data.user);
+  }
 }
 
 function handleGuestLogin() {
@@ -386,7 +440,7 @@ function processGuestLogin() {
   localStorage.setItem('otaq_nickname', state.nickname);
   
   const savedAvatar = localStorage.getItem('otaq_avatar_url') || `https://api.dicebear.com/7.x/bottts/svg?seed=${state.playerId}`;
-  state.profile = { level: 1, xp: 0, avatar_url: savedAvatar };
+  state.profile = { level: 1, xp: 0, avatar_url: savedAvatar, coins: 100 };
   localStorage.setItem('otaq_avatar_url', savedAvatar);
   
   if (typeof getUserProfile === 'function' && typeof saveUserProfile === 'function') {
@@ -410,42 +464,66 @@ function processGuestLogin() {
 }
 
 async function finishAuth(user) {
+  if (!user) return;
   state.playerId = user.id;
-  
-  // Wait a sec for the trigger to insert the profile if they just registered
-  await new Promise(r => setTimeout(r, 1000));
+  localStorage.setItem('otaq_player_id', user.id);
+  localStorage.setItem('otaq_auth_email', user.email || '');
+
+  // Wait briefly for trigger/network if needed
+  await new Promise(r => setTimeout(r, 600));
   
   const savedLocalAvatar = localStorage.getItem('otaq_avatar_url');
-  const { data: profile } = await db.from('profiles').select('*').eq('id', user.id).single();
-  if (profile) {
-    state.nickname = profile.nickname;
-    state.profile = profile;
-    if (savedLocalAvatar && !profile.avatar_url) {
-      state.profile.avatar_url = savedLocalAvatar;
-      db.from('profiles').update({ avatar_url: savedLocalAvatar }).eq('id', user.id);
-    }
-    localStorage.setItem('otaq_avatar_url', state.profile.avatar_url);
-    
-    if ($('#menu-nickname')) {
-      $('#menu-nickname').textContent = state.nickname;
-      $('#profile-level').textContent = profile.level;
-      $('#profile-avatar').src = profile.avatar_url;
-      const progress = (profile.xp % 100) + '%';
-      $('#profile-xp-bar').style.width = progress;
+  const savedLocalNick = localStorage.getItem('otaq_nickname');
+  
+  let { data: profile } = await db.from('profiles').select('*').eq('id', user.id).single();
+  
+  if (!profile) {
+    // Upsert default profile if not present
+    const initialProfile = {
+      id: user.id,
+      nickname: user.user_metadata?.nickname || savedLocalNick || 'Hero',
+      avatar_url: user.user_metadata?.avatar_url || savedLocalAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.id}`,
+      level: 1,
+      xp: 0,
+      coins: 100
+    };
+    try {
+      await db.from('profiles').upsert(initialProfile);
+      profile = initialProfile;
+    } catch (err) {
+      profile = initialProfile;
     }
   } else {
-    // Fallback if SQL trigger failed or hasn't run yet
-    state.nickname = user.user_metadata?.nickname || 'Player';
-    const fallbackAvatar = savedLocalAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.id}`;
-    state.profile = { level: 1, xp: 0, avatar_url: fallbackAvatar };
-    localStorage.setItem('otaq_avatar_url', fallbackAvatar);
-    
-    if ($('#menu-nickname')) {
-      $('#menu-nickname').textContent = state.nickname;
-      $('#profile-level').textContent = '1';
-      $('#profile-avatar').src = state.profile.avatar_url;
-      $('#profile-xp-bar').style.width = '0%';
+    if (savedLocalAvatar && !profile.avatar_url) {
+      profile.avatar_url = savedLocalAvatar;
+      db.from('profiles').update({ avatar_url: savedLocalAvatar }).eq('id', user.id);
     }
+  }
+  
+  state.nickname = profile.nickname || 'Hero';
+  state.profile = profile;
+  localStorage.setItem('otaq_nickname', state.nickname);
+  localStorage.setItem('otaq_avatar_url', profile.avatar_url);
+  
+  if (typeof getUserProfile === 'function' && typeof saveUserProfile === 'function') {
+    const p = getUserProfile();
+    p.id = user.id;
+    p.email = user.email;
+    p.nickname = state.nickname;
+    p.avatar_url = profile.avatar_url;
+    p.is_guest = false;
+    saveUserProfile(p);
+  }
+  
+  if ($('#menu-nickname')) {
+    $('#menu-nickname').textContent = state.nickname;
+    $('#profile-level').textContent = profile.level || 1;
+    $('#profile-avatar').src = profile.avatar_url;
+    const progress = ((profile.xp || 0) % 100) + '%';
+    $('#profile-xp-bar').style.width = progress;
+  }
+  if ($('#profile-coins-val')) {
+    $('#profile-coins-val').textContent = profile.coins || 100;
   }
   
   const path = window.location.pathname;
