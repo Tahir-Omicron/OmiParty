@@ -474,10 +474,22 @@ function playSound(type) {
 }
 
 // ----------------------------------------------------------------------------
-// Procedural 8-Bit Chiptune BGM Engine
+// Multi-Track 8-Bit Chiptune Arcade Synthesizer Engine
 // ----------------------------------------------------------------------------
 let bgmInterval = null;
 let isBgmPlaying = false;
+let noiseBuffer = null;
+
+function getNoiseBuffer(ctx) {
+  if (noiseBuffer) return noiseBuffer;
+  const bufferSize = ctx.sampleRate * 1;
+  noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const output = noiseBuffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    output[i] = Math.random() * 2 - 1;
+  }
+  return noiseBuffer;
+}
 
 function toggleBGM() {
   const ctx = getAudioContext();
@@ -493,7 +505,7 @@ function toggleBGM() {
     const soundBtn = document.getElementById('sound-toggle');
     if (soundBtn) soundBtn.innerHTML = getSoundIcon(false);
     startBGM();
-    showToast(isAz() ? '8-Bit Musiqi Aktivdir ♫' : 'Chiptune BGM Active ♫', 'success');
+    showToast(isAz() ? '8-Bit Arkada Musiqisi Aktivdir ♫' : 'Chiptune Arcade BGM Active ♫', 'success');
   }
   const btn = document.getElementById('bgm-toggle');
   if (btn) btn.classList.toggle('active', isBgmPlaying);
@@ -508,36 +520,147 @@ function startBGM() {
   if (!ctx) return;
   if (ctx.state === 'suspended') ctx.resume();
 
-  const melody = [
-    261.63, 329.63, 392.00, 523.25, // C E G C
-    392.00, 329.63, 293.66, 349.23, // G E D F
-    440.00, 523.25, 440.00, 392.00, // A C A G
-    349.23, 329.63, 293.66, 261.63  // F E D C
+  // Frequencies (Hz)
+  const N = {
+    C2: 65.41, D2: 73.42, E2: 82.41, F2: 87.31, G2: 98.00, A2: 110.00, B2: 123.47,
+    C3: 130.81, D3: 146.83, E3: 164.81, F3: 174.61, G3: 196.00, A3: 220.00, B3: 246.94,
+    C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392.00, A4: 440.00, B4: 493.88,
+    C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99, A5: 880.00, B5: 987.77,
+    C6: 1046.50, D6: 1174.66, E6: 1318.51, _: 0
+  };
+
+  // 32-Step Energetic Retro Hook Melody (Lead Square Wave)
+  const leadMelody = [
+    N.E5, N._,  N.E5, N.G5,  N.A5, N._,  N.G5, N.E5,
+    N.D5, N.E5, N.G5, N.A5,  N.B5, N.A5, N.G5, N.E5,
+    N.A5, N._,  N.A5, N.C6,  N.D6, N._,  N.C6, N.A5,
+    N.G5, N.A5, N.C6, N.D6,  N.E6, N.D6, N.C6, N.G5
   ];
-  
-  let noteIndex = 0;
+
+  // 32-Step Bouncy Retro Bassline (Triangle Wave)
+  const bassline = [
+    N.C3, N._,  N.C3, N.G3,  N.C3, N._,  N.E3, N.G3,
+    N.A2, N._,  N.A2, N.E3,  N.A2, N._,  N.C3, N.E3,
+    N.F2, N._,  N.F2, N.C3,  N.F2, N._,  N.A2, N.C3,
+    N.G2, N._,  N.G2, N.D3,  N.G2, N._,  N.B2, N.D3
+  ];
+
+  // 32-Step Fast Chiptune Arpeggios (Square wave pulses)
+  const arpeggios = [
+    N.C4, N.E4, N.G4, N.C5,  N.E4, N.G4, N.C5, N.E5,
+    N.A3, N.C4, N.E4, N.A4,  N.C4, N.E4, N.A4, N.C5,
+    N.F3, N.A3, N.C4, N.F4,  N.A3, N.C4, N.F4, N.A4,
+    N.G3, N.B3, N.D4, N.G4,  N.B3, N.D4, N.G4, N.B4
+  ];
+
+  let step = 0;
+  const STEP_TIME = 0.125;
+
   bgmInterval = setInterval(() => {
     if (!isBgmPlaying || isAudioMuted()) return;
     try {
       const now = ctx.currentTime;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(melody[noteIndex % melody.length], now);
-      
-      gain.gain.setValueAtTime(0.04, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
-      
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      
-      osc.start(now);
-      osc.stop(now + 0.22);
-      
-      noteIndex++;
+      const s = step % 32;
+
+      // 1. LEAD MELODY (Square Wave)
+      const leadFreq = leadMelody[s];
+      if (leadFreq > 0) {
+        const leadOsc = ctx.createOscillator();
+        const leadGain = ctx.createGain();
+        leadOsc.type = 'square';
+        leadOsc.frequency.setValueAtTime(leadFreq, now);
+        leadOsc.frequency.linearRampToValueAtTime(leadFreq * 1.01, now + STEP_TIME * 0.7);
+        leadGain.gain.setValueAtTime(0.04, now);
+        leadGain.gain.exponentialRampToValueAtTime(0.001, now + STEP_TIME * 0.95);
+        leadOsc.connect(leadGain);
+        leadGain.connect(ctx.destination);
+        leadOsc.start(now);
+        leadOsc.stop(now + STEP_TIME);
+      }
+
+      // 2. BASSLINE (Triangle Wave)
+      const bassFreq = bassline[s];
+      if (bassFreq > 0) {
+        const bassOsc = ctx.createOscillator();
+        const bassGain = ctx.createGain();
+        bassOsc.type = 'triangle';
+        bassOsc.frequency.setValueAtTime(bassFreq, now);
+        bassGain.gain.setValueAtTime(0.07, now);
+        bassGain.gain.exponentialRampToValueAtTime(0.001, now + STEP_TIME * 0.9);
+        bassOsc.connect(bassGain);
+        bassGain.connect(ctx.destination);
+        bassOsc.start(now);
+        bassOsc.stop(now + STEP_TIME);
+      }
+
+      // 3. ARPEGGIOS (Chiptune Sparkle)
+      const arpFreq = arpeggios[s];
+      if (arpFreq > 0) {
+        const arpOsc = ctx.createOscillator();
+        const arpGain = ctx.createGain();
+        arpOsc.type = 'square';
+        arpOsc.frequency.setValueAtTime(arpFreq, now);
+        arpGain.gain.setValueAtTime(0.015, now);
+        arpGain.gain.exponentialRampToValueAtTime(0.0005, now + STEP_TIME * 0.5);
+        arpOsc.connect(arpGain);
+        arpGain.connect(ctx.destination);
+        arpOsc.start(now);
+        arpOsc.stop(now + STEP_TIME * 0.5);
+      }
+
+      // 4. RETRO DRUMS
+      // Kick
+      if (s % 8 === 0) {
+        const kickOsc = ctx.createOscillator();
+        const kickGain = ctx.createGain();
+        kickOsc.type = 'triangle';
+        kickOsc.frequency.setValueAtTime(110, now);
+        kickOsc.frequency.exponentialRampToValueAtTime(25, now + 0.08);
+        kickGain.gain.setValueAtTime(0.09, now);
+        kickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+        kickOsc.connect(kickGain);
+        kickGain.connect(ctx.destination);
+        kickOsc.start(now);
+        kickOsc.stop(now + 0.08);
+      }
+
+      // Snare
+      if (s % 8 === 4) {
+        const noise = ctx.createBufferSource();
+        noise.buffer = getNoiseBuffer(ctx);
+        const noiseGain = ctx.createGain();
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.value = 1000;
+        noiseGain.gain.setValueAtTime(0.04, now);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+        noise.connect(filter);
+        filter.connect(noiseGain);
+        noiseGain.connect(ctx.destination);
+        noise.start(now);
+        noise.stop(now + 0.07);
+      }
+
+      // Hi-Hat
+      if (s % 2 === 1) {
+        const hat = ctx.createBufferSource();
+        hat.buffer = getNoiseBuffer(ctx);
+        const hatGain = ctx.createGain();
+        const hatFilter = ctx.createBiquadFilter();
+        hatFilter.type = 'highpass';
+        hatFilter.frequency.value = 6000;
+        hatGain.gain.setValueAtTime(0.015, now);
+        hatGain.gain.exponentialRampToValueAtTime(0.0005, now + 0.03);
+        hat.connect(hatFilter);
+        hatFilter.connect(hatGain);
+        hatGain.connect(ctx.destination);
+        hat.start(now);
+        hat.stop(now + 0.03);
+      }
+
+      step++;
     } catch (e) {}
-  }, 240);
+  }, 125);
 }
 
 function stopBGM() {
