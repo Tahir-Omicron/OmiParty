@@ -1554,10 +1554,85 @@ function handleSaveProfileSettings() {
   closeProfileModal();
 }
 
+// ----------------------------------------------------------------------------
+// RETRO 8-BIT INFO HUD CONTROLLER
+// ----------------------------------------------------------------------------
+function toggleInfoHud() {
+  playSound('click');
+  const hud = document.getElementById('pixel-info-hud');
+  const body = document.getElementById('info-hud-body');
+  const btn = document.getElementById('info-hud-toggle-btn');
+  if (!hud || !body) return;
+
+  const isMin = hud.classList.toggle('is-minimized');
+  if (btn) btn.textContent = isMin ? '+' : '_';
+  localStorage.setItem('otaq_info_hud_min', isMin ? 'true' : 'false');
+}
+
+function switchInfoTab(tabId, el) {
+  playSound('click');
+  const contents = document.querySelectorAll('.pixel-info-content');
+  const tabs = document.querySelectorAll('.pixel-info-tab');
+  
+  contents.forEach(c => c.classList.remove('active'));
+  tabs.forEach(t => t.classList.remove('active'));
+  
+  const target = document.getElementById(`info-tab-${tabId}`);
+  if (target) target.classList.add('active');
+  if (el) el.classList.add('active');
+}
+
+function updateInfoHudTelemetry() {
+  const currentTheme = document.documentElement.getAttribute('data-theme') || 'cyber';
+  const themeObj = RETRO_DISPLAY_THEMES.find(t => t.id === currentTheme) || RETRO_DISPLAY_THEMES[0];
+  
+  const shaderEl = document.getElementById('hud-shader-val');
+  if (shaderEl) shaderEl.textContent = isAz() ? themeObj.nameAz : themeObj.nameEn;
+
+  const pingEl = document.getElementById('hud-ping-val');
+  if (pingEl) {
+    const jitter = Math.floor(14 + Math.random() * 8);
+    pingEl.textContent = `${jitter} ms`;
+  }
+}
+
+// Global Hotkeys for Retro HUD
+document.addEventListener('keydown', (e) => {
+  if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
+
+  const key = e.key.toLowerCase();
+  if (key === 'm') {
+    nextBGMTrack();
+  } else if (key === 't') {
+    toggleTheme();
+  } else if (key === 'g') {
+    const guestModal = document.getElementById('guest-modal');
+    if (guestModal && guestModal.style.display !== 'block') {
+      playSound('click');
+      guestModal.style.display = 'flex';
+      const input = document.getElementById('guest-nickname-input');
+      if (input) {
+        input.value = typeof getRandomGuestNickname === 'function' ? getRandomGuestNickname() : 'PixelHero';
+        input.focus();
+      }
+    }
+  }
+});
+
 // Global DOM Ready Handlers
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
   updateProfileHeaderUI();
+  updateInfoHudTelemetry();
+  setInterval(updateInfoHudTelemetry, 4000);
+
+  const isMinSaved = localStorage.getItem('otaq_info_hud_min') === 'true';
+  const hud = document.getElementById('pixel-info-hud');
+  const btn = document.getElementById('info-hud-toggle-btn');
+  if (hud && isMinSaved) {
+    hud.classList.add('is-minimized');
+    if (btn) btn.textContent = '+';
+  }
   
   document.body.addEventListener('mousedown', (e) => {
     if (e.target.tagName === 'BUTTON' || e.target.closest('button') || e.target.classList.contains('btn') || e.target.classList.contains('mode-card')) {

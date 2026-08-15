@@ -249,6 +249,102 @@
         </div>
     </main>
 
+    <!-- ================= 8-BIT RETRO INFO HUD (BOTTOM RIGHT) ================= -->
+    <aside id="pixel-info-hud" class="pixel-info-hud" aria-label="Information Panel">
+        <div class="pixel-info-header" onclick="toggleInfoHud()">
+            <div class="pixel-info-title-row">
+                <span class="pixel-info-led"></span>
+                <span class="pixel-info-title">OTAQ.GG // INFO</span>
+            </div>
+            <button type="button" class="pixel-info-toggle-btn" id="info-hud-toggle-btn" title="Toggle Panel">_</button>
+        </div>
+
+        <div class="pixel-info-body" id="info-hud-body">
+            <!-- Tabs Bar -->
+            <div class="pixel-info-tabs">
+                <button type="button" class="pixel-info-tab active" onclick="switchInfoTab('games', this)">GAMES</button>
+                <button type="button" class="pixel-info-tab" onclick="switchInfoTab('status', this)">STATUS</button>
+                <button type="button" class="pixel-info-tab" onclick="switchInfoTab('keys', this)">HOTKEYS</button>
+            </div>
+
+            <!-- Tab 1: Games Guide -->
+            <div class="pixel-info-content active" id="info-tab-games">
+                <div class="pixel-info-item">
+                    <span class="p-item-tag tag-red">[SABOTAGE]</span>
+                    <div class="p-item-text">
+                        <strong>Traitors &amp; Crew</strong>
+                        <p>Identify traitors or secretly sabotage missions!</p>
+                    </div>
+                </div>
+                <div class="pixel-info-item">
+                    <span class="p-item-tag tag-gold">[WORD BOMB]</span>
+                    <div class="p-item-text">
+                        <strong>Word Bomb</strong>
+                        <p>Timer is ticking! Spell matching words and pass the bomb.</p>
+                    </div>
+                </div>
+                <div class="pixel-info-item">
+                    <span class="p-item-tag tag-purple">[CANVAS]</span>
+                    <div class="p-item-text">
+                        <strong>Liar's Canvas</strong>
+                        <p>Expose the fake painter hiding among genuine artists!</p>
+                    </div>
+                </div>
+                <div class="pixel-info-item">
+                    <span class="p-item-tag tag-cyan">[AUCTION]</span>
+                    <div class="p-item-text">
+                        <strong>Auction Chaos</strong>
+                        <p>Bid on blind mystery crates and bankrupt your opponents!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: System Telemetry -->
+            <div class="pixel-info-content" id="info-tab-status">
+                <div class="pixel-stat-row">
+                    <span>SERVER:</span>
+                    <span class="p-green">ONLINE [99.9%]</span>
+                </div>
+                <div class="pixel-stat-row">
+                    <span>PING:</span>
+                    <span class="p-cyan" id="hud-ping-val">18 ms</span>
+                </div>
+                <div class="pixel-stat-row">
+                    <span>VERSION:</span>
+                    <span class="p-gold">v2.4 (8-BIT CRT)</span>
+                </div>
+                <div class="pixel-stat-row">
+                    <span>SHADER:</span>
+                    <span class="p-purple" id="hud-shader-val">NEON SYNTH</span>
+                </div>
+                <div class="pixel-stat-row">
+                    <span>ONLINE HEROES:</span>
+                    <span class="p-green" id="hud-online-val">1,248</span>
+                </div>
+            </div>
+
+            <!-- Tab 3: Hotkeys Helper -->
+            <div class="pixel-info-content" id="info-tab-keys">
+                <div class="pixel-key-row">
+                    <span class="p-key-badge">TAB</span>
+                    <span>Flip card (Login / Register)</span>
+                </div>
+                <div class="pixel-key-row">
+                    <span class="p-key-badge">M</span>
+                    <span>Switch 8-Bit Chiptune track</span>
+                </div>
+                <div class="pixel-key-row">
+                    <span class="p-key-badge">T</span>
+                    <span>Cycle CRT shader theme</span>
+                </div>
+                <div class="pixel-key-row">
+                    <span class="p-key-badge">G</span>
+                    <span>Quick Guest Play modal</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
     <!-- Guest Modal (Pixelated) -->
     <div id="guest-modal" class="modal-overlay" style="display: none;">
         <div class="pixel-box pixel-modal-box text-center">

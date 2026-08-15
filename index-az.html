@@ -249,6 +249,102 @@
         </div>
     </main>
 
+    <!-- ================= 8-BIT RETRO INFO HUD (BOTTOM RIGHT) ================= -->
+    <aside id="pixel-info-hud" class="pixel-info-hud" aria-label="Məlumat Paneli">
+        <div class="pixel-info-header" onclick="toggleInfoHud()">
+            <div class="pixel-info-title-row">
+                <span class="pixel-info-led"></span>
+                <span class="pixel-info-title">OTAQ.GG // INFO</span>
+            </div>
+            <button type="button" class="pixel-info-toggle-btn" id="info-hud-toggle-btn" title="Göstər / Gizlə">_</button>
+        </div>
+
+        <div class="pixel-info-body" id="info-hud-body">
+            <!-- Tabs Bar -->
+            <div class="pixel-info-tabs">
+                <button type="button" class="pixel-info-tab active" onclick="switchInfoTab('games', this)">OYUNLAR</button>
+                <button type="button" class="pixel-info-tab" onclick="switchInfoTab('status', this)">STATUS</button>
+                <button type="button" class="pixel-info-tab" onclick="switchInfoTab('keys', this)">QISAYOL</button>
+            </div>
+
+            <!-- Tab 1: Games Guide -->
+            <div class="pixel-info-content active" id="info-tab-games">
+                <div class="pixel-info-item">
+                    <span class="p-item-tag tag-red">[SABOTAGE]</span>
+                    <div class="p-item-text">
+                        <strong>Xain Və Mühafizəçi</strong>
+                        <p>Xainləri tap və ya tapşırıqları gizlicə partlat!</p>
+                    </div>
+                </div>
+                <div class="pixel-info-item">
+                    <span class="p-item-tag tag-gold">[WORD BOMB]</span>
+                    <div class="p-item-text">
+                        <strong>Partlayan Söz</strong>
+                        <p>Saat tıqqıldayır! Hərflərə uyğun söz tap və bombanı ötür.</p>
+                    </div>
+                </div>
+                <div class="pixel-info-item">
+                    <span class="p-item-tag tag-purple">[CANVAS]</span>
+                    <div class="p-item-text">
+                        <strong>Liar's Canvas</strong>
+                        <p>Rəssamlar arasında gizlənən fırıldaqçını ifşa et!</p>
+                    </div>
+                </div>
+                <div class="pixel-info-item">
+                    <span class="p-item-tag tag-cyan">[AUCTION]</span>
+                    <div class="p-item-text">
+                        <strong>Auction Chaos</strong>
+                        <p>Gizli sandıqlara təklif ver, rəqibləri müflis et!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: System Telemetry -->
+            <div class="pixel-info-content" id="info-tab-status">
+                <div class="pixel-stat-row">
+                    <span>SERVER:</span>
+                    <span class="p-green">ONLINE [99.9%]</span>
+                </div>
+                <div class="pixel-stat-row">
+                    <span>PİNG:</span>
+                    <span class="p-cyan" id="hud-ping-val">18 ms</span>
+                </div>
+                <div class="pixel-stat-row">
+                    <span>VERSİYA:</span>
+                    <span class="p-gold">v2.4 (8-BIT CRT)</span>
+                </div>
+                <div class="pixel-stat-row">
+                    <span>ŞEYDER:</span>
+                    <span class="p-purple" id="hud-shader-val">NEON SİNZ</span>
+                </div>
+                <div class="pixel-stat-row">
+                    <span>ONLİNE OYUNCU:</span>
+                    <span class="p-green" id="hud-online-val">1,248</span>
+                </div>
+            </div>
+
+            <!-- Tab 3: Hotkeys Helper -->
+            <div class="pixel-info-content" id="info-tab-keys">
+                <div class="pixel-key-row">
+                    <span class="p-key-badge">TAB</span>
+                    <span>Qeydiyyat / Giriş keçidi</span>
+                </div>
+                <div class="pixel-key-row">
+                    <span class="p-key-badge">M</span>
+                    <span>BGM 8-Bit Lo-Fi mahnı dəyiş</span>
+                </div>
+                <div class="pixel-key-row">
+                    <span class="p-key-badge">T</span>
+                    <span>CRT / Şeyder rejimi dəyiş</span>
+                </div>
+                <div class="pixel-key-row">
+                    <span class="p-key-badge">G</span>
+                    <span>Qonaq kimi sürətli başla</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
     <!-- Guest Modal (Pixelated) -->
     <div id="guest-modal" class="modal-overlay" style="display: none;">
         <div class="pixel-box pixel-modal-box text-center">
