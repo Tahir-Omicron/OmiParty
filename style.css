@@ -2054,17 +2054,25 @@ input:checked + .slider:before {
 .pixel-eye-btn {
     position: absolute;
     right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
     background: transparent;
     border: none;
-    color: #64748b;
+    color: #94a3b8;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 3px;
+    transition: color 0.15s, transform 0.1s;
+    z-index: 5;
 }
 .pixel-eye-btn:hover {
     color: #fff;
+    transform: translateY(-50%) scale(1.15);
+}
+.pixel-eye-btn:active {
+    transform: translateY(-50%) scale(0.95);
 }
 
 /* 8-Bit Pixel Buttons */
