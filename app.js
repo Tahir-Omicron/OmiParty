@@ -194,24 +194,20 @@ document.addEventListener('DOMContentLoaded', init);
 // ============================================================================
 // 6. SCREEN: AUTH (LOGIN / REGISTER / GUEST)
 // ============================================================================
-window.switchAuthTab = function(mode) {
-  playSound('click');
-  const loginForm = $('#login-form');
-  const registerForm = $('#register-form');
-  const tabLogin = $('#tab-login');
-  const tabRegister = $('#tab-register');
-
+window.flipToAuth = function(mode) {
+  playSound('deal');
+  const card = document.getElementById('auth-flip-card');
+  if (!card) return;
+  
   if (mode === 'register') {
-    if (loginForm) loginForm.style.display = 'none';
-    if (registerForm) registerForm.style.display = 'flex';
-    if (tabLogin) tabLogin.classList.remove('active');
-    if (tabRegister) tabRegister.classList.add('active');
+    card.classList.add('is-flipped');
   } else {
-    if (loginForm) loginForm.style.display = 'flex';
-    if (registerForm) registerForm.style.display = 'none';
-    if (tabLogin) tabLogin.classList.add('active');
-    if (tabRegister) tabRegister.classList.remove('active');
+    card.classList.remove('is-flipped');
   }
+};
+
+window.switchAuthTab = function(mode) {
+  window.flipToAuth(mode);
 };
 
 window.togglePasswordVisibility = function(inputId) {

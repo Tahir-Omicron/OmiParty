@@ -383,6 +383,14 @@ function playSound(type) {
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
       osc.start(now);
       osc.stop(now + 0.45);
+    } else if (type === 'click') {
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(600, now);
+      osc.frequency.exponentialRampToValueAtTime(1200, now + 0.04);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+      osc.start(now);
+      osc.stop(now + 0.04);
     } else if (type === 'tick') {
       osc.type = 'square';
       osc.frequency.setValueAtTime(880, now);
@@ -391,7 +399,6 @@ function playSound(type) {
       osc.start(now);
       osc.stop(now + 0.04);
     } else if (type === 'bomb') {
-      // Cinematic deep boom
       osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(160, now);
       osc.frequency.exponentialRampToValueAtTime(30, now + 0.6);
@@ -400,7 +407,7 @@ function playSound(type) {
       osc.start(now);
       osc.stop(now + 0.6);
     } else if (type === 'correct') {
-      osc.type = 'sine';
+      osc.type = 'square';
       osc.frequency.setValueAtTime(587.33, now); // D5
       osc.frequency.setValueAtTime(880, now + 0.08); // A5
       gain.gain.setValueAtTime(0.12, now);
@@ -420,25 +427,26 @@ function playSound(type) {
       chords.forEach((freq, idx) => {
         const o = ctx.createOscillator();
         const g = ctx.createGain();
-        o.type = 'sine';
+        o.type = 'square';
         o.frequency.setValueAtTime(freq, now + idx * 0.1);
-        g.gain.setValueAtTime(0.1, now + idx * 0.1);
-        g.gain.exponentialRampToValueAtTime(0.001, now + 0.6 + idx * 0.1);
+        g.gain.setValueAtTime(0.08, now + idx * 0.1);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.5 + idx * 0.1);
         o.connect(g);
         g.connect(ctx.destination);
         o.start(now + idx * 0.1);
-        o.stop(now + 0.6 + idx * 0.1);
+        o.stop(now + 0.5 + idx * 0.1);
       });
     } else if (type === 'deal') {
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(400, now);
-      osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
-      gain.gain.setValueAtTime(0.06, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(350, now);
+      osc.frequency.setValueAtTime(550, now + 0.04);
+      osc.frequency.setValueAtTime(880, now + 0.08);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
       osc.start(now);
-      osc.stop(now + 0.08);
+      osc.stop(now + 0.14);
     } else if (type === 'coin') {
-      osc.type = 'sine';
+      osc.type = 'square';
       osc.frequency.setValueAtTime(987.77, now); // B5
       osc.frequency.setValueAtTime(1318.51, now + 0.08); // E6
       gain.gain.setValueAtTime(0.12, now);
