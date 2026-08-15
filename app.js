@@ -144,38 +144,15 @@ async function init() {
     });
   }
   
-  // Always fetch session first so state.playerId is populated
+  // Always fetch Supabase session
   const { data: { session } } = await db.auth.getSession();
   if (session && session.user) {
     await finishAuth(session.user);
   } else {
-    // Restore guest session if present
-    const savedPlayerId = localStorage.getItem('otaq_player_id');
-    const savedNickname = localStorage.getItem('otaq_nickname');
-    const savedAvatar = localStorage.getItem('otaq_avatar_url');
-    
-    if (savedPlayerId && savedNickname) {
-      state.playerId = savedPlayerId;
-      state.nickname = savedNickname;
-      state.profile = { 
-        level: 1, 
-        xp: 0, 
-        coins: 100,
-        avatar_url: savedAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${savedPlayerId}` 
-      };
-      
-      if ($('#menu-nickname')) {
-        $('#menu-nickname').textContent = state.nickname;
-        $('#profile-level').textContent = '1';
-        $('#profile-avatar').src = state.profile.avatar_url;
-        $('#profile-xp-bar').style.width = '0%';
-      }
-      
-      const path = window.location.pathname;
-      if (path === '/' || path.endsWith('index.html') || path.endsWith('index-az.html')) {
-        showScreen('menu');
-      }
-    }
+    // Unauthenticated: Always show the 3D Auth (Login / Register) Screen!
+    state.playerId = null;
+    state.nickname = null;
+    showScreen('auth');
   }
   
   const urlParams = new URLSearchParams(window.location.search);
@@ -533,10 +510,18 @@ async function finishAuth(user) {
 }
 
 async function handleLogout() {
-  await db.auth.signOut();
+  try {
+    await db.auth.signOut();
+  } catch (e) {
+    console.warn("Sign out err:", e);
+  }
   state.playerId = null;
   state.nickname = null;
   state.profile = null;
+  localStorage.removeItem('otaq_player_id');
+  localStorage.removeItem('otaq_nickname');
+  localStorage.removeItem('otaq_account_profile');
+  showToast(isAz() ? 'Hesabdan çıxış edildi.' : 'Signed out successfully.', 'info');
   showScreen('auth');
 }
 
