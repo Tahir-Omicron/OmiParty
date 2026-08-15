@@ -32,7 +32,7 @@
 
 /* ================= RETRO DISPLAY / SHADER THEMES ================= */
 
-/* 1. CYBER CRT (Default Dark Arcade) */
+/* 1. CYBER CRT (Default Dark Space Arcade) */
 [data-theme="cyber"] {
     --bg-primary: #060911;
     --bg-secondary: #0d121f;
@@ -50,8 +50,19 @@
     --accent-gold: #f59e0b;
     --accent-purple: #a855f7;
 }
+[data-theme="cyber"] .pixel-grid-bg {
+    background-image: 
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 600' width='800' height='600'%3E%3Cg fill='%2300ffcc' opacity='0.45'%3E%3Crect x='80' y='100' width='3' height='3'/%3E%3Crect x='180' y='60' width='2' height='2'/%3E%3Crect x='250' y='140' width='4' height='4'/%3E%3Crect x='340' y='90' width='2' height='2'/%3E%3Crect x='430' y='160' width='3' height='3'/%3E%3Crect x='520' y='70' width='4' height='4'/%3E%3Crect x='610' y='130' width='2' height='2'/%3E%3Crect x='700' y='80' width='3' height='3'/%3E%3Crect x='760' y='150' width='2' height='2'/%3E%3Crect x='120' y='220' width='3' height='3'/%3E%3Crect x='680' y='240' width='4' height='4'/%3E%3C/g%3E%3Cg stroke='%2300ffcc' stroke-width='1' fill='none' opacity='0.2'%3E%3Cpolygon points='180,60 250,140 340,90'/%3E%3Cpolygon points='520,70 610,130 700,80'/%3E%3C/g%3E%3C/svg%3E"),
+        radial-gradient(ellipse at 50% 20%, rgba(0, 255, 204, 0.15) 0%, transparent 65%),
+        radial-gradient(ellipse at 50% 80%, rgba(168, 85, 247, 0.15) 0%, transparent 60%),
+        linear-gradient(rgba(0, 255, 204, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 204, 0.08) 1px, transparent 1px) !important;
+    background-size: 800px 600px, 100% 100%, 100% 100%, 28px 28px, 28px 28px !important;
+    background-position: center top, 0 0, 0 0, 0 0, 0 0 !important;
+    background-color: #060911 !important;
+}
 
-/* 2. GAME BOY & RETRO MATRIX (Dark Phosphor Emerald / Mint) */
+/* 2. GAME BOY & RETRO MATRIX (Dark Phosphor Digital Rain & Emerald Grid) */
 [data-theme="gameboy"] {
     --bg-primary: #051209;
     --bg-secondary: #0a1f11;
@@ -85,15 +96,23 @@
 }
 [data-theme="gameboy"] .pixel-grid-bg {
     background-image: 
-        radial-gradient(ellipse at 50% 20%, rgba(0, 255, 136, 0.14) 0%, transparent 65%),
-        radial-gradient(ellipse at 50% 80%, rgba(16, 185, 129, 0.14) 0%, transparent 60%),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600' width='600' height='600'%3E%3Cg fill='%2300ff88' font-family='monospace' font-size='13' font-weight='bold' opacity='0.28'%3E%3Ctext x='40' y='60'%3E0%3C/text%3E%3Ctext x='40' y='85'%3E1%3C/text%3E%3Ctext x='40' y='110'%3EX%3C/text%3E%3Ctext x='40' y='135'%3E9%3C/text%3E%3Ctext x='40' y='160' fill='%23e6fffa' opacity='0.9'%3EA%3C/text%3E%3Ctext x='120' y='140'%3E7%3C/text%3E%3Ctext x='120' y='165'%3EF%3C/text%3E%3Ctext x='120' y='190'%3E3%3C/text%3E%3Ctext x='120' y='215'%3E0%3C/text%3E%3Ctext x='120' y='240' fill='%23e6fffa' opacity='0.9'%3EC%3C/text%3E%3Ctext x='200' y='40'%3EE%3C/text%3E%3Ctext x='200' y='65'%3E8%3C/text%3E%3Ctext x='200' y='90'%3E2%3C/text%3E%3Ctext x='200' y='115'%3EB%3C/text%3E%3Ctext x='200' y='140' fill='%23e6fffa' opacity='0.9'%3E9%3C/text%3E%3Ctext x='280' y='200'%3E1%3C/text%3E%3Ctext x='280' y='225'%3E0%3C/text%3E%3Ctext x='280' y='250'%3EA%3C/text%3E%3Ctext x='280' y='275'%3E5%3C/text%3E%3Ctext x='280' y='300' fill='%23e6fffa' opacity='0.9'%3EF%3C/text%3E%3Ctext x='360' y='90'%3ED%3C/text%3E%3Ctext x='360' y='115'%3E3%3C/text%3E%3Ctext x='360' y='140'%3E6%3C/text%3E%3Ctext x='360' y='165'%3E1%3C/text%3E%3Ctext x='360' y='190' fill='%23e6fffa' opacity='0.9'%3E8%3C/text%3E%3Ctext x='440' y='160'%3E8%3C/text%3E%3Ctext x='440' y='185'%3EC%3C/text%3E%3Ctext x='440' y='210'%3E0%3C/text%3E%3Ctext x='440' y='235'%3E9%3C/text%3E%3Ctext x='440' y='260' fill='%23e6fffa' opacity='0.9'%3EB%3C/text%3E%3Ctext x='520' y='50'%3E5%3C/text%3E%3Ctext x='520' y='75'%3E1%3C/text%3E%3Ctext x='520' y='100'%3EE%3C/text%3E%3Ctext x='520' y='125'%3EF%3C/text%3E%3Ctext x='520' y='150' fill='%23e6fffa' opacity='0.9'%3E2%3C/text%3E%3C/g%3E%3C/svg%3E"),
+        radial-gradient(ellipse at 50% 20%, rgba(0, 255, 136, 0.16) 0%, transparent 65%),
+        radial-gradient(ellipse at 50% 80%, rgba(16, 185, 129, 0.16) 0%, transparent 60%),
         linear-gradient(rgba(0, 255, 136, 0.08) 1px, transparent 1px),
         linear-gradient(90deg, rgba(0, 255, 136, 0.08) 1px, transparent 1px) !important;
+    background-size: 600px 600px, 100% 100%, 100% 100%, 28px 28px, 28px 28px !important;
+    background-position: center center, 0 0, 0 0, 0 0, 0 0 !important;
     background-color: #051209 !important;
-    filter: none !important;
+    animation: matrixScroll 14s linear infinite !important;
 }
 
-/* 3. SYNTHWAVE (Midnight Outrun Neon Magenta & Cyan) */
+@keyframes matrixScroll {
+    0% { background-position: center 0, 0 0, 0 0, 0 0, 0 0; }
+    100% { background-position: center 600px, 0 0, 0 0, 0 56px, 56px 0; }
+}
+
+/* 3. SYNTHWAVE (Cyberpunk Skyline, Sunset & Outrun Sun) */
 [data-theme="synthwave"] {
     --bg-primary: #0d0517;
     --bg-secondary: #1a0a2e;
@@ -126,14 +145,24 @@
 }
 [data-theme="synthwave"] .pixel-grid-bg {
     background-image: 
-        radial-gradient(ellipse at 50% 20%, rgba(255, 0, 128, 0.2) 0%, transparent 60%),
-        radial-gradient(ellipse at 80% 80%, rgba(0, 240, 255, 0.18) 0%, transparent 60%),
-        linear-gradient(rgba(255, 0, 128, 0.1) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 240, 255, 0.1) 1px, transparent 1px) !important;
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 450' width='1200' height='450'%3E%3Cdefs%3E%3ClinearGradient id='sunGrad' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23ff007f'/%3E%3Cstop offset='50%25' stop-color='%23ff007f'/%3E%3Cstop offset='100%25' stop-color='%23ffbe0b'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='600' cy='180' r='110' fill='url(%23sunGrad)' opacity='0.9'/%3E%3Crect x='480' y='160' width='240' height='4' fill='%230d0517'/%3E%3Crect x='480' y='172' width='240' height='6' fill='%230d0517'/%3E%3Crect x='480' y='186' width='240' height='8' fill='%230d0517'/%3E%3Crect x='480' y='202' width='240' height='12' fill='%230d0517'/%3E%3Crect x='480' y='222' width='240' height='16' fill='%230d0517'/%3E%3Crect x='480' y='246' width='240' height='22' fill='%230d0517'/%3E%3Cpolygon points='0,450 0,220 50,220 50,260 90,260 90,190 140,190 140,240 210,240 210,170 260,170 260,250 320,250 320,200 390,200 390,270 450,270 450,160 510,160 510,240 580,240 580,180 630,180 630,250 700,250 700,160 760,160 760,260 830,260 830,190 890,190 890,240 960,240 960,170 1020,170 1020,250 1090,250 1090,210 1140,210 1140,260 1200,260 1200,450' fill='%231b0a33'/%3E%3Cpolygon points='0,450 0,270 30,270 30,240 70,240 70,280 120,280 120,210 170,210 170,290 230,290 230,230 280,230 280,300 340,300 340,220 400,220 400,280 470,280 470,210 520,210 520,290 590,290 590,230 650,230 650,300 720,300 720,220 780,220 780,280 850,280 850,210 900,210 900,290 970,290 970,230 1030,230 1030,300 1100,300 1100,240 1160,240 1160,290 1200,290 1200,450' fill='%230e041c'/%3E%3Crect x='135' y='230' width='6' height='8' fill='%2300f0ff' opacity='0.8'/%3E%3Crect x='150' y='230' width='6' height='8' fill='%23ff007f' opacity='0.8'/%3E%3Crect x='135' y='250' width='6' height='8' fill='%2300f0ff' opacity='0.6'/%3E%3Crect x='150' y='250' width='6' height='8' fill='%23ffbe0b' opacity='0.7'/%3E%3Crect x='245' y='250' width='6' height='8' fill='%23ff007f' opacity='0.9'/%3E%3Crect x='260' y='250' width='6' height='8' fill='%2300f0ff' opacity='0.8'/%3E%3Crect x='355' y='240' width='6' height='8' fill='%2300f0ff' opacity='0.9'/%3E%3Crect x='375' y='240' width='6' height='8' fill='%23ff007f' opacity='0.7'/%3E%3Crect x='355' y='260' width='6' height='8' fill='%23ffbe0b' opacity='0.8'/%3E%3Crect x='485' y='230' width='6' height='8' fill='%2300f0ff' opacity='0.9'/%3E%3Crect x='500' y='230' width='6' height='8' fill='%23ff007f' opacity='0.8'/%3E%3Crect x='605' y='250' width='6' height='8' fill='%2300f0ff' opacity='0.8'/%3E%3Crect x='625' y='250' width='6' height='8' fill='%23ff007f' opacity='0.9'/%3E%3Crect x='735' y='240' width='6' height='8' fill='%23ffbe0b' opacity='0.8'/%3E%3Crect x='755' y='240' width='6' height='8' fill='%2300f0ff' opacity='0.9'/%3E%3Crect x='865' y='230' width='6' height='8' fill='%23ff007f' opacity='0.8'/%3E%3Crect x='880' y='230' width='6' height='8' fill='%2300f0ff' opacity='0.8'/%3E%3Crect x='985' y='250' width='6' height='8' fill='%2300f0ff' opacity='0.9'/%3E%3Crect x='1005' y='250' width='6' height='8' fill='%23ff007f' opacity='0.7'/%3E%3C/svg%3E"),
+        radial-gradient(ellipse at 50% 15%, rgba(255, 0, 128, 0.25) 0%, transparent 65%),
+        radial-gradient(ellipse at 50% 85%, rgba(0, 240, 255, 0.2) 0%, transparent 60%),
+        linear-gradient(rgba(255, 0, 128, 0.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 240, 255, 0.12) 1px, transparent 1px) !important;
+    background-size: 100% auto, 100% 100%, 100% 100%, 32px 32px, 32px 32px !important;
+    background-position: center bottom, 0 0, 0 0, 0 0, 0 0 !important;
+    background-repeat: no-repeat, no-repeat, no-repeat, repeat, repeat !important;
     background-color: #0d0517 !important;
+    animation: synthwaveGridScroll 18s linear infinite !important;
 }
 
-/* 4. AMBER CRT (1982 Monochrome Warm Gold Phosphor) */
+@keyframes synthwaveGridScroll {
+    0% { background-position: center bottom, 0 0, 0 0, 0 0, 0 0; }
+    100% { background-position: center bottom, 0 0, 0 0, 0 64px, 64px 0; }
+}
+
+/* 4. AMBER CRT (1982 Monochrome Radar & Telemetry) */
 [data-theme="amber"] {
     --bg-primary: #100800;
     --bg-secondary: #201000;
@@ -166,10 +195,20 @@
 }
 [data-theme="amber"] .pixel-grid-bg {
     background-image: 
-        radial-gradient(ellipse at 50% 30%, rgba(255, 176, 0, 0.18) 0%, transparent 60%),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 600' width='800' height='600'%3E%3Cg stroke='%23ffb000' stroke-width='1.5' fill='none' opacity='0.22'%3E%3Ccircle cx='400' cy='300' r='120'/%3E%3Ccircle cx='400' cy='300' r='220' stroke-dasharray='6,6'/%3E%3Ccircle cx='400' cy='300' r='290'/%3E%3Cline x1='110' y1='300' x2='690' y2='300'/%3E%3Cline x1='400' y1='10' x2='400' y2='590'/%3E%3Cline x1='190' y1='90' x2='610' y2='510' stroke-dasharray='4,4'/%3E%3C/g%3E%3Cg fill='%23ffb000' font-family='monospace' font-size='10' opacity='0.38'%3E%3Ctext x='415' y='110'%3ERADAR // 1982%3C/text%3E%3Ctext x='415' y='210'%3ERANGE: 290KM%3C/text%3E%3Ctext x='415' y='315'%3EFREQ: 1420 MHZ%3C/text%3E%3Ctext x='130' y='290'%3ETARGET ACQUIRED%3C/text%3E%3C/g%3E%3C/svg%3E"),
+        radial-gradient(ellipse at 50% 30%, rgba(255, 176, 0, 0.22) 0%, transparent 60%),
+        radial-gradient(ellipse at 50% 80%, rgba(255, 85, 0, 0.15) 0%, transparent 60%),
         linear-gradient(rgba(255, 176, 0, 0.1) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255, 176, 0, 0.1) 1px, transparent 1px) !important;
+    background-size: 800px 600px, 100% 100%, 100% 100%, 28px 28px, 28px 28px !important;
+    background-position: center center, 0 0, 0 0, 0 0, 0 0 !important;
     background-color: #100800 !important;
+    animation: amberRadarScroll 25s linear infinite !important;
+}
+
+@keyframes amberRadarScroll {
+    0% { background-position: center center, 0 0, 0 0, 0 0, 0 0; }
+    100% { background-position: center center, 0 0, 0 0, 0 56px, 56px 0; }
 }
 
 /* Global Reset & Base Styles */
