@@ -2221,3 +2221,170 @@ input:checked + .slider:before {
     0% { filter: hue-rotate(0deg); }
     100% { filter: hue-rotate(360deg); }
 }
+
+/* ============================================================================
+   ULTRA-RESPONSIVE ADAPTATION (MOBILE, TABLET, FOLDABLE, DESKTOP, LANDSCAPE)
+   ============================================================================ */
+
+/* Fluid Defaults */
+.pixel-perspective-wrapper {
+    perspective: 1200px;
+    width: 100%;
+    max-width: 440px;
+    margin: clamp(4rem, 8vh, 5.5rem) auto clamp(1rem, 3vh, 2rem);
+    position: relative;
+    z-index: 10;
+    padding: 0 0.5rem;
+}
+
+.pixel-box {
+    padding: clamp(1.25rem, 4vw, 2rem) clamp(1rem, 4vw, 1.75rem);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Mobile Screens (<= 480px) */
+@media (max-width: 480px) {
+    .pixel-body {
+        padding: 0.5rem;
+        justify-content: flex-start;
+        padding-top: max(4.2rem, calc(env(safe-area-inset-top) + 3.5rem));
+        padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+        overflow-y: auto;
+    }
+
+    .pixel-nav {
+        padding: 0.5rem 0.75rem;
+        padding-top: max(0.5rem, env(safe-area-inset-top));
+    }
+    
+    .pixel-logo-icon {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .pixel-nav-title {
+        font-size: 0.8rem;
+    }
+    
+    .pixel-mini-btn {
+        height: 28px;
+        min-width: 28px;
+        padding: 0 6px;
+        font-size: 0.75rem;
+    }
+    
+    .p-bgm-btn span {
+        display: none;
+    }
+    .p-bgm-btn svg {
+        margin-right: 0 !important;
+    }
+
+    .pixel-perspective-wrapper {
+        margin: 1.5rem auto 1rem;
+        max-width: 100%;
+    }
+
+    .pixel-companion-wrap {
+        top: -46px;
+        right: 4px;
+    }
+
+    .pixel-speech-bubble {
+        font-size: 0.52rem;
+        padding: 4px 8px;
+    }
+
+    .pixel-mascot-pet svg {
+        width: 32px;
+        height: 32px;
+    }
+
+    .pixel-title {
+        font-size: 1.05rem;
+    }
+
+    .pixel-subtitle {
+        font-size: 0.85rem;
+    }
+
+    .pixel-tabs-bar {
+        margin-bottom: 1.25rem;
+    }
+
+    .pixel-tab-btn {
+        font-size: 0.82rem;
+        padding: 7px 6px;
+    }
+
+    .p-tab-indicator {
+        font-size: 0.55rem;
+    }
+
+    .pixel-input {
+        height: 44px;
+        font-size: 0.95rem;
+        padding: 0 34px 0 10px;
+    }
+
+    .pixel-btn {
+        font-size: 0.9rem;
+        padding: 10px 14px;
+    }
+
+    .pixel-avatar-picker-wrap {
+        padding: 8px;
+        gap: 8px;
+    }
+
+    .pixel-avatar-preview {
+        width: 40px;
+        height: 40px;
+    }
+
+    .pixel-class-tag {
+        font-size: 0.5rem;
+    }
+}
+
+/* Micro Mobile / Foldables (<= 360px) */
+@media (max-width: 360px) {
+    .pixel-nav-title {
+        display: none;
+    }
+    
+    .pixel-box {
+        padding: 1.15rem 0.85rem;
+    }
+
+    .pixel-tab-btn {
+        font-size: 0.75rem;
+        padding: 6px 4px;
+        gap: 3px;
+    }
+
+    .pixel-btn {
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+    }
+}
+
+/* Landscape Mode on Small Devices */
+@media (max-height: 580px) and (orientation: landscape) {
+    .pixel-body {
+        justify-content: flex-start;
+        padding-top: 4rem;
+        padding-bottom: 2rem;
+        overflow-y: auto;
+    }
+
+    .pixel-perspective-wrapper {
+        margin: 1rem auto;
+    }
+
+    .pixel-companion-wrap {
+        top: -40px;
+    }
+}
+
