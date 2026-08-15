@@ -244,7 +244,18 @@ let state = {
 function $(selector) { return document.querySelector(selector); }
 function $$(selector) { return document.querySelectorAll(selector); }
 
+let lastToastMsg = '';
+let lastToastTime = 0;
+
 function showToast(msg, type = 'info') {
+  if (!msg) return;
+  const now = Date.now();
+  if (msg === lastToastMsg && (now - lastToastTime) < 2000) {
+    return; // Prevent duplicate toast display
+  }
+  lastToastMsg = msg;
+  lastToastTime = now;
+
   let container = document.getElementById('toast-container');
   if (!container) {
     container = document.createElement('div');

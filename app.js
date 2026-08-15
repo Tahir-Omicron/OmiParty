@@ -300,26 +300,36 @@ window.generateRandomRegNickname = function() {
   }
 };
 
+let isAuthSubmitting = false;
+
 async function handleLogin() {
+  if (isAuthSubmitting) return;
   const email = $('#login-email').value.trim();
   const password = $('#login-password').value;
   if (!email || !password) {
     return showToast(isAz() ? 'E-poçt və şifrəni daxil edin!' : 'Please enter email and password.', 'error');
   }
   
+  isAuthSubmitting = true;
   localStorage.setItem('otaq_last_email', email);
   showToast(isAz() ? 'Daxil olunur...' : 'Logging in...', 'info');
   
-  const { data, error } = await db.auth.signInWithPassword({ email, password });
-  if (error) {
-    return showToast(error.message, 'error');
+  try {
+    const { data, error } = await db.auth.signInWithPassword({ email, password });
+    if (error) {
+      isAuthSubmitting = false;
+      return showToast(error.message, 'error');
+    }
+    
+    showToast(isAz() ? 'Giriş uğurludur! Xoş gəldin!' : 'Login successful! Welcome!', 'success');
+    await finishAuth(data.user);
+  } finally {
+    setTimeout(() => { isAuthSubmitting = false; }, 1200);
   }
-  
-  showToast(isAz() ? 'Giriş uğurludur! Xoş gəldin!' : 'Login successful! Welcome!', 'success');
-  await finishAuth(data.user);
 }
 
 async function handleRegister() {
+  if (isAuthSubmitting) return;
   const email = $('#reg-email').value.trim();
   const password = $('#reg-password').value;
   const nickname = $('#reg-nickname').value.trim();
@@ -327,6 +337,7 @@ async function handleRegister() {
     return showToast(isAz() ? 'Bütün xanaları doldurun!' : 'Please fill all fields.', 'error');
   }
   
+  isAuthSubmitting = true;
   const selectedPreset = PIXEL_AVATAR_PRESETS[currentPixelAvatarIdx] || PIXEL_AVATAR_PRESETS[0];
   const avatar_url = `https://api.dicebear.com/7.x/bottts/svg?seed=${selectedPreset.seed}`;
   
@@ -339,37 +350,42 @@ async function handleRegister() {
 
   showToast(isAz() ? 'Hesab yaradılır...' : 'Creating account...', 'info');
 
-  const { data, error } = await db.auth.signUp({
-    email, password, options: { 
-      data: { nickname, avatar_url },
-      emailRedirectTo: 'https://omi-party.vercel.app/'
-    }
-  });
-  
-  if (error) {
-    return showToast(error.message, 'error');
-  }
-  
-  if (data && data.user) {
-    // Proactively upsert into profiles table to guarantee database persistence
-    try {
-      await db.from('profiles').upsert({
-        id: data.user.id,
-        nickname: nickname,
-        avatar_url: avatar_url,
-        level: 1,
-        xp: 0,
-        coins: 100
-      });
-    } catch (err) {
-      console.warn("Profiles upsert:", err);
+  try {
+    const { data, error } = await db.auth.signUp({
+      email, password, options: { 
+        data: { nickname, avatar_url },
+        emailRedirectTo: 'https://omi-party.vercel.app/'
+      }
+    });
+    
+    if (error) {
+      isAuthSubmitting = false;
+      return showToast(error.message, 'error');
     }
     
-    showToast(isAz() ? 'Qeydiyyat uğurla tamamlandı! Xoş gəldin!' : 'Registration successful! Welcome!', 'success');
-    await finishAuth(data.user);
-    if (typeof openProfileModal === 'function') {
-      setTimeout(() => openProfileModal('overview'), 300);
+    if (data && data.user) {
+      // Proactively upsert into profiles table to guarantee database persistence
+      try {
+        await db.from('profiles').upsert({
+          id: data.user.id,
+          nickname: nickname,
+          avatar_url: avatar_url,
+          level: 1,
+          xp: 0,
+          coins: 100
+        });
+      } catch (err) {
+        console.warn("Profiles upsert:", err);
+      }
+      
+      showToast(isAz() ? 'Qeydiyyat uğurla tamamlandı! Xoş gəldin!' : 'Registration successful! Welcome!', 'success');
+      await finishAuth(data.user);
+      if (typeof openProfileModal === 'function') {
+        setTimeout(() => openProfileModal('overview'), 300);
+      }
     }
+  } finally {
+    setTimeout(() => { isAuthSubmitting = false; }, 1200);
   }
 }
 
@@ -2304,8 +2320,6 @@ async function handlePlayAgain() {
 // ============================================================================
 function bindEventListeners() {
   // Auth
-  $('#login-btn')?.addEventListener('click', handleLogin);
-  $('#register-btn')?.addEventListener('click', handleRegister);
   $$('#guest-btn').forEach(btn => btn.addEventListener('click', handleGuestLogin));
   
   // Guest Modal
