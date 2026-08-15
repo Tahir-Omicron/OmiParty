@@ -1,5 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
   <defs>
+    <!-- Deep Space Sky Gradient -->
     <linearGradient id="cyberSky" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#02040a"/>
       <stop offset="35%" stop-color="#070c1a"/>
@@ -9,19 +10,19 @@
 
     <!-- Nebula Cloud Gradients -->
     <radialGradient id="nebulaCyan" cx="25%" cy="30%" r="45%">
-      <stop offset="0%" stop-color="#00ffcc" stop-opacity="0.25"/>
-      <stop offset="60%" stop-color="#0ea5e9" stop-opacity="0.1"/>
+      <stop offset="0%" stop-color="#00ffcc" stop-opacity="0.22"/>
+      <stop offset="60%" stop-color="#0ea5e9" stop-opacity="0.08"/>
       <stop offset="100%" stop-color="#02040a" stop-opacity="0"/>
     </radialGradient>
 
     <radialGradient id="nebulaPurple" cx="80%" cy="25%" r="48%">
-      <stop offset="0%" stop-color="#a855f7" stop-opacity="0.28"/>
-      <stop offset="50%" stop-color="#6366f1" stop-opacity="0.12"/>
+      <stop offset="0%" stop-color="#a855f7" stop-opacity="0.24"/>
+      <stop offset="50%" stop-color="#6366f1" stop-opacity="0.09"/>
       <stop offset="100%" stop-color="#02040a" stop-opacity="0"/>
     </radialGradient>
 
-    <filter id="starGlow" x="-40%" y="-40%" width="180%" height="180%">
-      <feGaussianBlur stdDeviation="5" result="blur"/>
+    <filter id="starGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
       <feMerge>
         <feMergeNode in="blur"/>
         <feMergeNode in="SourceGraphic"/>
@@ -32,25 +33,24 @@
   <!-- SKY BACKGROUND -->
   <rect width="1920" height="1080" fill="url(#cyberSky)"/>
 
-  <!-- NEBULA GAS CLOUDS -->
+  <!-- NEBULA GAS CLOUDS (Stationary & Layered) -->
   <rect width="1920" height="1080" fill="url(#nebulaCyan)"/>
   <rect width="1920" height="1080" fill="url(#nebulaPurple)"/>
 
-  <!-- 8-BIT DIAMOND SPARKLE STARS -->
+  <!-- 8-BIT DIAMOND SPARKLE STARS (Stationary & Crisp) -->
   <g fill="#ffffff" filter="url(#starGlow)">
-    <!-- Major Diamond Stars -->
-    <polygon points="200,90 206,96 200,102 194,96" fill="#00ffcc"/>
-    <polygon points="440,70 447,77 440,84 433,77" fill="#a855f7"/>
-    <polygon points="720,130 728,138 720,146 712,138" fill="#00ffcc"/>
-    <polygon points="960,80 967,87 960,94 953,87" fill="#ffffff"/>
-    <polygon points="1200,110 1208,118 1200,126 1192,118" fill="#00ffcc"/>
-    <polygon points="1480,60 1488,68 1480,76 1472,68" fill="#a855f7"/>
-    <polygon points="1760,110 1767,117 1760,124 1753,117" fill="#00ffcc"/>
+    <polygon points="200,90 205,95 200,100 195,95" fill="#00ffcc"/>
+    <polygon points="440,70 446,76 440,82 434,76" fill="#a855f7"/>
+    <polygon points="720,130 727,137 720,144 713,137" fill="#00ffcc"/>
+    <polygon points="960,80 966,86 960,92 954,86" fill="#ffffff"/>
+    <polygon points="1200,110 1207,117 1200,124 1193,117" fill="#00ffcc"/>
+    <polygon points="1480,60 1487,67 1480,74 1473,67" fill="#a855f7"/>
+    <polygon points="1760,110 1766,116 1760,122 1754,116" fill="#00ffcc"/>
 
-    <polygon points="150,280 156,286 150,292 144,286" fill="#ffffff"/>
-    <polygon points="520,220 527,227 520,234 513,227" fill="#00ffcc"/>
-    <polygon points="1420,240 1427,247 1420,254 1413,247" fill="#a855f7"/>
-    <polygon points="1700,300 1706,306 1700,312 1694,306" fill="#00ffcc"/>
+    <polygon points="150,280 155,285 150,290 145,285" fill="#ffffff"/>
+    <polygon points="520,220 526,226 520,232 514,226" fill="#00ffcc"/>
+    <polygon points="1420,240 1426,246 1420,252 1414,246" fill="#a855f7"/>
+    <polygon points="1700,300 1705,305 1700,310 1695,305" fill="#00ffcc"/>
   </g>
 
   <!-- DENSE 8-BIT STARFIELD -->
@@ -70,9 +70,9 @@
     <rect x="1840" y="90" width="4" height="4" fill="#a855f7"/>
   </g>
 
-  <!-- PIXEL CONSTELLATION LINES -->
+  <!-- PIXEL CONSTELLATION LINES (Stationary & Elegant) -->
   <g stroke="#00ffcc" stroke-width="2" stroke-dasharray="6,6" fill="none" opacity="0.45" filter="url(#starGlow)">
-    <!-- Left Celestial Gamepad Constellation -->
+    <!-- Left Gamepad Constellation -->
     <polyline points="200,90 280,160 360,190 440,70 360,40 200,90"/>
     <circle cx="280" cy="160" r="4" fill="#00ffcc"/>
     <circle cx="360" cy="40" r="4" fill="#00ffcc"/>
@@ -83,28 +83,28 @@
     <circle cx="1700" cy="200" r="4" fill="#a855f7"/>
   </g>
 
-  <!-- 3D CYBER HORIZON WIREFRAME GRID -->
+  <!-- 3D CYBER HORIZON WIREFRAME GRID (Stationary) -->
   <g stroke="#00ffcc" stroke-width="2" opacity="0.6">
-    <line x1="0" y1="720" x2="1920" y2="720" stroke="#a855f7" stroke-width="5" filter="url(#starGlow)"/>
-    <line x1="0" y1="750" x2="1920" y2="750"/>
-    <line x1="0" y1="785" x2="1920" y2="785"/>
-    <line x1="0" y1="825" x2="1920" y2="825"/>
-    <line x1="0" y1="875" x2="1920" y2="875"/>
-    <line x1="0" y1="935" x2="1920" y2="935"/>
-    <line x1="0" y1="1005" x2="1920" y2="1005"/>
+    <line x1="0" y1="740" x2="1920" y2="740" stroke="#a855f7" stroke-width="4" filter="url(#starGlow)"/>
+    <line x1="0" y1="770" x2="1920" y2="770"/>
+    <line x1="0" y1="805" x2="1920" y2="805"/>
+    <line x1="0" y1="845" x2="1920" y2="845"/>
+    <line x1="0" y1="895" x2="1920" y2="895"/>
+    <line x1="0" y1="955" x2="1920" y2="955"/>
+    <line x1="0" y1="1025" x2="1920" y2="1025"/>
     <line x1="0" y1="1080" x2="1920" y2="1080" stroke="#a855f7" stroke-width="5"/>
 
-    <!-- Vanishing Lines to Center Horizon (960, 720) -->
-    <line x1="960" y1="720" x2="960" y2="1080" stroke="#a855f7" stroke-width="3" filter="url(#starGlow)"/>
-    <line x1="960" y1="720" x2="800" y2="1080"/>
-    <line x1="960" y1="720" x2="1120" y2="1080"/>
-    <line x1="960" y1="720" x2="620" y2="1080"/>
-    <line x1="960" y1="720" x2="1300" y2="1080"/>
-    <line x1="960" y1="720" x2="420" y2="1080"/>
-    <line x1="960" y1="720" x2="1500" y2="1080"/>
-    <line x1="960" y1="720" x2="200" y2="1080"/>
-    <line x1="960" y1="720" x2="1720" y2="1080"/>
-    <line x1="960" y1="720" x2="-80" y2="1080"/>
-    <line x1="960" y1="720" x2="2000" y2="1080"/>
+    <!-- Vanishing Lines to Center Horizon (960, 740) -->
+    <line x1="960" y1="740" x2="960" y2="1080" stroke="#a855f7" stroke-width="3" filter="url(#starGlow)"/>
+    <line x1="960" y1="740" x2="820" y2="1080"/>
+    <line x1="960" y1="740" x2="1100" y2="1080"/>
+    <line x1="960" y1="740" x2="660" y2="1080"/>
+    <line x1="960" y1="740" x2="1260" y2="1080"/>
+    <line x1="960" y1="740" x2="480" y2="1080"/>
+    <line x1="960" y1="740" x2="1440" y2="1080"/>
+    <line x1="960" y1="740" x2="280" y2="1080"/>
+    <line x1="960" y1="740" x2="1640" y2="1080"/>
+    <line x1="960" y1="740" x2="60" y2="1080"/>
+    <line x1="960" y1="740" x2="1860" y2="1080"/>
   </g>
 </svg>

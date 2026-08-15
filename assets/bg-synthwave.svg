@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
   <defs>
-    <!-- Sky & Nebula Gradients -->
+    <!-- Smooth Twilight Sky Gradient -->
     <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#05010a"/>
-      <stop offset="35%" stop-color="#150426"/>
-      <stop offset="65%" stop-color="#3b0a4c"/>
-      <stop offset="100%" stop-color="#700d57"/>
+      <stop offset="0%" stop-color="#06020c"/>
+      <stop offset="35%" stop-color="#140526"/>
+      <stop offset="70%" stop-color="#360a47"/>
+      <stop offset="100%" stop-color="#690e52"/>
     </linearGradient>
 
-    <!-- Monumental Outrun Sun Gradient -->
+    <!-- Outrun Sun Gradient -->
     <linearGradient id="sunGrad" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#ff007f"/>
       <stop offset="40%" stop-color="#ff007f"/>
@@ -16,259 +16,184 @@
       <stop offset="100%" stop-color="#ffbe0b"/>
     </linearGradient>
 
-    <!-- Searchlight Gradient -->
-    <linearGradient id="beamGrad" x1="0" y1="1" x2="0" y2="0">
-      <stop offset="0%" stop-color="#00f0ff" stop-opacity="0.35"/>
-      <stop offset="100%" stop-color="#00f0ff" stop-opacity="0"/>
-    </linearGradient>
-    <linearGradient id="beamGradPink" x1="0" y1="1" x2="0" y2="0">
-      <stop offset="0%" stop-color="#ff007f" stop-opacity="0.35"/>
-      <stop offset="100%" stop-color="#ff007f" stop-opacity="0"/>
-    </linearGradient>
-
     <!-- Neon Glow Filter -->
     <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feGaussianBlur stdDeviation="5" result="blur"/>
       <feMerge>
         <feMergeNode in="blur"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
     
-    <filter id="sunGlow" x="-40%" y="-40%" width="180%" height="180%">
-      <feGaussianBlur stdDeviation="35" result="blur"/>
+    <filter id="sunGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="25" result="blur"/>
       <feMerge>
         <feMergeNode in="blur"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
-
-    <style>
-      @keyframes beamSwingLeft {
-        0%, 100% { transform: rotate(-15deg); }
-        50% { transform: rotate(20deg); }
-      }
-      @keyframes beamSwingRight {
-        0%, 100% { transform: rotate(18deg); }
-        50% { transform: rotate(-22deg); }
-      }
-      .beam-left {
-        transform-origin: 320px 580px;
-        animation: beamSwingLeft 12s ease-in-out infinite;
-      }
-      .beam-right {
-        transform-origin: 1600px 580px;
-        animation: beamSwingRight 14s ease-in-out infinite;
-      }
-    </style>
   </defs>
 
   <!-- SKY BACKGROUND -->
   <rect width="1920" height="1080" fill="url(#skyGrad)"/>
 
-  <!-- TWINKLING STARS IN SKY -->
-  <g fill="#ffffff" opacity="0.75">
-    <rect x="80" y="40" width="3" height="3"/>
-    <rect x="180" y="90" width="2" height="2"/>
-    <rect x="340" y="50" width="4" height="4" fill="#00f0ff" filter="url(#neonGlow)"/>
-    <rect x="520" y="110" width="3" height="3"/>
-    <rect x="740" y="40" width="2" height="2"/>
-    <rect x="960" y="60" width="4" height="4" fill="#ffbe0b"/>
-    <rect x="1180" y="45" width="3" height="3"/>
-    <rect x="1390" y="85" width="4" height="4" fill="#ff007f" filter="url(#neonGlow)"/>
-    <rect x="1580" y="55" width="2" height="2"/>
-    <rect x="1750" y="90" width="3" height="3" fill="#00f0ff"/>
-    <rect x="1880" y="40" width="2" height="2"/>
-    <rect x="250" y="180" width="3" height="3"/>
-    <rect x="620" y="160" width="2" height="2"/>
-    <rect x="1300" y="170" width="3" height="3"/>
-    <rect x="1680" y="160" width="2" height="2"/>
+  <!-- TWINKLING STARS IN SKY (Stationary & Crisp) -->
+  <g fill="#ffffff" opacity="0.8">
+    <rect x="120" y="60" width="3" height="3"/>
+    <rect x="260" y="120" width="2" height="2"/>
+    <rect x="420" y="70" width="4" height="4" fill="#00f0ff" filter="url(#neonGlow)"/>
+    <rect x="620" y="110" width="3" height="3"/>
+    <rect x="820" y="50" width="2" height="2"/>
+    <rect x="1100" y="60" width="4" height="4" fill="#ffbe0b"/>
+    <rect x="1320" y="80" width="3" height="3"/>
+    <rect x="1520" y="60" width="4" height="4" fill="#ff007f" filter="url(#neonGlow)"/>
+    <rect x="1720" y="90" width="3" height="3" fill="#00f0ff"/>
+    <rect x="1860" y="50" width="2" height="2"/>
+    <rect x="300" y="190" width="2" height="2"/>
+    <rect x="700" y="170" width="3" height="3"/>
+    <rect x="1220" y="180" width="2" height="2"/>
+    <rect x="1620" y="170" width="3" height="3"/>
   </g>
 
-  <!-- SWEEPING SKYLINE SEARCHLIGHT BEAMS -->
-  <g class="beam-left">
-    <polygon points="300,580 340,580 480,-100 160,-100" fill="url(#beamGrad)"/>
-  </g>
-  <g class="beam-right">
-    <polygon points="1580,580 1620,580 1760,-100 1440,-100" fill="url(#beamGradPink)"/>
-  </g>
+  <!-- DISTANT MOUNTAINS -->
+  <polygon points="0,620 180,500 360,570 540,470 720,550 900,450 1080,540 1260,440 1440,530 1620,470 1800,560 1920,490 1920,760 0,760" fill="#170626" opacity="0.85"/>
+  <polygon points="0,660 140,560 300,620 480,530 660,610 840,520 1020,600 1200,510 1380,590 1560,530 1740,610 1920,550 1920,760 0,760" fill="#220938" opacity="0.95"/>
 
-  <!-- DISTANT JAGGED SYNTHWAVE MOUNTAIN RANGE -->
-  <polygon points="0,580 160,460 320,540 500,430 680,520 860,410 1060,510 1260,400 1440,500 1620,430 1780,530 1920,450 1920,750 0,750" fill="#150524" opacity="0.85"/>
-  <polygon points="0,630 130,520 280,590 460,490 640,580 820,480 1020,570 1220,470 1400,560 1580,490 1740,580 1920,510 1920,750 0,750" fill="#200736" opacity="0.95"/>
-
-  <!-- ELEVATED GIANT OUTRUN SUN (Crests Above and Around Center) -->
+  <!-- HORIZON OUTRUN SUN (Clean & Elevated) -->
   <g filter="url(#sunGlow)">
-    <circle cx="960" cy="360" r="230" fill="url(#sunGrad)"/>
-    <!-- Horizontal Blind Slices -->
-    <rect x="680" y="310" width="560" height="7" fill="#150426"/>
-    <rect x="680" y="332" width="560" height="10" fill="#150426"/>
-    <rect x="680" y="358" width="560" height="14" fill="#150426"/>
-    <rect x="680" y="390" width="560" height="19" fill="#150426"/>
-    <rect x="680" y="428" width="560" height="26" fill="#150426"/>
-    <rect x="680" y="472" width="560" height="34" fill="#150426"/>
-    <rect x="680" y="524" width="560" height="45" fill="#150426"/>
+    <circle cx="960" cy="400" r="210" fill="url(#sunGrad)"/>
+    <!-- Horizontal Perspective Blind Slices -->
+    <rect x="700" y="350" width="520" height="7" fill="#140526"/>
+    <rect x="700" y="372" width="520" height="10" fill="#140526"/>
+    <rect x="700" y="398" width="520" height="14" fill="#140526"/>
+    <rect x="700" y="430" width="520" height="19" fill="#140526"/>
+    <rect x="700" y="468" width="520" height="26" fill="#140526"/>
+    <rect x="700" y="512" width="520" height="34" fill="#140526"/>
+    <rect x="700" y="564" width="520" height="44" fill="#140526"/>
   </g>
 
-  <!-- FAR SKYLINE TOWERS & ANTENNAS (Deep Silhouette) -->
+  <!-- FAR SKYLINE SILHOUETTES -->
   <g fill="#120320">
-    <rect x="40" y="380" width="100" height="400"/>
-    <polygon points="40,380 90,320 140,380"/>
-    <line x1="90" y1="320" x2="90" y2="250" stroke="#ff007f" stroke-width="2"/>
-    <circle cx="90" cy="250" r="4" fill="#ff007f" filter="url(#neonGlow)"/>
+    <rect x="60" y="420" width="90" height="340"/>
+    <line x1="105" y1="420" x2="105" y2="340" stroke="#ff007f" stroke-width="2"/>
+    <circle cx="105" cy="340" r="3" fill="#ff007f"/>
 
-    <rect x="180" y="340" width="120" height="440"/>
-    <rect x="340" y="410" width="90" height="370"/>
-    <rect x="470" y="320" width="140" height="460"/>
-    <line x1="540" y1="320" x2="540" y2="230" stroke="#00f0ff" stroke-width="3"/>
-    <circle cx="540" cy="230" r="4" fill="#00f0ff" filter="url(#neonGlow)"/>
+    <rect x="200" y="380" width="110" height="380"/>
+    <rect x="360" y="440" width="90" height="320"/>
+    <rect x="490" y="360" width="130" height="400"/>
+    <line x1="555" y1="360" x2="555" y2="280" stroke="#00f0ff" stroke-width="3"/>
+    <circle cx="555" cy="280" r="4" fill="#00f0ff" filter="url(#neonGlow)"/>
 
-    <rect x="650" y="400" width="110" height="380"/>
-    <rect x="800" y="360" width="120" height="420"/>
-    <rect x="1000" y="330" width="120" height="450"/>
-    <line x1="1060" y1="330" x2="1060" y2="240" stroke="#ff007f" stroke-width="3"/>
-    <circle cx="1060" cy="240" r="4" fill="#ff007f" filter="url(#neonGlow)"/>
+    <rect x="1300" y="370" width="130" height="390"/>
+    <line x1="1365" y1="370" x2="1365" y2="290" stroke="#00f0ff" stroke-width="3"/>
+    <circle cx="1365" cy="290" r="4" fill="#00f0ff" filter="url(#neonGlow)"/>
 
-    <rect x="1160" y="390" width="100" height="390"/>
-    <rect x="1300" y="340" width="140" height="440"/>
-    <line x1="1370" y1="340" x2="1370" y2="250" stroke="#00f0ff" stroke-width="3"/>
-    <circle cx="1370" cy="250" r="4" fill="#00f0ff" filter="url(#neonGlow)"/>
-
-    <rect x="1480" y="410" width="110" height="370"/>
-    <rect x="1630" y="350" width="130" height="430"/>
-    <rect x="1800" y="390" width="100" height="390"/>
+    <rect x="1470" y="430" width="100" height="330"/>
+    <rect x="1620" y="380" width="120" height="380"/>
+    <line x1="1680" y1="380" x2="1680" y2="300" stroke="#ff007f" stroke-width="2"/>
+    <circle cx="1680" cy="300" r="3" fill="#ff007f"/>
+    <rect x="1780" y="420" width="90" height="340"/>
   </g>
 
-  <!-- MIDGROUND FLANKING CYBERPUNK MEGATOWERS (Rich Detailing) -->
-  <g fill="#090112">
-    <!-- Left Flank Tower 1 -->
-    <rect x="0" y="460" width="90" height="340"/>
-    <rect x="110" y="390" width="130" height="410"/>
-    <polygon points="110,390 175,340 240,390"/>
-    <line x1="175" y1="340" x2="175" y2="260" stroke="#ff007f" stroke-width="3"/>
-    <circle cx="175" cy="260" r="5" fill="#ff007f" filter="url(#neonGlow)"/>
+  <!-- FLANKING FOREGROUND CYBERPUNK BUILDINGS (Clean, Detailed & Stationary) -->
+  <g fill="#090114">
+    <!-- Left Building 1 -->
+    <rect x="0" y="480" width="90" height="280"/>
+    <rect x="110" y="420" width="120" height="340"/>
+    <polygon points="110,420 170,370 230,420"/>
+    <line x1="170" y1="370" x2="170" y2="300" stroke="#ff007f" stroke-width="3"/>
+    <circle cx="170" cy="300" r="4" fill="#ff007f" filter="url(#neonGlow)"/>
 
-    <!-- Left Flank Tower 2 (The Spire) -->
-    <rect x="270" y="470" width="100" height="330"/>
-    <rect x="400" y="370" width="150" height="430"/>
-    <line x1="475" y1="370" x2="475" y2="270" stroke="#00f0ff" stroke-width="4"/>
-    <circle cx="475" cy="270" r="5" fill="#00f0ff" filter="url(#neonGlow)"/>
-    <!-- Skybridge Connector -->
-    <rect x="370" y="520" width="30" height="16" fill="#1b042b"/>
+    <!-- Left Building 2 (Spire) -->
+    <rect x="260" y="490" width="100" height="270"/>
+    <rect x="390" y="410" width="140" height="350"/>
+    <line x1="460" y1="410" x2="460" y2="320" stroke="#00f0ff" stroke-width="3"/>
+    <circle cx="460" cy="320" r="4" fill="#00f0ff" filter="url(#neonGlow)"/>
 
-    <!-- Right Flank Tower 1 (The Spire) -->
-    <rect x="1370" y="380" width="140" height="420"/>
-    <polygon points="1370,380 1440,330 1510,380"/>
-    <line x1="1440" y1="330" x2="1440" y2="250" stroke="#00f0ff" stroke-width="4"/>
-    <circle cx="1440" cy="250" r="5" fill="#00f0ff" filter="url(#neonGlow)"/>
-    <!-- Skybridge Connector -->
-    <rect x="1510" y="520" width="40" height="16" fill="#1b042b"/>
+    <!-- Right Building 1 (Spire) -->
+    <rect x="1390" y="420" width="140" height="340"/>
+    <polygon points="1390,420 1460,370 1530,420"/>
+    <line x1="1460" y1="370" x2="1460" y2="290" stroke="#00f0ff" stroke-width="3"/>
+    <circle cx="1460" cy="290" r="4" fill="#00f0ff" filter="url(#neonGlow)"/>
 
-    <!-- Right Flank Tower 2 -->
-    <rect x="1550" y="450" width="110" height="350"/>
-    <rect x="1690" y="400" width="140" height="400"/>
-    <line x1="1760" y1="400" x2="1760" y2="300" stroke="#ff007f" stroke-width="3"/>
-    <circle cx="1760" cy="300" r="5" fill="#ff007f" filter="url(#neonGlow)"/>
-    <rect x="1850" y="460" width="70" height="340"/>
+    <!-- Right Building 2 -->
+    <rect x="1560" y="470" width="110" height="290"/>
+    <rect x="1700" y="430" width="130" height="330"/>
+    <line x1="1765" y1="430" x2="1765" y2="340" stroke="#ff007f" stroke-width="3"/>
+    <circle cx="1765" cy="340" r="4" fill="#ff007f" filter="url(#neonGlow)"/>
+    <rect x="1850" y="480" width="70" height="280"/>
   </g>
 
-  <!-- GLOWING NEON BILLBOARDS -->
+  <!-- STATIONARY NEON SIGNS -->
   <g filter="url(#neonGlow)">
-    <!-- Billboard Left: OTAQ.GG -->
-    <rect x="130" y="430" width="90" height="28" fill="#150221" stroke="#00f0ff" stroke-width="2"/>
-    <text x="175" y="450" fill="#00f0ff" font-family="'Courier New', monospace" font-weight="900" font-size="15" text-anchor="middle" letter-spacing="3">OTAQ.GG</text>
+    <rect x="125" y="450" width="90" height="24" fill="#150221" stroke="#00f0ff" stroke-width="2"/>
+    <text x="170" y="467" fill="#00f0ff" font-family="'Courier New', monospace" font-weight="900" font-size="13" text-anchor="middle" letter-spacing="2">OTAQ.GG</text>
 
-    <!-- Billboard Left: 8-BIT PARTY -->
-    <rect x="420" y="410" width="110" height="30" fill="#150221" stroke="#ff007f" stroke-width="2"/>
-    <text x="475" y="432" fill="#ff007f" font-family="'Courier New', monospace" font-weight="900" font-size="16" text-anchor="middle" letter-spacing="4">8-BIT</text>
+    <rect x="410" y="440" width="100" height="26" fill="#150221" stroke="#ff007f" stroke-width="2"/>
+    <text x="460" y="459" fill="#ff007f" font-family="'Courier New', monospace" font-weight="900" font-size="14" text-anchor="middle" letter-spacing="3">8-BIT</text>
 
-    <!-- Billboard Right: NEO CITY -->
-    <rect x="1390" y="420" width="100" height="28" fill="#150221" stroke="#00f0ff" stroke-width="2"/>
-    <text x="1440" y="440" fill="#00f0ff" font-family="'Courier New', monospace" font-weight="900" font-size="14" text-anchor="middle" letter-spacing="3">NEO TOKYO</text>
+    <rect x="1410" y="450" width="100" height="24" fill="#150221" stroke="#00f0ff" stroke-width="2"/>
+    <text x="1460" y="467" fill="#00f0ff" font-family="'Courier New', monospace" font-weight="900" font-size="12" text-anchor="middle" letter-spacing="2">NEO TOKYO</text>
 
-    <!-- Billboard Right: CHAOS CLUB -->
-    <rect x="1710" y="440" width="100" height="30" fill="#150221" stroke="#ffbe0b" stroke-width="2"/>
-    <text x="1760" y="462" fill="#ffbe0b" font-family="'Courier New', monospace" font-weight="900" font-size="15" text-anchor="middle" letter-spacing="3">CHAOS</text>
+    <rect x="1720" y="460" width="90" height="24" fill="#150221" stroke="#ffbe0b" stroke-width="2"/>
+    <text x="1765" y="477" fill="#ffbe0b" font-family="'Courier New', monospace" font-weight="900" font-size="13" text-anchor="middle" letter-spacing="2">CHAOS</text>
   </g>
 
   <!-- GLOWING PIXEL WINDOWS -->
-  <g opacity="0.95">
-    <!-- Left Tower Windows -->
-    <rect x="130" y="480" width="10" height="14" fill="#00f0ff"/>
-    <rect x="155" y="480" width="10" height="14" fill="#ff007f"/>
-    <rect x="180" y="480" width="10" height="14" fill="#ffbe0b"/>
-    <rect x="205" y="480" width="10" height="14" fill="#00f0ff"/>
-    <rect x="130" y="515" width="10" height="14" fill="#ff007f"/>
-    <rect x="155" y="515" width="10" height="14" fill="#00f0ff"/>
-    <rect x="180" y="515" width="10" height="14" fill="#00f0ff"/>
-    <rect x="205" y="515" width="10" height="14" fill="#ffbe0b"/>
-    <rect x="130" y="550" width="10" height="14" fill="#00f0ff"/>
-    <rect x="180" y="550" width="10" height="14" fill="#ff007f"/>
-    <rect x="205" y="550" width="10" height="14" fill="#00f0ff"/>
+  <g opacity="0.9">
+    <!-- Left Windows -->
+    <rect x="130" y="490" width="8" height="12" fill="#00f0ff"/>
+    <rect x="150" y="490" width="8" height="12" fill="#ff007f"/>
+    <rect x="170" y="490" width="8" height="12" fill="#ffbe0b"/>
+    <rect x="190" y="490" width="8" height="12" fill="#00f0ff"/>
+    <rect x="130" y="520" width="8" height="12" fill="#ff007f"/>
+    <rect x="150" y="520" width="8" height="12" fill="#00f0ff"/>
+    <rect x="190" y="520" width="8" height="12" fill="#ffbe0b"/>
 
-    <!-- Left Spire Windows -->
-    <rect x="420" y="460" width="12" height="16" fill="#ff007f"/>
-    <rect x="450" y="460" width="12" height="16" fill="#00f0ff"/>
-    <rect x="480" y="460" width="12" height="16" fill="#00f0ff"/>
-    <rect x="510" y="460" width="12" height="16" fill="#ffbe0b"/>
-    <rect x="420" y="495" width="12" height="16" fill="#00f0ff"/>
-    <rect x="450" y="495" width="12" height="16" fill="#ffbe0b"/>
-    <rect x="510" y="495" width="12" height="16" fill="#ff007f"/>
-    <rect x="420" y="530" width="12" height="16" fill="#ff007f"/>
-    <rect x="480" y="530" width="12" height="16" fill="#00f0ff"/>
+    <rect x="410" y="480" width="10" height="14" fill="#ff007f"/>
+    <rect x="435" y="480" width="10" height="14" fill="#00f0ff"/>
+    <rect x="460" y="480" width="10" height="14" fill="#00f0ff"/>
+    <rect x="485" y="480" width="10" height="14" fill="#ffbe0b"/>
+    <rect x="410" y="510" width="10" height="14" fill="#00f0ff"/>
+    <rect x="460" y="510" width="10" height="14" fill="#ff007f"/>
 
-    <!-- Right Spire Windows -->
-    <rect x="1390" y="470" width="12" height="16" fill="#00f0ff"/>
-    <rect x="1420" y="470" width="12" height="16" fill="#ff007f"/>
-    <rect x="1450" y="470" width="12" height="16" fill="#00f0ff"/>
-    <rect x="1480" y="470" width="12" height="16" fill="#ffbe0b"/>
-    <rect x="1390" y="505" width="12" height="16" fill="#ffbe0b"/>
-    <rect x="1450" y="505" width="12" height="16" fill="#ff007f"/>
-    <rect x="1480" y="505" width="12" height="16" fill="#00f0ff"/>
+    <!-- Right Windows -->
+    <rect x="1410" y="490" width="10" height="14" fill="#00f0ff"/>
+    <rect x="1435" y="490" width="10" height="14" fill="#ff007f"/>
+    <rect x="1460" y="490" width="10" height="14" fill="#00f0ff"/>
+    <rect x="1485" y="490" width="10" height="14" fill="#ffbe0b"/>
+    <rect x="1410" y="520" width="10" height="14" fill="#ffbe0b"/>
+    <rect x="1460" y="520" width="10" height="14" fill="#ff007f"/>
 
-    <!-- Right Tower Windows -->
-    <rect x="1710" y="490" width="12" height="16" fill="#ff007f"/>
-    <rect x="1740" y="490" width="12" height="16" fill="#00f0ff"/>
-    <rect x="1770" y="490" width="12" height="16" fill="#ffbe0b"/>
-    <rect x="1800" y="490" width="12" height="16" fill="#00f0ff"/>
-    <rect x="1710" y="525" width="12" height="16" fill="#00f0ff"/>
-    <rect x="1770" y="525" width="12" height="16" fill="#ff007f"/>
-    <rect x="1800" y="525" width="12" height="16" fill="#00f0ff"/>
+    <rect x="1720" y="500" width="10" height="14" fill="#ff007f"/>
+    <rect x="1745" y="500" width="10" height="14" fill="#00f0ff"/>
+    <rect x="1770" y="500" width="10" height="14" fill="#ffbe0b"/>
+    <rect x="1720" y="530" width="10" height="14" fill="#00f0ff"/>
+    <rect x="1770" y="530" width="10" height="14" fill="#ff007f"/>
   </g>
 
-  <!-- 3D OUTRUN LASER HORIZON HIGHWAY GRID -->
-  <g stroke="#ff007f" stroke-width="2" opacity="0.7">
-    <!-- Horizon Neon Line -->
-    <line x1="0" y1="720" x2="1920" y2="720" stroke="#00f0ff" stroke-width="5" filter="url(#neonGlow)"/>
-    <line x1="0" y1="750" x2="1920" y2="750"/>
-    <line x1="0" y1="785" x2="1920" y2="785"/>
-    <line x1="0" y1="825" x2="1920" y2="825"/>
-    <line x1="0" y1="875" x2="1920" y2="875"/>
-    <line x1="0" y1="935" x2="1920" y2="935"/>
-    <line x1="0" y1="1005" x2="1920" y2="1005"/>
-    <line x1="0" y1="1080" x2="1920" y2="1080" stroke="#00f0ff" stroke-width="5"/>
+  <!-- 3D OUTRUN HORIZON HIGHWAY GRID (Stationary & Razor Sharp) -->
+  <g stroke="#ff007f" stroke-width="2" opacity="0.65">
+    <line x1="0" y1="740" x2="1920" y2="740" stroke="#00f0ff" stroke-width="4" filter="url(#neonGlow)"/>
+    <line x1="0" y1="770" x2="1920" y2="770"/>
+    <line x1="0" y1="805" x2="1920" y2="805"/>
+    <line x1="0" y1="845" x2="1920" y2="845"/>
+    <line x1="0" y1="895" x2="1920" y2="895"/>
+    <line x1="0" y1="955" x2="1920" y2="955"/>
+    <line x1="0" y1="1025" x2="1920" y2="1025"/>
+    <line x1="0" y1="1080" x2="1920" y2="1080" stroke="#00f0ff" stroke-width="4"/>
 
-    <!-- Perspective Converging Lines to Horizon (960, 720) -->
-    <line x1="960" y1="720" x2="960" y2="1080" stroke="#00f0ff" stroke-width="4" filter="url(#neonGlow)"/>
-    <line x1="960" y1="720" x2="820" y2="1080"/>
-    <line x1="960" y1="720" x2="1100" y2="1080"/>
-    <line x1="960" y1="720" x2="660" y2="1080"/>
-    <line x1="960" y1="720" x2="1260" y2="1080"/>
-    <line x1="960" y1="720" x2="480" y2="1080"/>
-    <line x1="960" y1="720" x2="1440" y2="1080"/>
-    <line x1="960" y1="720" x2="280" y2="1080"/>
-    <line x1="960" y1="720" x2="1640" y2="1080"/>
-    <line x1="960" y1="720" x2="60" y2="1080"/>
-    <line x1="960" y1="720" x2="1860" y2="1080"/>
-    <line x1="960" y1="720" x2="-180" y2="1080"/>
-    <line x1="960" y1="720" x2="2100" y2="1080"/>
-  </g>
-
-  <!-- MOVING CYBER HIGHWAY LIGHT STREAKS -->
-  <g filter="url(#neonGlow)">
-    <line x1="720" y1="840" x2="680" y2="880" stroke="#00f0ff" stroke-width="4" opacity="0.8"/>
-    <line x1="1200" y1="840" x2="1240" y2="880" stroke="#ffbe0b" stroke-width="4" opacity="0.8"/>
-    <line x1="520" y1="940" x2="460" y2="1010" stroke="#00f0ff" stroke-width="6" opacity="0.9"/>
-    <line x1="1400" y1="940" x2="1460" y2="1010" stroke="#ff007f" stroke-width="6" opacity="0.9"/>
+    <!-- Converging Perspective Lines to Horizon Center (960, 740) -->
+    <line x1="960" y1="740" x2="960" y2="1080" stroke="#00f0ff" stroke-width="3" filter="url(#neonGlow)"/>
+    <line x1="960" y1="740" x2="820" y2="1080"/>
+    <line x1="960" y1="740" x2="1100" y2="1080"/>
+    <line x1="960" y1="740" x2="660" y2="1080"/>
+    <line x1="960" y1="740" x2="1260" y2="1080"/>
+    <line x1="960" y1="740" x2="480" y2="1080"/>
+    <line x1="960" y1="740" x2="1440" y2="1080"/>
+    <line x1="960" y1="740" x2="280" y2="1080"/>
+    <line x1="960" y1="740" x2="1640" y2="1080"/>
+    <line x1="960" y1="740" x2="60" y2="1080"/>
+    <line x1="960" y1="740" x2="1860" y2="1080"/>
   </g>
 </svg>
