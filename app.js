@@ -192,8 +192,49 @@ async function init() {
 document.addEventListener('DOMContentLoaded', init);
 
 // ============================================================================
-// 6. SCREEN: NICKNAME
+// 6. SCREEN: AUTH (LOGIN / REGISTER / GUEST)
 // ============================================================================
+window.switchAuthTab = function(mode) {
+  playSound('click');
+  const loginForm = $('#login-form');
+  const registerForm = $('#register-form');
+  const tabLogin = $('#tab-login');
+  const tabRegister = $('#tab-register');
+
+  if (mode === 'register') {
+    if (loginForm) loginForm.style.display = 'none';
+    if (registerForm) registerForm.style.display = 'flex';
+    if (tabLogin) tabLogin.classList.remove('active');
+    if (tabRegister) tabRegister.classList.add('active');
+  } else {
+    if (loginForm) loginForm.style.display = 'flex';
+    if (registerForm) registerForm.style.display = 'none';
+    if (tabLogin) tabLogin.classList.add('active');
+    if (tabRegister) tabRegister.classList.remove('active');
+  }
+};
+
+window.togglePasswordVisibility = function(inputId) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  playSound('click');
+  input.type = input.type === 'password' ? 'text' : 'password';
+};
+
+window.generateRandomRegNickname = function() {
+  playSound('click');
+  const azNames = ['XaosKralı', 'BombaUstası', 'Dedektiv', 'ŞənRəssam', 'GizliXain', 'CyberQəhrəman', 'QalibOyunçu', 'NeonNinja', 'PartiyaUlduzu', 'GecəBayquşu'];
+  const enNames = ['ChaosKing', 'BombMaster', 'Detective', 'ArtWhiz', 'SecretFaker', 'CyberHero', 'Victor', 'NeonNinja', 'PartyStar', 'NightOwl'];
+  const pool = isAz() ? azNames : enNames;
+  const randPrefix = pool[Math.floor(Math.random() * pool.length)];
+  const randNum = Math.floor(10 + Math.random() * 90);
+  const input = $('#reg-nickname');
+  if (input) {
+    input.value = `${randPrefix}_${randNum}`;
+    input.focus();
+  }
+};
+
 async function handleLogin() {
   const email = $('#login-email').value.trim();
   const password = $('#login-password').value;
