@@ -1307,13 +1307,13 @@ function closeProfileModal() {
 function createProfileModalDOM() {
   const div = document.createElement('div');
   div.id = 'profile-modal';
-  div.className = 'modal-backdrop';
-  div.style.cssText = 'display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); backdrop-filter:blur(8px); z-index:99999; align-items:center; justify-content:center; padding:15px;';
+  div.className = 'modal-overlay';
+  div.style.cssText = 'display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); z-index:99999; align-items:center; justify-content:center; padding:15px; box-sizing:border-box;';
   
   div.innerHTML = `
-    <div class="glass-panel" style="max-width:540px; width:100%; max-height:90vh; display:flex; flex-direction:column; padding:1.5rem; position:relative; overflow:hidden;">
-      <button class="btn btn-ghost" onclick="closeProfileModal()" style="position:absolute; top:12px; right:12px; width:36px; height:36px; padding:0; border-radius:50%; font-size:1.2rem;">✕</button>
-      <div id="profile-modal-body" style="overflow-y:auto; padding-right:4px;"></div>
+    <div class="pixel-box pixel-modal-box" style="max-width:540px; width:100%; max-height:90vh; display:flex; flex-direction:column; padding:1.25rem; position:relative; overflow:hidden; background:#0b0e17; border:3px solid #000; box-shadow:4px 4px 0 0 #000;">
+      <button type="button" class="pixel-mini-btn" onclick="closeProfileModal()" style="position:absolute; top:10px; right:10px; z-index:10; font-weight:900;">[X]</button>
+      <div id="profile-modal-body" style="overflow-y:auto; padding-right:4px; max-height:calc(90vh - 40px);"></div>
     </div>
   `;
   document.body.appendChild(div);

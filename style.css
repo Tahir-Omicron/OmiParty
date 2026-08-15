@@ -3195,3 +3195,26 @@ input:checked + .slider:before {
 .pixel-lobby-actions .pixel-btn {
     flex: 1;
 }
+
+/* Modal Backdrop & Glass Panel Fallbacks */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    box-sizing: border-box;
+}
+
+.glass-panel {
+    background: #0b0e17 !important;
+    border: 3px solid #000 !important;
+    box-shadow: 4px 4px 0 0 #000 !important;
+    color: #fff;
+}

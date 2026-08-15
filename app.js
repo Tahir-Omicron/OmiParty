@@ -144,17 +144,7 @@ async function init() {
     });
   }
   
-  // Always fetch Supabase session
-  const { data: { session } } = await db.auth.getSession();
-  if (session && session.user) {
-    await finishAuth(session.user);
-  } else {
-    // Unauthenticated: Always show the 3D Auth (Login / Register) Screen!
-    state.playerId = null;
-    state.nickname = null;
-    showScreen('auth');
-  }
-  
+  // If explicitly navigating with a room code in URL query (?code=ABC12)
   const urlParams = new URLSearchParams(window.location.search);
   const code = urlParams.get('code');
   if (code) {
@@ -162,22 +152,15 @@ async function init() {
     return;
   }
 
-  // Active session auto-recovery (if refreshed or tab re-opened)
-  const activeSession = typeof getActiveSession === 'function' ? getActiveSession() : null;
-  if (activeSession && activeSession.roomCode && state.playerId) {
-    try {
-      const { data: roomData } = await db.from('rooms').select('*').eq('code', activeSession.roomCode).single();
-      if (roomData && (roomData.status === 'lobby' || roomData.status === 'playing')) {
-        await enterLobby(activeSession.roomCode);
-        return;
-      }
-    } catch (e) {
-      console.warn("Active session recovery skipped:", e);
-    }
-  }
-  
-  // If not resuming a game and not logged in, show auth
-  if (!state.playerId) {
+  // Always fetch Supabase session
+  const { data: { session } } = await db.auth.getSession();
+  if (session && session.user) {
+    await finishAuth(session.user);
+  } else {
+    // Unauthenticated: Strictly show the 3D Auth (Login / Register) Screen!
+    state.playerId = null;
+    state.nickname = null;
+    state.profile = null;
     showScreen('auth');
   }
 }
