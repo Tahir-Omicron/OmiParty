@@ -83,7 +83,9 @@
         inset -3px -3px 0 0 #05140b,
         inset 3px 3px 0 0 #184225,
         0 0 0 3px #000,
-        6px 6px 0 0 rgba(0, 0, 0, 0.85) !important;
+        0 14px 30px rgba(0, 0, 0, 0.92),
+        0 0 25px rgba(0, 255, 136, 0.2),
+        8px 8px 0 0 rgba(0, 0, 0, 0.95) !important;
 }
 [data-theme="gameboy"] .pixel-input {
     background: #06170c !important;
@@ -122,7 +124,9 @@
         inset -3px -3px 0 0 #0b0314,
         inset 3px 3px 0 0 #331557,
         0 0 0 3px #000,
-        6px 6px 0 0 rgba(0, 0, 0, 0.85) !important;
+        0 14px 30px rgba(0, 0, 0, 0.92),
+        0 0 25px rgba(255, 0, 128, 0.25),
+        8px 8px 0 0 rgba(0, 0, 0, 0.95) !important;
 }
 [data-theme="synthwave"] .pixel-input {
     background: #0f041b !important;
@@ -161,7 +165,9 @@
         inset -3px -3px 0 0 #0a0500,
         inset 3px 3px 0 0 #3b2005,
         0 0 0 3px #000,
-        6px 6px 0 0 rgba(0, 0, 0, 0.85) !important;
+        0 14px 30px rgba(0, 0, 0, 0.92),
+        0 0 25px rgba(255, 176, 0, 0.22),
+        8px 8px 0 0 rgba(0, 0, 0, 0.95) !important;
 }
 [data-theme="amber"] .pixel-input {
     background: #120900 !important;
@@ -1818,11 +1824,51 @@ input:checked + .slider:before {
     perspective: 1200px;
     width: 100%;
     max-width: 420px;
-    margin: 2.2rem auto 0;
+    margin: 2.2rem auto 2.5rem;
     position: relative;
     z-index: 10;
     padding: 0 0.5rem;
     box-sizing: border-box;
+}
+
+/* 3D Contact Shadow & Holographic Floor Reflection */
+.pixel-perspective-wrapper::after {
+    content: '';
+    position: absolute;
+    bottom: -22px;
+    left: 4%;
+    width: 92%;
+    height: 40px;
+    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.96) 0%, rgba(0, 0, 0, 0.75) 45%, rgba(0, 255, 204, 0.28) 65%, transparent 80%);
+    border-radius: 50%;
+    transform: rotateX(70deg);
+    filter: blur(5px);
+    z-index: -1;
+    pointer-events: none;
+    animation: shadowBreathe 3s ease-in-out infinite;
+}
+
+[data-theme="synthwave"] .pixel-perspective-wrapper::after {
+    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.98) 0%, rgba(0, 0, 0, 0.75) 40%, rgba(255, 0, 128, 0.38) 65%, transparent 80%);
+}
+
+[data-theme="gameboy"] .pixel-perspective-wrapper::after {
+    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.98) 0%, rgba(0, 0, 0, 0.75) 40%, rgba(0, 255, 136, 0.35) 65%, transparent 80%);
+}
+
+[data-theme="amber"] .pixel-perspective-wrapper::after {
+    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.98) 0%, rgba(0, 0, 0, 0.75) 40%, rgba(255, 176, 0, 0.35) 65%, transparent 80%);
+}
+
+@keyframes shadowBreathe {
+    0%, 100% {
+        transform: rotateX(70deg) scale(1);
+        opacity: 0.85;
+    }
+    50% {
+        transform: rotateX(70deg) scale(1.08);
+        opacity: 1;
+    }
 }
 
 /* Pixel Mascot Companion (Centered & Snug) */
@@ -1913,7 +1959,9 @@ input:checked + .slider:before {
         inset -3px -3px 0 0 #090c13,
         inset 3px 3px 0 0 #28334f,
         0 0 0 3px #000,
-        6px 6px 0 0 rgba(0, 0, 0, 0.85);
+        0 12px 30px rgba(0, 0, 0, 0.9),
+        0 0 25px rgba(0, 255, 204, 0.15),
+        8px 8px 0 0 rgba(0, 0, 0, 0.95);
     position: relative;
     padding: 0.85rem 1.15rem 0.65rem;
     box-sizing: border-box;
