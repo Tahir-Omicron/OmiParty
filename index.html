@@ -38,6 +38,15 @@
             <span class="pixel-nav-title">OTAQ<span class="p-cyan">.GG</span></span>
         </div>
         <div class="pixel-nav-actions">
+            <!-- Profile Action Button (shown when logged in) -->
+            <button id="profile-header-btn" class="pixel-mini-btn" onclick="openProfileModal()" title="Profile" style="display:none;">
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M5 2h6v4H5V2zM3 7h10v2H3V7zM1 10h14v4H1v-4z"/></svg>
+                <span>PROFILE</span>
+            </button>
+            <button id="friends-btn" class="pixel-mini-btn" onclick="openFriendsModal()" title="Friends" style="display:none;">
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M2 3h4v4H2V3zm8 0h4v4h-4V3zM1 8h6v5H1V8zm8 0h6v5H9V8z"/></svg>
+                <span>FRIENDS</span>
+            </button>
             <!-- Chiptune BGM Button -->
             <button id="bgm-toggle" class="pixel-mini-btn p-bgm-btn" onclick="toggleBGM()" title="8-Bit Music">
                 <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" style="margin-right:4px; shape-rendering: crispEdges;">
@@ -63,191 +72,346 @@
     <!-- Toast Notifications Container -->
     <div id="toast-container" class="toast-container"></div>
 
-    <!-- 3D Perspective Flip Card Wrapper -->
-    <main class="pixel-perspective-wrapper">
-        
-        <!-- Interactive 8-Bit Pixel Mascot Companion -->
-        <div class="pixel-companion-wrap">
-            <div class="pixel-speech-bubble" id="pixel-companion-msg">HELLO HERO!</div>
-            <div class="pixel-mascot-pet" onclick="triggerMascotClick()" title="Click me!">
-                <svg width="32" height="32" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M4 1h8v2H4V1zM2 3h12v2H2V3zM1 5h14v6H1V5zM3 11h10v2H3v-2zM5 13h6v2H5v-2z" fill="var(--accent-cyan)"/>
-                    <path d="M4 7h3v2H4V7zm5 0h3v2H9V7z" fill="#000"/>
-                    <path d="M7 11h2v1H7v-1z" fill="var(--accent-red)"/>
-                </svg>
-            </div>
-        </div>
-
-        <div id="auth-flip-card" class="pixel-flip-card">
+    <!-- =========================================================================
+         SCREEN 1: AUTHENTICATION (3D FLIP CARD PORTAL)
+         ========================================================================= -->
+    <div class="screen active" data-screen="auth">
+        <main class="pixel-perspective-wrapper">
             
-            <!-- ================= FRONT: PIXEL LOGIN ================= -->
-            <div class="pixel-card-face pixel-card-front pixel-box">
-                <div class="pixel-card-header">
-                    <div class="pixel-badge-avatar">
-                        <svg width="24" height="24" viewBox="0 0 16 16" fill="currentColor" color="var(--accent-cyan)">
-                            <path d="M5 1h6v2H5V1zm-2 2h2v2H3V3zm8 0h2v2h-2V3zM1 5h14v6H1V5zm2 6h2v2H3v-2zm8 0h2v2h-2v-2zm-6 2h6v2H5v-2z"/>
-                            <path d="M4 7h2v2H4V7zm6 0h2v2h-2V7z" fill="#0b0f17"/>
-                        </svg>
-                    </div>
-                    <h1 class="pixel-title">OTAQ<span class="p-cyan">.GG</span></h1>
-                    <p class="pixel-subtitle">Chaotic 8-Bit Party Games for Friends</p>
+            <!-- Interactive 8-Bit Pixel Mascot Companion -->
+            <div class="pixel-companion-wrap">
+                <div class="pixel-speech-bubble" id="pixel-companion-msg">HELLO HERO!</div>
+                <div class="pixel-mascot-pet" onclick="triggerMascotClick()" title="Click me!">
+                    <svg width="32" height="32" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M4 1h8v2H4V1zM2 3h12v2H2V3zM1 5h14v6H1V5zM3 11h10v2H3v-2zM5 13h6v2H5v-2z" fill="var(--accent-cyan)"/>
+                        <path d="M4 7h3v2H4V7zm5 0h3v2H9V7z" fill="#000"/>
+                        <path d="M7 11h2v1H7v-1z" fill="var(--accent-red)"/>
+                    </svg>
                 </div>
+            </div>
 
-                <!-- 8-Bit Sliding Switcher (Slide Toggle) -->
-                <div class="pixel-tabs-bar pixel-slider-toggle" id="front-slider-toggle" onclick="toggleAuthSlider(event, 'front')">
-                    <!-- Physical Sliding Glider Pill -->
-                    <div class="pixel-slider-glider" id="front-slider-glider"></div>
-                    <button type="button" class="pixel-tab-btn active" id="front-tab-login" onclick="flipToAuth('login', event)">
-                        <span class="p-tab-indicator">&gt;</span>
-                        <span>SIGN IN</span>
-                    </button>
-                    <button type="button" class="pixel-tab-btn" id="front-tab-register" onclick="flipToAuth('register', event)">
-                        <span class="p-tab-indicator">&gt;</span>
-                        <span>REGISTER</span>
-                    </button>
-                </div>
-
-                <!-- Login Form -->
-                <form id="login-form" class="pixel-form" onsubmit="event.preventDefault(); handleLogin();">
-                    <div class="pixel-input-group">
-                        <label for="login-email" class="pixel-label">EMAIL:</label>
-                        <div class="pixel-input-wrap">
-                            <input type="email" id="login-email" class="pixel-input" placeholder="player@otaq.gg" required autocomplete="email" onfocus="setMascotMsg('ENTER EMAIL...')">
+            <div id="auth-flip-card" class="pixel-flip-card">
+                
+                <!-- ================= FRONT: PIXEL LOGIN ================= -->
+                <div class="pixel-card-face pixel-card-front pixel-box">
+                    <div class="pixel-card-header">
+                        <div class="pixel-badge-avatar">
+                            <svg width="24" height="24" viewBox="0 0 16 16" fill="currentColor" color="var(--accent-cyan)">
+                                <path d="M5 1h6v2H5V1zm-2 2h2v2H3V3zm8 0h2v2h-2V3zM1 5h14v6H1V5zm2 6h2v2H3v-2zm8 0h2v2h-2v-2zm-6 2h6v2H5v-2z"/>
+                                <path d="M4 7h2v2H4V7zm6 0h2v2h-2V7z" fill="#0b0f17"/>
+                            </svg>
                         </div>
+                        <h1 class="pixel-title">OTAQ<span class="p-cyan">.GG</span></h1>
+                        <p class="pixel-subtitle">Chaotic 8-Bit Party Games</p>
                     </div>
 
-                    <div class="pixel-input-group">
-                        <div class="pixel-label-row">
+                    <!-- 8-Bit Sliding Switcher -->
+                    <div class="pixel-tabs-bar pixel-slider-toggle" id="front-slider-toggle" onclick="toggleAuthSlider(event, 'front')">
+                        <div class="pixel-slider-glider" id="front-slider-glider"></div>
+                        <button type="button" class="pixel-tab-btn active" id="front-tab-login" onclick="flipToAuth('login', event)">
+                            <span class="p-tab-indicator">&gt;</span>
+                            <span>LOGIN</span>
+                        </button>
+                        <button type="button" class="pixel-tab-btn" id="front-tab-register" onclick="flipToAuth('register', event)">
+                            <span class="p-tab-indicator">&gt;</span>
+                            <span>REGISTER</span>
+                        </button>
+                    </div>
+
+                    <!-- Login Form -->
+                    <form id="login-form" class="pixel-form" onsubmit="event.preventDefault(); handleLogin();">
+                        <div class="pixel-input-group">
+                            <label for="login-email" class="pixel-label">EMAIL:</label>
+                            <div class="pixel-input-wrap">
+                                <input type="email" id="login-email" class="pixel-input" placeholder="player@otaq.gg" required autocomplete="email" onfocus="setMascotMsg('ENTER YOUR EMAIL!')">
+                            </div>
+                        </div>
+
+                        <div class="pixel-input-group">
                             <label for="login-password" class="pixel-label">PASSWORD:</label>
-                            <span class="pixel-link" onclick="showToast('If forgotten, play using Guest Mode.', 'info')">[FORGOT?]</span>
+                            <div class="pixel-input-wrap">
+                                <input type="password" id="login-password" class="pixel-input" placeholder="••••••••" required minlength="6" autocomplete="current-password">
+                                <button type="button" class="pixel-eye-btn" onclick="togglePasswordVisibility('login-password', this)" title="Show password">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="shape-rendering: crispEdges;">
+                                        <path d="M8 6h8v2H8V6zm8 2h2v2h-2V8zm2 2h2v2h-2v-2zm2 2h2v2h-2v-2zm-2 2h-2v2h2v-2zm-2 2h-2v2h2v-2zm-2 2H8v-2h8v2zm-8-2H6v-2h2v2zm-2-2H4v-2h2v2zm-2-2H2v-2h2v2zm2-2h2V8H4v2zm2-2h2V6H6v2z" fill="currentColor"/>
+                                        <rect x="9" y="9" width="6" height="6" fill="var(--accent-cyan)"/>
+                                        <rect x="11" y="11" width="2" height="2" fill="#0b0f17"/>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
-                        <div class="pixel-input-wrap">
-                            <input type="password" id="login-password" class="pixel-input" placeholder="••••••••" required autocomplete="current-password" onfocus="setMascotMsg('SECRET KEY!')">
-                            <button type="button" class="pixel-eye-btn" onclick="togglePasswordVisibility('login-password', this)" title="Password">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="shape-rendering: crispEdges;">
-                                    <path d="M8 6h8v2H8V6zm8 2h2v2h-2V8zm2 2h2v2h-2v-2zm2 2h2v2h-2v-2zm-2 2h-2v2h2v-2zm-2 2h-2v2h2v-2zm-2 2H8v-2h8v2zm-8-2H6v-2h2v2zm-2-2H4v-2h2v2zm-2-2H2v-2h2v2zm2-2h2V8H4v2zm2-2h2V6H6v2z" fill="currentColor"/>
-                                    <rect x="9" y="9" width="6" height="6" fill="var(--accent-cyan)"/>
-                                    <rect x="11" y="11" width="2" height="2" fill="#0b0e14"/>
-                                </svg>
-                            </button>
+
+                        <button type="submit" id="login-btn" class="pixel-btn pixel-btn-primary">
+                            <span>ENTER THE GAME</span>
+                        </button>
+
+                        <div class="pixel-divider">
+                            <span class="p-line"></span>
+                            <span class="p-text">OR</span>
+                            <span class="p-line"></span>
                         </div>
+
+                        <button type="button" class="pixel-btn pixel-btn-secondary" onclick="handleGuestLogin()">
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M1 1h14v14H1V1zm2 2v10h10V3H3zm2 2h2v2H5V5zm4 0h2v2H9V5zm-4 4h2v2H5V9zm4 0h2v2H9V9z"/>
+                            </svg>
+                            <span>GUEST MODE</span>
+                        </button>
+                    </form>
+
+                    <!-- Footer Creator Badge -->
+                    <div class="pixel-footer">
+                        <a href="https://instagram.com/tahirquliyev01" target="_blank" rel="noopener noreferrer" class="pixel-author-pill">
+                            <svg width="10" height="10" viewBox="0 0 8 8" fill="var(--accent-gold)"><path d="M3 0h2v2H3V0zM1 2h2v2H1V2zM5 2h2v2H5V2zM3 4h2v2H3V4z"/></svg>
+                            <span>CODE: <strong>@tahirquliyev01</strong></span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- ================= BACK: PIXEL REGISTER ================= -->
+                <div class="pixel-card-face pixel-card-back pixel-box">
+                    <div class="pixel-card-header">
+                        <div class="pixel-badge-avatar p-badge-purple">
+                            <svg width="24" height="24" viewBox="0 0 16 16" fill="currentColor" color="var(--accent-purple)">
+                                <path d="M7 1h2v3h3v2H9v3H7V6H4V4h3V1zM2 11h12v3H2v-3z"/>
+                            </svg>
+                        </div>
+                        <h1 class="pixel-title">CREATE <span class="p-purple">ACCOUNT</span></h1>
+                        <p class="pixel-subtitle">Forge your 8-Bit Pixel Avatar</p>
                     </div>
 
-                    <button type="submit" id="login-btn" class="pixel-btn pixel-btn-primary" onmouseover="setMascotMsg('READY TO PLAY?')">
-                        <span>START GAME</span>
-                    </button>
-
-                    <div class="pixel-divider">
-                        <span class="p-line"></span>
-                        <span class="p-text">OR</span>
-                        <span class="p-line"></span>
+                    <!-- 8-Bit Sliding Switcher -->
+                    <div class="pixel-tabs-bar pixel-slider-toggle" id="back-slider-toggle" onclick="toggleAuthSlider(event, 'back')">
+                        <div class="pixel-slider-glider is-register" id="back-slider-glider"></div>
+                        <button type="button" class="pixel-tab-btn" id="back-tab-login" onclick="flipToAuth('login', event)">
+                            <span class="p-tab-indicator">&gt;</span>
+                            <span>LOGIN</span>
+                        </button>
+                        <button type="button" class="pixel-tab-btn active" id="back-tab-register" onclick="flipToAuth('register', event)">
+                            <span class="p-tab-indicator">&gt;</span>
+                            <span>REGISTER</span>
+                        </button>
                     </div>
 
-                    <button type="button" class="pixel-btn pixel-btn-secondary" onclick="handleGuestLogin()">
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                            <path d="M1 1h14v14H1V1zm2 2v10h10V3H3zm2 2h2v2H5V5zm4 0h2v2H9V5zm-4 4h2v2H5V9zm4 0h2v2H9V9z"/>
-                        </svg>
-                        <span>GUEST PLAY [1-CLICK]</span>
-                    </button>
-                </form>
+                    <!-- Register Form -->
+                    <form id="register-form" class="pixel-form" onsubmit="event.preventDefault(); handleRegister();">
+                        
+                        <!-- Character Class Selector -->
+                        <div class="pixel-avatar-picker-wrap">
+                            <button type="button" class="pixel-avatar-arrow" onclick="cyclePixelAvatar(-1)" title="Previous">&lt;</button>
+                            <div class="pixel-avatar-display">
+                                <img id="pixel-reg-avatar-img" src="https://api.dicebear.com/7.x/bottts/svg?seed=HeroKnight" alt="Avatar" class="pixel-avatar-preview">
+                                <span id="pixel-avatar-title" class="pixel-class-tag">CYBER KNIGHT</span>
+                            </div>
+                            <button type="button" class="pixel-avatar-arrow" onclick="cyclePixelAvatar(1)" title="Next">&gt;</button>
+                        </div>
 
-                <!-- Footer Creator Badge -->
-                <div class="pixel-footer">
-                    <a href="https://instagram.com/tahirquliyev01" target="_blank" rel="noopener noreferrer" class="pixel-author-pill">
-                        <svg width="10" height="10" viewBox="0 0 8 8" fill="var(--accent-gold)"><path d="M3 0h2v2H3V0zM1 2h2v2H1V2zM5 2h2v2H5V2zM3 4h2v2H3V4z"/></svg>
-                        <span>DEV: <strong>@tahirquliyev01</strong></span>
-                    </a>
+                        <div class="pixel-input-group">
+                            <label for="reg-email" class="pixel-label">EMAIL:</label>
+                            <div class="pixel-input-wrap">
+                                <input type="email" id="reg-email" class="pixel-input" placeholder="player@otaq.gg" required autocomplete="email" onfocus="setMascotMsg('NEW HERO EMAIL!')">
+                            </div>
+                        </div>
+
+                        <div class="pixel-input-group">
+                            <div class="pixel-label-row">
+                                <label for="reg-nickname" class="pixel-label">NICKNAME:</label>
+                                <button type="button" class="pixel-dice-btn" onclick="generateRandomRegNickname()" title="Randomize">
+                                    <span>[RANDOM]</span>
+                                </button>
+                            </div>
+                            <div class="pixel-input-wrap">
+                                <input type="text" id="reg-nickname" class="pixel-input" placeholder="e.g. PixelMaster_99" maxlength="16" required autocomplete="username" onfocus="setMascotMsg('COOL NICKNAME!')">
+                            </div>
+                        </div>
+
+                        <div class="pixel-input-group">
+                            <label for="reg-password" class="pixel-label">PASSWORD (MIN 6):</label>
+                            <div class="pixel-input-wrap">
+                                <input type="password" id="reg-password" class="pixel-input" placeholder="••••••••" required minlength="6" autocomplete="new-password">
+                                <button type="button" class="pixel-eye-btn" onclick="togglePasswordVisibility('reg-password', this)" title="Show password">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="shape-rendering: crispEdges;">
+                                        <path d="M8 6h8v2H8V6zm8 2h2v2h-2V8zm2 2h2v2h-2v-2zm2 2h2v2h-2v-2zm-2 2h-2v2h2v-2zm-2 2h-2v2h2v-2zm-2 2H8v-2h8v2zm-8-2H6v-2h2v2zm-2-2H4v-2h2v2zm-2-2H2v-2h2v2zm2-2h2V8H4v2zm2-2h2V6H6v2z" fill="currentColor"/>
+                                        <rect x="9" y="9" width="6" height="6" fill="var(--accent-purple)"/>
+                                        <rect x="11" y="11" width="2" height="2" fill="#0b0e14"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="submit" id="register-btn" class="pixel-btn pixel-btn-purple">
+                            <span>CONFIRM HERO ACCOUNT</span>
+                        </button>
+                    </form>
+
+                    <!-- Footer Creator Badge -->
+                    <div class="pixel-footer">
+                        <a href="https://instagram.com/tahirquliyev01" target="_blank" rel="noopener noreferrer" class="pixel-author-pill">
+                            <svg width="10" height="10" viewBox="0 0 8 8" fill="var(--accent-gold)"><path d="M3 0h2v2H3V0zM1 2h2v2H1V2zM5 2h2v2H5V2zM3 4h2v2H3V4z"/></svg>
+                            <span>CODE: <strong>@tahirquliyev01</strong></span>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- =========================================================================
+         SCREEN 2: MAIN MENU (POST-LOGIN HUB)
+         ========================================================================= -->
+    <div class="screen" data-screen="menu">
+        <div class="pixel-box pixel-menu-box">
+            
+            <!-- Player Profile Header in Menu -->
+            <div class="pixel-profile-card">
+                <div class="pixel-profile-avatar-wrap" onclick="showAvatarModal()" title="Change Avatar">
+                    <img id="profile-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=Felix" alt="Avatar" class="pixel-profile-img">
+                    <span class="pixel-edit-badge"><svg width="8" height="8" viewBox="0 0 16 16" fill="#000"><path d="M11 1l4 4-9 9H2v-4l9-9z"/></svg></span>
+                </div>
+                <div class="pixel-profile-info">
+                    <div class="pixel-profile-name-row">
+                        <h2 id="menu-nickname" class="pixel-profile-name">Hero</h2>
+                        <span class="pixel-level-tag">LVL <span id="profile-level">1</span></span>
+                    </div>
+                    <div class="pixel-xp-wrap">
+                        <div class="pixel-xp-bar"><div id="profile-xp-bar" class="pixel-xp-fill" style="width: 0%;"></div></div>
+                    </div>
+                    <div class="pixel-stats-mini">
+                        <span class="pixel-coin-pill"><span class="p-gold">●</span> <span id="profile-coins-val">100</span> COINS</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- ================= BACK: PIXEL REGISTER ================= -->
-            <div class="pixel-card-face pixel-card-back pixel-box">
-                <div class="pixel-card-header">
-                    <div class="pixel-badge-avatar p-badge-purple">
-                        <svg width="24" height="24" viewBox="0 0 16 16" fill="currentColor" color="var(--accent-purple)">
-                            <path d="M7 1h2v3h3v2H9v3H7V6H4V4h3V1zM2 11h12v3H2v-3z"/>
-                        </svg>
-                    </div>
-                    <h1 class="pixel-title">NEW <span class="p-purple">ACCOUNT</span></h1>
-                    <p class="pixel-subtitle">Create Your 8-Bit Legend</p>
-                </div>
+            <!-- Menu Main Actions -->
+            <div class="pixel-menu-actions">
+                <button type="button" id="create-room-btn" class="pixel-btn pixel-btn-primary pixel-btn-lg">
+                    <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M2 3h12v2H2zM4 5h8v2H4zM6 7h4v2H6zM1 10h14v3H1z"/></svg>
+                    <span>CREATE ROOM</span>
+                </button>
 
-                <!-- 8-Bit Sliding Switcher (Slide Toggle) -->
-                <div class="pixel-tabs-bar pixel-slider-toggle" id="back-slider-toggle" onclick="toggleAuthSlider(event, 'back')">
-                    <!-- Physical Sliding Glider Pill -->
-                    <div class="pixel-slider-glider is-register" id="back-slider-glider"></div>
-                    <button type="button" class="pixel-tab-btn" id="back-tab-login" onclick="flipToAuth('login', event)">
-                        <span class="p-tab-indicator">&gt;</span>
-                        <span>SIGN IN</span>
-                    </button>
-                    <button type="button" class="pixel-tab-btn active" id="back-tab-register" onclick="flipToAuth('register', event)">
-                        <span class="p-tab-indicator">&gt;</span>
-                        <span>REGISTER</span>
+                <!-- Join Room Section -->
+                <div class="pixel-join-box">
+                    <div class="pixel-input-wrap" style="flex: 1;">
+                        <input type="text" id="join-code-input" class="pixel-input text-center" placeholder="CODE (e.g. ABC12)" maxlength="5" style="text-transform: uppercase; letter-spacing: 2px;">
+                    </div>
+                    <button type="button" id="join-submit-btn" class="pixel-btn pixel-btn-purple">
+                        <span>JOIN</span>
                     </button>
                 </div>
 
-                <!-- Register Form with Character Class Selector -->
-                <form id="register-form" class="pixel-form" onsubmit="event.preventDefault(); handleRegister();">
-                    
-                    <!-- 8-Bit Character Class Selector -->
-                    <div class="pixel-avatar-picker-wrap">
-                        <button type="button" class="pixel-avatar-arrow" onclick="cyclePixelAvatar(-1)" title="Previous">&lt;</button>
-                        <div class="pixel-avatar-display">
-                            <img id="pixel-reg-avatar-img" src="https://api.dicebear.com/7.x/bottts/svg?seed=HeroKnight" alt="Avatar" class="pixel-avatar-preview">
-                            <span id="pixel-avatar-title" class="pixel-class-tag">CYBER KNIGHT</span>
-                        </div>
-                        <button type="button" class="pixel-avatar-arrow" onclick="cyclePixelAvatar(1)" title="Next">&gt;</button>
-                    </div>
-
-                    <div class="pixel-input-group">
-                        <label for="reg-email" class="pixel-label">EMAIL:</label>
-                        <div class="pixel-input-wrap">
-                            <input type="email" id="reg-email" class="pixel-input" placeholder="player@otaq.gg" required autocomplete="email" onfocus="setMascotMsg('NEW EMAIL!')">
-                        </div>
-                    </div>
-
-                    <div class="pixel-input-group">
-                        <div class="pixel-label-row">
-                            <label for="reg-nickname" class="pixel-label">NICKNAME:</label>
-                            <button type="button" class="pixel-dice-btn" onclick="generateRandomRegNickname()" title="Random">
-                                <span>[RANDOM]</span>
-                            </button>
-                        </div>
-                        <div class="pixel-input-wrap">
-                            <input type="text" id="reg-nickname" class="pixel-input" placeholder="e.g. PixelMaster_99" maxlength="16" required autocomplete="username" onfocus="setMascotMsg('COOL NAME!')">
-                        </div>
-                    </div>
-
-                    <div class="pixel-input-group">
-                        <label for="reg-password" class="pixel-label">PASSWORD (MIN 6):</label>
-                        <div class="pixel-input-wrap">
-                            <input type="password" id="reg-password" class="pixel-input" placeholder="••••••••" required minlength="6" autocomplete="new-password">
-                            <button type="button" class="pixel-eye-btn" onclick="togglePasswordVisibility('reg-password', this)" title="Password">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="shape-rendering: crispEdges;">
-                                    <path d="M8 6h8v2H8V6zm8 2h2v2h-2V8zm2 2h2v2h-2v-2zm2 2h2v2h-2v-2zm-2 2h-2v2h2v-2zm-2 2h-2v2h2v-2zm-2 2H8v-2h8v2zm-8-2H6v-2h2v2zm-2-2H4v-2h2v2zm-2-2H2v-2h2v2zm2-2h2V8H4v2zm2-2h2V6H6v2z" fill="currentColor"/>
-                                    <rect x="9" y="9" width="6" height="6" fill="var(--accent-purple)"/>
-                                    <rect x="11" y="11" width="2" height="2" fill="#0b0e14"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    <button type="submit" id="register-btn" class="pixel-btn pixel-btn-purple">
-                        <span>CREATE HERO</span>
+                <!-- Menu Secondary Grid -->
+                <div class="pixel-secondary-grid">
+                    <button type="button" id="rules-btn" class="pixel-btn pixel-btn-secondary" onclick="document.getElementById('rules-modal').style.display='flex'">
+                        <span>HOW TO PLAY</span>
                     </button>
-                </form>
-
-                <!-- Footer Creator Badge -->
-                <div class="pixel-footer">
-                    <a href="https://instagram.com/tahirquliyev01" target="_blank" rel="noopener noreferrer" class="pixel-author-pill">
-                        <svg width="10" height="10" viewBox="0 0 8 8" fill="var(--accent-gold)"><path d="M3 0h2v2H3V0zM1 2h2v2H1V2zM5 2h2v2H5V2zM3 4h2v2H3V4z"/></svg>
-                        <span>DEV: <strong>@tahirquliyev01</strong></span>
-                    </a>
+                    <button type="button" id="menu-profile-btn" class="pixel-btn pixel-btn-secondary" onclick="openProfileModal()">
+                        <span>PROFILE</span>
+                    </button>
+                    <button type="button" id="menu-friends-btn" class="pixel-btn pixel-btn-secondary" onclick="openFriendsModal()">
+                        <span>FRIENDS</span>
+                    </button>
+                    <button type="button" id="logout-btn" class="pixel-btn pixel-btn-ghost">
+                        <span>LOGOUT</span>
+                    </button>
                 </div>
             </div>
 
+            <!-- Footer Creator Badge -->
+            <div class="pixel-footer" style="margin-top: 1rem;">
+                <a href="https://instagram.com/tahirquliyev01" target="_blank" rel="noopener noreferrer" class="pixel-author-pill">
+                    <svg width="10" height="10" viewBox="0 0 8 8" fill="var(--accent-gold)"><path d="M3 0h2v2H3V0zM1 2h2v2H1V2zM5 2h2v2H5V2zM3 4h2v2H3V4z"/></svg>
+                    <span>CODE: <strong>@tahirquliyev01</strong></span>
+                </a>
+            </div>
         </div>
-    </main>
+    </div>
+
+    <!-- =========================================================================
+         SCREEN 3: MULTIPLAYER LOBBY
+         ========================================================================= -->
+    <div class="screen" data-screen="lobby">
+        <div class="pixel-box pixel-lobby-box">
+            <!-- Lobby Header -->
+            <div class="pixel-lobby-header">
+                <div class="pixel-code-badge">
+                    <span class="p-muted">ROOM CODE:</span>
+                    <strong id="lobby-room-code" class="p-cyan">ABC12</strong>
+                    <button type="button" id="copy-code-btn" class="pixel-mini-btn" title="Copy code">COPY</button>
+                </div>
+                <div class="pixel-lobby-status">
+                    <span class="pixel-live-dot"></span>
+                    <span id="lobby-status-text">WAITING FOR PLAYERS...</span>
+                </div>
+            </div>
+
+            <!-- Mode Selection Grid -->
+            <div class="pixel-modes-section">
+                <div class="pixel-section-label">SELECT GAME MODE:</div>
+                <div class="pixel-mode-cards">
+                    <div class="mode-card active" data-mode="sabotage" id="mode-sabotage">
+                        <span class="mode-badge-tag tag-red">[SABOTAGE]</span>
+                        <span class="mode-title">Find Traitors</span>
+                        <span class="mode-desc">Traitors vs Guardians</span>
+                    </div>
+                    <div class="mode-card" data-mode="wordbomb" id="mode-wordbomb">
+                        <span class="mode-badge-tag tag-gold">[WORD BOMB]</span>
+                        <span class="mode-title">Word Bomb</span>
+                        <span class="mode-desc">Spell word, pass the bomb</span>
+                    </div>
+                    <div class="mode-card" data-mode="canvas" id="mode-canvas">
+                        <span class="mode-badge-tag tag-purple">[CANVAS]</span>
+                        <span class="mode-title">Liar's Canvas</span>
+                        <span class="mode-desc">Expose fake painter</span>
+                    </div>
+                    <div class="mode-card" data-mode="auction" id="mode-auction">
+                        <span class="mode-badge-tag tag-cyan">[AUCTION]</span>
+                        <span class="mode-title">Auction Chaos</span>
+                        <span class="mode-desc">Blind bid &amp; chaos</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Players Grid -->
+            <div class="pixel-players-section">
+                <div class="pixel-section-label">HEROES (<span id="players-count">1</span>/8):</div>
+                <div id="players-grid" class="player-grid"></div>
+            </div>
+
+            <!-- Tactical Emotes & Shoutouts Bar -->
+            <div class="pixel-lobby-reactions">
+                <div class="pixel-reaction-emotes">
+                    <button type="button" class="p-emote-btn" onclick="sendReactionEmote('[FIRE]')">[FIRE]</button>
+                    <button type="button" class="p-emote-btn" onclick="sendReactionEmote('[LAUGH]')">[LAUGH]</button>
+                    <button type="button" class="p-emote-btn" onclick="sendReactionEmote('[CROWN]')">[CROWN]</button>
+                    <button type="button" class="p-emote-btn" onclick="sendReactionEmote('[SKULL]')">[SKULL]</button>
+                    <button type="button" class="p-emote-btn" onclick="sendReactionEmote('[BOMB]')">[BOMB]</button>
+                    <button type="button" class="p-emote-btn" onclick="sendReactionEmote('[EYES]')">[EYES]</button>
+                    <button type="button" class="p-emote-btn" onclick="sendReactionEmote('[HEART]')">[HEART]</button>
+                    <button type="button" class="p-emote-btn" onclick="sendReactionEmote('[LIGHTNING]')">[BOLT]</button>
+                </div>
+                <div class="pixel-shoutouts-row">
+                    <button type="button" class="p-shoutout-btn" onclick="sendTacticalShoutout('[I am innocent!]')">[I am innocent!]</button>
+                    <button type="button" class="p-shoutout-btn" onclick="sendTacticalShoutout('[Found traitor!]')">[Found traitor!]</button>
+                    <button type="button" class="p-shoutout-btn" onclick="sendTacticalShoutout('[Bomb ticking!]')">[Bomb ticking!]</button>
+                    <button type="button" class="p-shoutout-btn" onclick="sendTacticalShoutout('[GG! Great game!]')">[GG! Great game!]</button>
+                </div>
+            </div>
+
+            <!-- Lobby Footer Actions -->
+            <div class="pixel-lobby-actions">
+                <button type="button" id="add-bot-btn" class="pixel-btn pixel-btn-secondary">
+                    <span>+ ADD BOT</span>
+                </button>
+                <button type="button" id="start-game-btn" class="pixel-btn pixel-btn-primary">
+                    <span>START GAME</span>
+                </button>
+                <button type="button" id="leave-room-btn" class="pixel-btn pixel-btn-ghost">
+                    <span>LEAVE</span>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- ================= 8-BIT RETRO INFO HUD (BOTTOM RIGHT) ================= -->
     <aside id="pixel-info-hud" class="pixel-info-hud is-minimized" aria-label="Information Panel">
@@ -359,5 +523,90 @@
             </div>
         </div>
     </div>
+
+    <!-- Rules Modal (Pixelated) -->
+    <div id="rules-modal" class="modal-overlay" style="display: none;">
+        <div class="pixel-box pixel-modal-box" style="max-width: 480px; text-align: left;">
+            <h2 class="pixel-modal-title text-center">HOW TO PLAY</h2>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin: 10px 0; max-height: 55vh; overflow-y: auto;">
+                <div class="pixel-info-item">
+                    <span class="p-item-tag tag-red">[SABOTAGE]</span>
+                    <p style="font-size: 0.8rem; margin: 0; color: #cbd5e1;">Social deduction game. Guardians complete tasks, while traitors secretly sabotage missions!</p>
+                </div>
+                <div class="pixel-info-item">
+                    <span class="p-item-tag tag-gold">[WORD BOMB]</span>
+                    <p style="font-size: 0.8rem; margin: 0; color: #cbd5e1;">Timer is ticking! Spell a word containing the letters and pass the ticking bomb!</p>
+                </div>
+                <div class="pixel-info-item">
+                    <span class="p-item-tag tag-purple">[LIAR'S CANVAS]</span>
+                    <p style="font-size: 0.8rem; margin: 0; color: #cbd5e1;">All artists draw the secret prompt, but the imposter doesn't know what it is. Expose them!</p>
+                </div>
+                <div class="pixel-info-item">
+                    <span class="p-item-tag tag-cyan">[AUCTION CHAOS]</span>
+                    <p style="font-size: 0.8rem; margin: 0; color: #cbd5e1;">Bid your health points on secret mystery boxes and bankrupt your rivals!</p>
+                </div>
+            </div>
+            <button class="pixel-btn pixel-btn-primary" onclick="document.getElementById('rules-modal').style.display='none'" style="width: 100%;">GOT IT!</button>
+        </div>
+    </div>
+
+    <!-- Avatar Picker Modal -->
+    <div id="avatar-modal" class="modal-overlay" style="display: none;">
+        <div class="pixel-box pixel-modal-box" style="max-width: 440px;">
+            <h2 class="pixel-modal-title text-center">CHOOSE AVATAR</h2>
+            <div id="avatar-grid" class="avatar-grid-picker" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 15px 0; max-height: 240px; overflow-y: auto;"></div>
+            <button class="pixel-btn pixel-btn-secondary" onclick="randomizeAvatars()" style="width: 100%; margin-bottom: 8px;">RANDOMIZE</button>
+            <button class="pixel-btn pixel-btn-ghost" onclick="document.getElementById('avatar-modal').style.display='none'" style="width: 100%;">CLOSE</button>
+        </div>
+    </div>
+
+    <!-- Inline script helpers -->
+    <script>
+        function showAvatarModal() {
+            document.getElementById('avatar-modal').style.display = 'flex';
+            renderAvatarGrid();
+        }
+        async function selectAvatar(src) {
+            const profileAvatar = document.getElementById('profile-avatar');
+            if (profileAvatar) profileAvatar.src = src;
+            localStorage.setItem('otaq_avatar_url', src);
+            document.getElementById('avatar-modal').style.display = 'none';
+            if (window.updateUserAvatar) window.updateUserAvatar(src);
+        }
+
+        const AVATAR_SEEDS = {
+            bottts: ['HeroKnight', 'PixelMage', 'ShadowNinja', 'BombMaster', 'GlitchQueen', 'RetroMecha', 'Cyber', 'Neon'],
+            adventurer: ['Felix', 'Aneka', 'Oliver', 'Mimi', 'Jack', 'Trouble', 'Pepper', 'Ginger']
+        };
+
+        function renderAvatarGrid() {
+            const grid = document.getElementById('avatar-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            
+            Object.keys(AVATAR_SEEDS).forEach(style => {
+                const seeds = AVATAR_SEEDS[style] || [];
+                seeds.forEach(seed => {
+                    const url = `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}`;
+                    const item = document.createElement('div');
+                    item.style.cssText = 'border: 2px solid #000; background: #090d17; padding: 4px; cursor: pointer; text-align: center;';
+                    item.onmouseover = () => item.style.borderColor = 'var(--accent-cyan)';
+                    item.onmouseout = () => item.style.borderColor = '#000';
+                    item.onclick = () => selectAvatar(url);
+                    
+                    const img = document.createElement('img');
+                    img.src = url;
+                    img.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
+                    item.appendChild(img);
+                    grid.appendChild(item);
+                });
+            });
+        }
+
+        function randomizeAvatars() {
+            const randomSeed = 'Hero_' + Math.floor(Math.random() * 9999);
+            selectAvatar(`https://api.dicebear.com/7.x/bottts/svg?seed=${randomSeed}`);
+        }
+    </script>
 </body>
 </html>
