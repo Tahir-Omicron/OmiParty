@@ -194,6 +194,45 @@ document.addEventListener('DOMContentLoaded', init);
 // ============================================================================
 // 6. SCREEN: AUTH (LOGIN / REGISTER / GUEST)
 // ============================================================================
+// Pixel Mascot Companion Logic
+window.setMascotMsg = function(text) {
+  const el = document.getElementById('pixel-companion-msg');
+  if (el) el.textContent = text;
+};
+
+window.triggerMascotClick = function() {
+  playSound('coin');
+  const azQuotes = ['BEEP BOOP! XAOS BAŞLAYIR!', 'MƏN SƏNƏ GÜVƏNİRƏM!', '8-BIT GÜCÜ!', 'KONAMI KODUNU BİLİRSƏN?', 'KARTLARI FIRLAT!'];
+  const enQuotes = ['BEEP BOOP! CHAOS BEGINS!', 'I BELIEVE IN YOU!', '8-BIT POWER!', 'DO YOU KNOW KONAMI CODE?', 'FLIP THE CARD!'];
+  const quotes = isAz() ? azQuotes : enQuotes;
+  const rand = quotes[Math.floor(Math.random() * quotes.length)];
+  window.setMascotMsg(rand);
+};
+
+// 8-Bit Pixel Character Class Presets
+const PIXEL_AVATAR_PRESETS = [
+  { nameAz: 'CYBER CƏNGAVƏR', nameEn: 'CYBER KNIGHT', seed: 'HeroKnight' },
+  { nameAz: 'PİKSEL CADUGƏR', nameEn: 'PIXEL WIZARD', seed: 'PixelMage' },
+  { nameAz: 'KÖLGƏ NİNJASI', nameEn: 'SHADOW NINJA', seed: 'ShadowShinobi' },
+  { nameAz: 'BOMBA USTASI', nameEn: 'BOMB MASTER', seed: 'BombExpert' },
+  { nameAz: 'GLITCH KRALİÇƏSİ', nameEn: 'GLITCH QUEEN', seed: 'GlitchQueen' },
+  { nameAz: 'RETRO MECHA', nameEn: 'RETRO MECHA', seed: 'RetroMecha' }
+];
+let currentPixelAvatarIdx = 0;
+
+window.cyclePixelAvatar = function(dir) {
+  playSound('click');
+  currentPixelAvatarIdx = (currentPixelAvatarIdx + dir + PIXEL_AVATAR_PRESETS.length) % PIXEL_AVATAR_PRESETS.length;
+  const current = PIXEL_AVATAR_PRESETS[currentPixelAvatarIdx];
+  
+  const img = document.getElementById('pixel-reg-avatar-img');
+  const title = document.getElementById('pixel-avatar-title');
+  if (img) img.src = `https://api.dicebear.com/7.x/bottts/svg?seed=${current.seed}`;
+  if (title) title.textContent = isAz() ? current.nameAz : current.nameEn;
+  
+  window.setMascotMsg(isAz() ? `${current.nameAz} SEÇİLDİ!` : `${current.nameEn} CHOSEN!`);
+};
+
 window.flipToAuth = function(mode) {
   playSound('deal');
   const card = document.getElementById('auth-flip-card');
@@ -201,8 +240,10 @@ window.flipToAuth = function(mode) {
   
   if (mode === 'register') {
     card.classList.add('is-flipped');
+    window.setMascotMsg(isAz() ? 'YENİ QƏHRƏMAN YARAT!' : 'CREATE NEW HERO!');
   } else {
     card.classList.remove('is-flipped');
+    window.setMascotMsg(isAz() ? 'XEYİRLİ GƏLDİN!' : 'WELCOME BACK!');
   }
 };
 
@@ -228,6 +269,7 @@ window.generateRandomRegNickname = function() {
   if (input) {
     input.value = `${randPrefix}_${randNum}`;
     input.focus();
+    window.setMascotMsg(isAz() ? 'GÖZƏL LƏQƏB!' : 'COOL NICKNAME!');
   }
 };
 
@@ -248,9 +290,13 @@ async function handleRegister() {
   const nickname = $('#reg-nickname').value.trim();
   if (!email || !password || !nickname) return showToast('Please fill all fields.', 'error');
   
+  const selectedPreset = PIXEL_AVATAR_PRESETS[currentPixelAvatarIdx] || PIXEL_AVATAR_PRESETS[0];
+  const avatar_url = `https://api.dicebear.com/7.x/bottts/svg?seed=${selectedPreset.seed}`;
+  localStorage.setItem('otaq_avatar_url', avatar_url);
+
   const { data, error } = await db.auth.signUp({
     email, password, options: { 
-      data: { nickname },
+      data: { nickname, avatar_url },
       emailRedirectTo: 'https://omi-party.vercel.app/'
     }
   });

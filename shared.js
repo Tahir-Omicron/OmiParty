@@ -453,6 +453,20 @@ function playSound(type) {
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
       osc.start(now);
       osc.stop(now + 0.3);
+    } else if (type === 'powerup') {
+      const notes = [330, 392, 659, 523, 587, 784];
+      notes.forEach((freq, idx) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'square';
+        o.frequency.setValueAtTime(freq, now + idx * 0.06);
+        g.gain.setValueAtTime(0.1, now + idx * 0.06);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.3 + idx * 0.06);
+        o.connect(g);
+        g.connect(ctx.destination);
+        o.start(now + idx * 0.06);
+        o.stop(now + 0.3 + idx * 0.06);
+      });
     }
   } catch (e) {
     // Audio contexts may require initial user gesture
@@ -460,7 +474,105 @@ function playSound(type) {
 }
 
 // ----------------------------------------------------------------------------
-// FRIENDS SYSTEM
+// Procedural 8-Bit Chiptune BGM Engine
+// ----------------------------------------------------------------------------
+let bgmInterval = null;
+let isBgmPlaying = false;
+
+function toggleBGM() {
+  if (isBgmPlaying) {
+    stopBGM();
+    showToast(isAz() ? '8-Bit Musiqi Dayandırıldı' : 'Chiptune BGM Paused', 'info');
+  } else {
+    startBGM();
+    showToast(isAz() ? '8-Bit Musiqi Aktivdir ♫' : 'Chiptune BGM Active ♫', 'success');
+  }
+  const btn = document.getElementById('bgm-toggle');
+  if (btn) btn.classList.toggle('active', isBgmPlaying);
+}
+window.toggleBGM = toggleBGM;
+
+function startBGM() {
+  if (bgmInterval || !isSoundEnabled) return;
+  isBgmPlaying = true;
+  
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  if (ctx.state === 'suspended') ctx.resume();
+
+  const melody = [
+    261.63, 329.63, 392.00, 523.25, // C E G C
+    392.00, 329.63, 293.66, 349.23, // G E D F
+    440.00, 523.25, 440.00, 392.00, // A C A G
+    349.23, 329.63, 293.66, 261.63  // F E D C
+  ];
+  
+  let noteIndex = 0;
+  bgmInterval = setInterval(() => {
+    if (!isBgmPlaying || !isSoundEnabled) return;
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(melody[noteIndex % melody.length], now);
+      
+      gain.gain.setValueAtTime(0.04, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.start(now);
+      osc.stop(now + 0.22);
+      
+      noteIndex++;
+    } catch (e) {}
+  }, 240);
+}
+
+function stopBGM() {
+  isBgmPlaying = false;
+  if (bgmInterval) {
+    clearInterval(bgmInterval);
+    bgmInterval = null;
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Konami Code Easter Egg (↑ ↑ ↓ ↓ ← → ← → B A)
+// ----------------------------------------------------------------------------
+const KONAMI_CODE = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+let konamiPosition = 0;
+
+document.addEventListener('keydown', (e) => {
+  const key = e.key.toLowerCase();
+  const expectedKey = KONAMI_CODE[konamiPosition].toLowerCase();
+  
+  if (key === expectedKey) {
+    konamiPosition++;
+    if (konamiPosition === KONAMI_CODE.length) {
+      triggerKonamiUnlock();
+      konamiPosition = 0;
+    }
+  } else {
+    konamiPosition = 0;
+  }
+});
+
+function triggerKonamiUnlock() {
+  playSound('powerup');
+  showToast(isAz() ? '★ GİZLİ RETRO REJİM AKTİVLƏŞDİ! ★' : '★ SECRET RETRO MODE UNLOCKED! ★', 'success');
+  const card = document.getElementById('auth-flip-card');
+  if (card) {
+    card.classList.add('retro-gold-master');
+  }
+  const companion = document.getElementById('pixel-companion-msg');
+  if (companion) {
+    companion.textContent = isAz() ? 'VAY! KONAMI KODUNU TAPDIN!' : 'WOW! YOU FOUND THE SECRET CODE!';
+  }
+}
 // ----------------------------------------------------------------------------
 function getFriends() {
   try {

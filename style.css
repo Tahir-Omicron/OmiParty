@@ -2080,3 +2080,144 @@ input:checked + .slider:before {
     font-size: 0.95rem;
     margin-bottom: 1.25rem;
 }
+
+/* Pixel Mascot Pet & Speech Bubble */
+.pixel-companion-wrap {
+    position: absolute;
+    top: -56px;
+    right: 10px;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    z-index: 25;
+}
+
+.pixel-speech-bubble {
+    background: #090c13;
+    color: var(--accent-cyan);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.6rem;
+    padding: 6px 10px;
+    border: 2px solid #000;
+    box-shadow: 2px 2px 0 0 #000, 0 0 10px rgba(6, 182, 212, 0.3);
+    position: relative;
+    white-space: nowrap;
+    animation: bubbleFloat 2.5s ease-in-out infinite;
+}
+.pixel-speech-bubble::after {
+    content: '';
+    position: absolute;
+    right: -6px;
+    bottom: 8px;
+    width: 0;
+    height: 0;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    border-left: 6px solid #000;
+}
+
+.pixel-mascot-pet {
+    cursor: pointer;
+    filter: drop-shadow(2px 2px 0 #000);
+    transition: transform 0.15s;
+    animation: mascotIdle 2s infinite ease-in-out;
+}
+.pixel-mascot-pet:hover {
+    transform: scale(1.15) rotate(5deg);
+}
+
+@keyframes bubbleFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}
+
+@keyframes mascotIdle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+}
+
+/* 8-Bit Avatar Class Picker */
+.pixel-avatar-picker-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: #090c13;
+    border: 3px solid #000;
+    box-shadow: inset 3px 3px 0 0 #000, 0 0 0 2px #28334f;
+    padding: 10px;
+    margin-bottom: 0.5rem;
+}
+
+.pixel-avatar-arrow {
+    width: 32px;
+    height: 32px;
+    background: #1e293b;
+    border: 2px solid #000;
+    color: var(--accent-cyan);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset -2px -2px 0 0 #0f172a, inset 2px 2px 0 0 #334155, 0 2px 0 0 #000;
+}
+.pixel-avatar-arrow:active {
+    transform: translateY(2px);
+    box-shadow: inset 2px 2px 0 0 #0f172a, 0 0 0 0 #000;
+}
+
+.pixel-avatar-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.pixel-avatar-preview {
+    width: 48px;
+    height: 48px;
+    background: #141a29;
+    border: 2px solid #000;
+    box-shadow: inset 2px 2px 0 0 #000, 0 0 8px rgba(168, 85, 247, 0.4);
+    image-rendering: pixelated;
+}
+
+.pixel-class-tag {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.55rem;
+    color: var(--accent-purple);
+    letter-spacing: 0.5px;
+}
+
+/* BGM Active Button Glow */
+.p-bgm-btn.active {
+    background: #10b981;
+    color: #000;
+    box-shadow: inset -2px -2px 0 0 #047857, inset 2px 2px 0 0 #6ee7b7, 0 0 10px #10b981;
+    animation: bgmPulse 1s infinite alternate;
+}
+
+@keyframes bgmPulse {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.05); }
+}
+
+/* Konami Code Secret Golden Master Card */
+.pixel-flip-card.retro-gold-master .pixel-box {
+    border-color: #ffd700 !important;
+    box-shadow: 
+        inset -4px -4px 0 0 #b45309,
+        inset 4px 4px 0 0 #fef08a,
+        0 0 0 4px #ffd700,
+        0 0 30px rgba(250, 204, 21, 0.6),
+        8px 8px 0 0 rgba(0, 0, 0, 0.9) !important;
+    animation: rainbowShift 4s infinite linear;
+}
+
+@keyframes rainbowShift {
+    0% { filter: hue-rotate(0deg); }
+    100% { filter: hue-rotate(360deg); }
+}

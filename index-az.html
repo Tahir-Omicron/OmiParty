@@ -44,6 +44,10 @@
             <span class="pixel-nav-title">OTAQ<span class="p-cyan">.GG</span></span>
         </div>
         <div class="pixel-nav-actions">
+            <button id="bgm-toggle" class="pixel-mini-btn p-bgm-btn" onclick="toggleBGM()" title="8-Bit Musiqi">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" style="margin-right:4px;"><path d="M6 1h6v2H6V1zm4 2h2v7H9V8h1V3zM3 8h4v2H3V8zm0 2h1v3H3v-3zm3 0h1v3H6v-3zm-2 3h2v1H4v-1zm5-3h4v2H9v-2zm0 2h1v3H9v-3zm3 0h1v3h-1v-3zm-2 3h2v1h-2v-1z"/></svg>
+                <span>BGM</span>
+            </button>
             <button id="sound-toggle" class="pixel-mini-btn" onclick="toggleSound()" title="Səs">
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
                     <path d="M2 5h3l4-3v12l-4-3H2V5zm10 0h1v6h-1V5zm2-2h1v10h-1V3z"/>
@@ -63,6 +67,19 @@
 
     <!-- 3D Perspective Flip Card Wrapper -->
     <main class="pixel-perspective-wrapper">
+        
+        <!-- Interactive 8-Bit Pixel Mascot Companion -->
+        <div class="pixel-companion-wrap">
+            <div class="pixel-speech-bubble" id="pixel-companion-msg">SALAM QƏHRƏMAN!</div>
+            <div class="pixel-mascot-pet" onclick="triggerMascotClick()" title="Məni kliklə!">
+                <svg width="40" height="40" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M4 1h8v2H4V1zM2 3h12v2H2V3zM1 5h14v6H1V5zM3 11h10v2H3v-2zM5 13h6v2H5v-2z" fill="var(--accent-cyan)"/>
+                    <path d="M4 7h3v2H4V7zm5 0h3v2H9V7z" fill="#000"/>
+                    <path d="M7 11h2v1H7v-1z" fill="var(--accent-red)"/>
+                </svg>
+            </div>
+        </div>
+
         <div id="auth-flip-card" class="pixel-flip-card">
             
             <!-- ================= FRONT: PIXEL LOGIN ================= -->
@@ -95,7 +112,7 @@
                     <div class="pixel-input-group">
                         <label for="login-email" class="pixel-label">E-POÇT:</label>
                         <div class="pixel-input-wrap">
-                            <input type="email" id="login-email" class="pixel-input" placeholder="oyuncu@otaq.gg" required autocomplete="email">
+                            <input type="email" id="login-email" class="pixel-input" placeholder="oyuncu@otaq.gg" required autocomplete="email" onfocus="setMascotMsg('E-POÇT YAZ...')">
                         </div>
                     </div>
 
@@ -105,7 +122,7 @@
                             <span class="pixel-link" onclick="showToast('Şifrə unudulubsa Qonaq rejimi ilə daxil olun.', 'info')">[UNUTDUM]</span>
                         </div>
                         <div class="pixel-input-wrap">
-                            <input type="password" id="login-password" class="pixel-input" placeholder="••••••••" required autocomplete="current-password">
+                            <input type="password" id="login-password" class="pixel-input" placeholder="••••••••" required autocomplete="current-password" onfocus="setMascotMsg('GİZLİ ŞİFRƏ!')">
                             <button type="button" class="pixel-eye-btn" onclick="togglePasswordVisibility('login-password')" title="Şifrə">
                                 <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
                                     <path d="M2 7h12v2H2V7zm2-2h8v2H4V5zm0 6h8v2H4v-2z"/>
@@ -114,7 +131,7 @@
                         </div>
                     </div>
 
-                    <button type="submit" id="login-btn" class="pixel-btn pixel-btn-primary">
+                    <button type="submit" id="login-btn" class="pixel-btn pixel-btn-primary" onmouseover="setMascotMsg('BAŞLAMAĞA HAZIRSAN?')">
                         <span>BAŞLA (START)</span>
                     </button>
 
@@ -135,7 +152,7 @@
                 <!-- Footer Creator Badge -->
                 <div class="pixel-footer">
                     <a href="https://instagram.com/tahirquliyev01" target="_blank" rel="noopener noreferrer" class="pixel-author-pill">
-                        <span class="p-spark">◆</span>
+                        <svg width="10" height="10" viewBox="0 0 8 8" fill="var(--accent-gold)"><path d="M3 0h2v2H3V0zM1 2h2v2H1V2zM5 2h2v2H5V2zM3 4h2v2H3V4z"/></svg>
                         <span>KOD: <strong>@tahirquliyev01</strong></span>
                     </a>
                 </div>
@@ -165,12 +182,23 @@
                     </button>
                 </div>
 
-                <!-- Register Form -->
+                <!-- Register Form with Pixel Avatar Carousel -->
                 <form id="register-form" class="pixel-form" onsubmit="event.preventDefault(); handleRegister();">
+                    
+                    <!-- 8-Bit Character Class Selector -->
+                    <div class="pixel-avatar-picker-wrap">
+                        <button type="button" class="pixel-avatar-arrow" onclick="cyclePixelAvatar(-1)" title="Əvvəlki">&lt;</button>
+                        <div class="pixel-avatar-display">
+                            <img id="pixel-reg-avatar-img" src="https://api.dicebear.com/7.x/bottts/svg?seed=HeroKnight" alt="Avatar" class="pixel-avatar-preview">
+                            <span id="pixel-avatar-title" class="pixel-class-tag">CYBER CƏNGAVƏR</span>
+                        </div>
+                        <button type="button" class="pixel-avatar-arrow" onclick="cyclePixelAvatar(1)" title="Növbəti">&gt;</button>
+                    </div>
+
                     <div class="pixel-input-group">
                         <label for="reg-email" class="pixel-label">E-POÇT:</label>
                         <div class="pixel-input-wrap">
-                            <input type="email" id="reg-email" class="pixel-input" placeholder="oyuncu@otaq.gg" required autocomplete="email">
+                            <input type="email" id="reg-email" class="pixel-input" placeholder="oyuncu@otaq.gg" required autocomplete="email" onfocus="setMascotMsg('YENİ E-POÇT!')">
                         </div>
                     </div>
 
@@ -178,11 +206,11 @@
                         <div class="pixel-label-row">
                             <label for="reg-nickname" class="pixel-label">LƏQƏB (NAME):</label>
                             <button type="button" class="pixel-dice-btn" onclick="generateRandomRegNickname()" title="Təsadüfi">
-                                <span>[RANDOM 🎲]</span>
+                                <span>[TƏSADÜFİ]</span>
                             </button>
                         </div>
                         <div class="pixel-input-wrap">
-                            <input type="text" id="reg-nickname" class="pixel-input" placeholder="Məs: PixelMaster_99" maxlength="16" required autocomplete="username">
+                            <input type="text" id="reg-nickname" class="pixel-input" placeholder="Məs: PixelMaster_99" maxlength="16" required autocomplete="username" onfocus="setMascotMsg('GÖZƏL LƏQƏB!')">
                         </div>
                     </div>
 
@@ -206,7 +234,7 @@
                 <!-- Footer Creator Badge -->
                 <div class="pixel-footer">
                     <a href="https://instagram.com/tahirquliyev01" target="_blank" rel="noopener noreferrer" class="pixel-author-pill">
-                        <span class="p-spark">◆</span>
+                        <svg width="10" height="10" viewBox="0 0 8 8" fill="var(--accent-gold)"><path d="M3 0h2v2H3V0zM1 2h2v2H1V2zM5 2h2v2H5V2zM3 4h2v2H3V4z"/></svg>
                         <span>KOD: <strong>@tahirquliyev01</strong></span>
                     </a>
                 </div>
